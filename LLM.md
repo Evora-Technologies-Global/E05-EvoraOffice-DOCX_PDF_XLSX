@@ -5,8 +5,8 @@
 > where a new file belongs. For *how* to write an MVI screen, read
 > [`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md).
 
-**Status (25/11/2026): Sprint 1 Core Implementation Complete (`T-001`, `T-003`–`T-009` done; `T-002` CI workflow ready).** Architecture and module boundaries are
-defined in [`docs/07_TECH_SPEC.md`](docs/07_TECH_SPEC.md). Modules marked `[Active]` are compiled and verified in Sprint 1; modules marked `[Planned — Sprint N]` activate in their respective sprint.
+**Status (25/11/2026): Sprint 1 Complete (`T-001`, `T-003`–`T-009` done) + Sprint 2 Kotlin/Compose Implementation Complete (`T-010`–`T-014`, `T-016`–`T-017` done; `T-015` JNI bridge + OOXML/ODF serializer + 15s atomic draft recovery + 8 templates done; awaiting `R-01` Linux LOK `.so` artifact from `T-002`).** Architecture and module boundaries are
+defined in [`docs/07_TECH_SPEC.md`](docs/07_TECH_SPEC.md). Modules marked `[Active]` are compiled and verified; modules marked `[Planned — Sprint N]` activate in their respective sprint.
 Code snippets in §4–§6 are copied strictly from real E05 code as modules land.
 
 ---
@@ -38,21 +38,21 @@ Native Android application (**Kotlin + Jetpack Compose**, **MVI + Clean Architec
   - `:core:datastore` (DataStore Preferences + Hilt) `[Active — T-003/T-005]`
   - `:core:data` (Hilt `@Binds` implementations of `:core:domain` ports + `WorkManager` `@HiltWorker` + `CD-07` monetization stubs; depends on `:core:model`, `:core:domain`, `:core:database`, `:core:datastore`) `[Active — T-003/T-005]`
 - **Engine Layer (isolated SDK/JNI wrappers implementing `:core:domain` ports):**
-  - `:engine:pdf` (`io.legere:pdfiumandroid:2.0.3`, later `PDFBox-Android` + `BouncyCastle`) `[Active — T-003/T-008]`
-  - `:engine:office` (`LibreOfficeKit` `16 KB` `.so` JNI bridge interface + OOXML/ODF text preview fallback) `[Active — T-003; full LOK integration T-015]`
+  - `:engine:pdf` (`io.legere:pdfiumandroid:2.0.3` + `PDFBox-Android 2.0.27.0` + `BouncyCastle 1.80`) `[Active — T-003/T-008/T-010..T-013]`
+  - `:engine:office` (`LibreOfficeNativeBridge` `16 KB` JNI bridge + `OoxmlOfficeEngine` OOXML/ODF parser/serializer + `DraftSnapshotSerializer`) `[Active — T-003/T-015..T-017; awaiting R-01 .so]`
   - `:engine:hwp` (`kr.dogfoot:hwplib:1.1.11` + `hwpxlib:1.0.9` offline HTML sanitizer + `EPUB`/`TXT`/`CSV`/`MD` reader) `[Active — T-009]`
   - `:engine:archive` (`Apache Commons Compress 1.28.0` + `XZ 1.12` `.zip`/`.7z`) `[Active — T-009]`
-  - `:engine:scanner` (`CameraX` + `ML Kit` Scan/OCR/QR) `[Planned — Sprint 2 T-014]`
+  - `:engine:scanner` (`CameraX 1.7.0` + `ML Kit` Doc Scanner `16.0.0` / 5-Script OCR `16.0.1` / Barcode `17.3.0`) `[Active — Sprint 2 T-014]`
   - `:engine:transfer` (`Ktor CIO` Wi-Fi HTTP/FTP + `TileService`) `[Planned — Sprint 3 T-019]`
   - `:engine:cloud` (`Google Drive REST v3` + `OneDrive MSAL`) `[Planned — Sprint 3 T-020]`
   - `:engine:monetization` (`Play Billing 8.0.0`, `UMP CMP`, `AdMob Mediation`, `Firebase Remote Config`) `[Planned — Sprint 4 T-023/T-024 per CD-07]`
 - **Feature Layer (isolated; `:feature:*` NEVER depends on another `:feature:*`):**
   - `:feature:onboarding` (`SplashRoute`, `LanguageSelectRoute`, `OnboardingIntroRoute`, `StoragePermissionRoute`) `[Active — T-006]`
-  - `:feature:library` (`HomeDocumentsRoute`, `RecentBookmarksRoute`, `SearchDocumentsRoute`) `[Active — T-007; Storage/Glance Sprint 3]`
+  - `:feature:library` (`HomeDocumentsRoute`, `RecentBookmarksRoute`, `SearchDocumentsRoute`, `EvoraTemplatesSheet`) `[Active — T-007/T-015; Storage/Glance Sprint 3]`
   - `:feature:reader` (`DocumentReaderRoute`, `ArchiveInspectorRoute`) `[Active — T-008/T-009]`
-  - `:feature:editor` `[Planned — Sprint 2 T-010/T-011/T-016/T-017]`
-  - `:feature:tools` `[Planned — Sprint 2 T-012/T-013]`
-  - `:feature:scanner` `[Planned — Sprint 2 T-014]`
+  - `:feature:editor` (`PdfEditorRoute`, `SignaturePadRoute`, `OfficeEditorRoute`, `SlideShowRoute`) `[Active — Sprint 2 T-010/T-011/T-015/T-016/T-017]`
+  - `:feature:tools` (`ToolsHubRoute`, `PdfToolConfigRoute`) `[Active — Sprint 2 T-012/T-013]`
+  - `:feature:scanner` (`ScannerFlowRoute`) `[Active — Sprint 2 T-014]`
   - `:feature:cloud` `[Planned — Sprint 3 T-020]`
   - `:feature:transfer` `[Planned — Sprint 3 T-019]`
   - `:feature:monetization` (`PaywallRoute`, `RewardGateSheet` shell wired to `ProEntitlementPort`) `[Active — T-006 shell / Sprint 4 T-023]`
@@ -179,15 +179,15 @@ Locked by CEO (`CD-11`, `2026-11-25`): **Hilt with KSP (`com.google.dagger:hilt-
 | Pure Kotlin Domain Models (`DocFormat`, `DocumentItem`, `ProStatus`, etc.) | `core/model/src/main/kotlin/com/evora/technologies/office/core/model/...` |
 | Pure Kotlin Ports & UseCases (`ProEntitlementPort`, `DocumentRepository`, etc.) | `core/domain/src/main/kotlin/com/evora/technologies/office/core/domain/...` |
 | MVI Base (`MviViewModel`, `UiState`, `UiIntent`, `UiEffect`, `CollectEffects`) | `core/mvi/src/main/kotlin/com/evora/technologies/office/core/mvi/...` |
-| Material 3 Theme (`Style B`), Format Colors, Fonts, Shared Components | `core/designsystem/src/main/kotlin/com/evora/technologies/office/core/designsystem/...` |
+| Material 3 Theme (`Style B`), Format Colors, Fonts, Shared Components (`EvoraRewardGateSheet`, `EvoraTemplatesSheet`, `AndroidPrintHelper`) | `core/designsystem/src/main/kotlin/com/evora/technologies/office/core/designsystem/...` |
 | Room Entities, DAOs, `EvoraOfficeDatabase`, `DatabaseModule` | `core/database/src/main/kotlin/com/evora/technologies/office/core/database/...` |
 | DataStore Preferences, Local Entitlement Cache, `DataStoreModule` | `core/datastore/src/main/kotlin/com/evora/technologies/office/core/datastore/...` |
-| Repository Implementations, `MediaStore` Indexer, `TrashPurgeWorker`, `CD-07` Stubs | `core/data/src/main/kotlin/com/evora/technologies/office/core/data/...` |
-| PDF Engine (`PdfiumAndroid`, `PDFBox-Android`, `BouncyCastle`, `PrintManager`) | `engine/pdf/src/main/kotlin/com/evora/technologies/office/engine/pdf/...` |
-| Office Engine (`LibreOfficeKit` `16 KB` `.so` + JNI Bridge + Draft Serializer) | `engine/office/src/main/kotlin/com/evora/technologies/office/engine/office/...` & `engine/office/src/main/jniLibs/arm64-v8a/` |
+| Repository Implementations, `MediaStore` Indexer, `TrashPurgeWorker`, `SignatureRepositoryImpl`, `DraftRecoveryRepositoryImpl`, `TemplateRepositoryImpl`, `assets/templates/`, `CD-07` Stubs | `core/data/src/main/kotlin/.../core/data/...` & `core/data/src/main/assets/templates/` |
+| PDF Engine (`PdfiumAndroid`, `PDFBox-Android`, `BouncyCastle`, `PdfBoxPowerEngine`) | `engine/pdf/src/main/kotlin/com/evora/technologies/office/engine/pdf/...` |
+| Office Engine (`LibreOfficeNativeBridge`, `OoxmlOfficeEngine`, `DraftSnapshotSerializer`) | `engine/office/src/main/kotlin/com/evora/technologies/office/engine/office/...` & `engine/office/src/main/jniLibs/arm64-v8a/` |
 | Hangul Engine (`hwplib`, `hwpxlib`, Sanitized HTML WebView Bridge) | `engine/hwp/src/main/kotlin/com/evora/technologies/office/engine/hwp/...` |
 | Archive Engine (`Commons Compress` `.zip`/`.7z`) | `engine/archive/src/main/kotlin/com/evora/technologies/office/engine/archive/...` |
-| Scanner Engine (`CameraX`, `ML Kit` Doc/OCR/QR, Dual ID Card) | `engine/scanner/src/main/kotlin/com/evora/technologies/office/engine/scanner/...` *(Sprint 2 T-014)* |
+| Scanner Engine (`CameraX`, `ML Kit` Doc/OCR/QR, `MlKitScannerEngine`, Dual ID Card) | `engine/scanner/src/main/kotlin/com/evora/technologies/office/engine/scanner/...` |
 | Wi-Fi Transfer Engine (`Ktor CIO` HTTP/FTP, `TileService`) | `engine/transfer/src/main/kotlin/com/evora/technologies/office/engine/transfer/...` *(Sprint 3 T-019)* |
 | Cloud Engine (`Google Drive v3`, `OneDrive MSAL`, Keystore) | `engine/cloud/src/main/kotlin/com/evora/technologies/office/engine/cloud/...` *(Sprint 3 T-020)* |
 | Monetization Engine (`BillingClient 8`, `UMP`, `AdMob Mediation`, `RemoteConfig`) | `engine/monetization/src/main/kotlin/com/evora/technologies/office/engine/monetization/...` *(Sprint 4 T-023/T-024 per CD-07)* |
@@ -200,7 +200,8 @@ Locked by CEO (`CD-11`, `2026-11-25`): **Hilt with KSP (`com.google.dagger:hilt-
 
 ### Open
 
-None yet.
+- **`T-015` Native `LibreOfficeKit` Binary Pending `R-01` CI Dispatch:** `LibreOfficeNativeBridge` and `LOKDispatcher` are wired in `:engine:office`, and `OoxmlOfficeEngine` provides full offline `.docx`/`.xlsx`/`.pptx`/ODF editing, formulas, Track Changes, and 15s atomic `DraftRecoveryEntity` persistence until `liblo-native-code.so` / `libsofficeapp.so` lands from GitHub Actions `lok-android-16kb.yml` (`T-002`).
+- **BouncyCastle Version Resolution:** `pdfbox-android:2.0.27.0` transitively pulls `bc*-jdk15to18:1.72`; `:engine:pdf` and `:app` exclude `-jdk15to18` in favor of `bcprov-jdk18on:1.80` + `bcpkix-jdk18on:1.80`.
 
 ### Fixed
 
@@ -211,9 +212,10 @@ None.
 ## 12. What is already right — keep it
 
 - **Gradle Build Logic & Catalog (`T-003`):** `gradle/libs.versions.toml`, `compose-stability.conf`, and `build-logic/convention` cleanly compile AGP `9.4.1` built-in Kotlin + Compose + Hilt `2.60.1` (KSP `2.3.14`) + Room `2.8.5` without `kapt` or `kotlin-android`.
-- **Clean Architecture & MVI Foundation (`T-003`–`T-007`):** `:core:model` and `:core:domain` (`MagicByteSniffer`, `FileNameValidator`) are pure JVM modules; `:core:mvi` enforces `MviViewModel` + `Channel(BUFFERED)` + `CollectEffects` + `CancellationException` rethrow verified in `MviViewModelTest`; `:core:designsystem` bundles `Poppins` + `JetBrains Mono` (`tnum`) and Style B tokens/components; `:core:database` exports all 5 Room entities (`EvoraOfficeDatabaseTest`); `:core:data` runs `TrashPurgeWorker` + `MediaStore` scanner; `:app` hosts `AppNavHost`, 10 localized `strings.xml`, `FileProvider`, and granular `<activity-alias>` targets.
+- **Clean Architecture & MVI Foundation (`T-003`–`T-007`):** `:core:model` and `:core:domain` (`MagicByteSniffer`, `FileNameValidator`, `PageRangeParser`, `ExcelFormulaEvaluator`, `QrPayloadParser`, `OoxmlDocxWriter`) are pure JVM modules; `:core:mvi` enforces `MviViewModel` + `Channel(BUFFERED)` + `CollectEffects` + `CancellationException` rethrow verified in `MviViewModelTest`; `:core:designsystem` bundles `Poppins` + `JetBrains Mono` (`tnum`) and Style B tokens/components (`EvoraRewardGateSheet`, `EvoraTemplatesSheet`, `AndroidPrintHelper`); `:core:database` exports all 5 Room entities (`EvoraOfficeDatabaseTest`); `:core:data` runs `TrashPurgeWorker`, `MediaStore` scanner, `SignatureRepositoryImpl`, `DraftRecoveryRepositoryImpl`, `TemplateRepositoryImpl` (`8` real OOXML templates); `:app` hosts `AppNavHost`, 10 localized `strings.xml`, `FileProvider`, and granular `<activity-alias>` targets.
 - **Universal Readers & Archives (`T-008`–`T-009`):** `:engine:pdf` (`PdfiumAndroid`), `:engine:hwp` (`hwplib`/`hwpxlib` + XSS sanitizer + `EPUB`/`TXT`/`CSV`), and `:engine:archive` (`Commons Compress` + `XZ` with Zip-Slip checks & `.rar` guard) drive `DocumentReaderRoute` and `ArchiveInspectorRoute`.
-- **16 KB Native Gate (`T-002`/`T-003`):** `scripts/verify_16kb_elf.py` and `.github/workflows/android-ci.yml` verify `arm64-v8a` + `x86_64` `.so` alignment (`0x4000`) including `io.legere:pdfiumandroid:2.0.3`.
+- **Sprint 2 PDF Power, Scanner & Office Editors (`T-010`–`T-017`):** `:engine:pdf` (`PdfBoxPowerEngine` annotations, signatures, PKCS#7, AES-128/256, merge, split, compress, watermark, offline `PDF->DOCX` w/ ML Kit OCR fallback), `:engine:scanner` (`CameraX`, ML Kit Doc Scanner, 5-script OCR, Dual-Side ID Card A4, QR), `:engine:office` (`OoxmlOfficeEngine` + `LibreOfficeNativeBridge`), and `:feature:tools`, `:feature:scanner`, `:feature:editor` (`PdfEditorRoute`, `SignaturePadRoute`, `OfficeEditorRoute`, `SlideShowRoute`) compile, pass unit tests + Lint, and enforce zero `SAVE_HEADER` locks.
+- **16 KB Native Gate (`T-002`/`T-003`/`T-014`):** `scripts/verify_16kb_elf.py` verifies `16/16` bundled `.so` binaries (`arm64-v8a` + `x86_64`) pass `0x4000` alignment across `PdfiumAndroid`, `CameraX`, `ML Kit` OCR/Barcode, `DataStore`, and `androidx.graphics.path`.
 
 ---
 
