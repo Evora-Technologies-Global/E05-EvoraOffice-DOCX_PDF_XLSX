@@ -1,0 +1,62 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+.venv/
+venv/
+
+# Local-only competitor data, temp assets, and throwaway spikes (see GEMINI.md)
+.local/
+scratch/
+notes/
+
+# Competitor binaries and decompiled output never enter the repo
+*.apk
+*.apks
+*.xapk
+*.aab
+decompiled/
+
+# Android / Gradle
+.gradle/
+.kotlin/
+build/
+local.properties
+.idea/
+*.iml
+captures/
+.cxx/
+.externalNativeBuild/
+
+# Secrets & signing
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.pem
+*.key
+keystore.properties
+signing.properties
+
+# Antigravity / Gemini local settings, secrets, and ephemeral state
+.gemini/.env
+.gemini/skills/**/.env
+.gemini/settings.local.json
+.gemini/worktrees/
+.gemini/agent-memory/
+mcp_config.json
+.mcp.json
+
+# Logs & temp
+*.log
+logs/
+*.tmp
+*.temp
+.cache/
