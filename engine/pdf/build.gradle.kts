@@ -10,6 +10,7 @@ android {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:domain"))
-    implementation(libs.pdfium.android)
+    implementation(project(":core:data"))
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.pdfium.android)
 }
