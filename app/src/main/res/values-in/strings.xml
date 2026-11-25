@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Evora Office</string>
+    <string name="tab_home">Beranda</string>
+    <string name="tab_recent">Terbaru</string>
+    <string name="tab_storage">Penyimpanan</string>
+    <string name="tab_tools">Alat</string>
+    <string name="action_scan">Pindai</string>
+    <string name="action_continue">Lanjutkan</string>
+    <string name="action_skip">Lewati</string>
+</resources>

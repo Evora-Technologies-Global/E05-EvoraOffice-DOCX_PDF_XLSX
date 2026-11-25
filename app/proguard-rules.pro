@@ -3,3 +3,14 @@
     @javax.inject.Inject <init>(...);
 }
 -keepattributes Signature,InnerClasses,EnclosingMethod
+
+# PdfiumAndroid JNI & API models
+-keep class io.legere.pdfiumandroid.** { *; }
+
+# Hangul HWP / HWPX parsers
+-keep class kr.dogfoot.hwplib.** { *; }
+-keep class kr.dogfoot.hwpxlib.** { *; }
+
+# Apache Commons Compress & XZ
+-keep class org.apache.commons.compress.** { *; }
+-keep class org.tukaani.xz.** { *; }

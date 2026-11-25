@@ -2,13 +2,24 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
     <application
         android:name=".EvoraApplication"
         android:allowBackup="false"
         android:enableOnBackInvokedCallback="true"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
 
         <provider
             android:name="androidx.startup.InitializationProvider"
@@ -21,6 +32,16 @@
                 tools:node="remove" />
         </provider>
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -31,6 +52,184 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Granular OS "Open With" activity-alias targets (F-01 / US-004) -->
+        <activity-alias
+            android:name=".AliasPdfViewer"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Evora PDF Reader"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/pdf" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasWordViewer"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Evora Word Viewer"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/msword" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                <data android:mimeType="application/vnd.oasis.opendocument.text" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasExcelViewer"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Evora Excel Viewer"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/vnd.ms-excel" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                <data android:mimeType="application/vnd.oasis.opendocument.spreadsheet" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasPptViewer"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Evora Slide Viewer"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/vnd.ms-powerpoint" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.presentation" />
+                <data android:mimeType="application/vnd.oasis.opendocument.presentation" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasHwpViewer"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Evora HWP Viewer"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/x-hwp" />
+                <data android:mimeType="application/haansofthwp" />
+                <data android:mimeType="application/vnd.hancom.hwp" />
+                <data android:mimeType="application/vnd.hancom.hwpx" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasTextViewer"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Evora Document &amp; Ebook Reader"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="text/csv" />
+                <data android:mimeType="text/markdown" />
+                <data android:mimeType="application/epub+zip" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasArchiveViewer"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Evora ZIP / 7z Viewer"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-7z-compressed" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasScanEntry"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Evora Scan"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="com.evora.technologies.office.ACTION_SCAN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasSignEntry"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Evora PDF Sign"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="com.evora.technologies.office.ACTION_SIGN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasOcrEntry"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Evora OCR"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="com.evora.technologies.office.ACTION_OCR" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasExternalGeneric"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Evora Office File Handler"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+        </activity-alias>
 
     </application>
 
