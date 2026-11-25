@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Evora Office</string>
+    <string name="tab_home">Accueil</string>
+    <string name="tab_recent">Récents</string>
+    <string name="tab_storage">Stockage</string>
+    <string name="tab_tools">Outils</string>
+    <string name="action_scan">Scanner</string>
+    <string name="action_continue">Continuer</string>
+    <string name="action_skip">Ignorer</string>
+</resources>

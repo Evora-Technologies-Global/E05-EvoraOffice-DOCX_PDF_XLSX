@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Evora Office</string>
+    <string name="tab_home">Trang chủ</string>
+    <string name="tab_recent">Gần đây</string>
+    <string name="tab_storage">Lưu trữ</string>
+    <string name="tab_tools">Công cụ</string>
+    <string name="action_scan">Quét tài liệu</string>
+    <string name="action_continue">Tiếp tục</string>
+    <string name="action_skip">Bỏ qua</string>
+</resources>

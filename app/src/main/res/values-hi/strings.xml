@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Evora Office</string>
+    <string name="tab_home">होम</string>
+    <string name="tab_recent">हाल का</string>
+    <string name="tab_storage">स्टोरेज</string>
+    <string name="tab_tools">टूल्स</string>
+    <string name="action_scan">स्कैन</string>
+    <string name="action_continue">जारी रखें</string>
+    <string name="action_skip">छोड़ें</string>
+</resources>

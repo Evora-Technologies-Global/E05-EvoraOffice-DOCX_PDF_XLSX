@@ -5,15 +5,9 @@
 > where a new file belongs. For *how* to write an MVI screen, read
 > [`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md).
 
-**Status (25/11/2026): skeleton. E05 has no product code yet.** This repository is configured for
-Phase 1–8 execution under [`GEMINI.md`](GEMINI.md) and
-[`.gemini/rules/product-lifecycle-workflow.md`](.gemini/rules/product-lifecycle-workflow.md). The
-module graph, package layout, and conventions will be decided in Phase 6 by `docs/07_TECH_SPEC.md`,
-then documented into §2–§10 from the real code. Until then, each section records only constraints
-already fixed and marks the rest **TBD (Phase 6)**.
-
-Why a skeleton and not a proposed layout: this file describes code that actually exists in this
-repository. Snippets here must be copied from real E05 code, never written ahead of it.
+**Status (25/11/2026): Sprint 1 Complete (`T-001`, `T-003`–`T-009` done) + Sprint 2 Kotlin/Compose Implementation Complete (`T-010`–`T-014`, `T-016`–`T-017` done; `T-015` JNI bridge + OOXML/ODF serializer + 15s atomic draft recovery + 8 templates done; awaiting `R-01` Linux LOK `.so` artifact from `T-002`).** Architecture and module boundaries are
+defined in [`docs/07_TECH_SPEC.md`](docs/07_TECH_SPEC.md). Modules marked `[Active]` are compiled and verified; modules marked `[Planned — Sprint N]` activate in their respective sprint.
+Code snippets in §4–§6 are copied strictly from real E05 code as modules land.
 
 ---
 
@@ -21,81 +15,184 @@ repository. Snippets here must be copied from real E05 code, never written ahead
 
 | When | Do |
 |---|---|
-| Before writing code | Read §2–§10 of this file, then the relevant section of [`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md). |
-| While §10 says `TBD (Phase 6)` | Do not create product source files. Throwaway feasibility spikes live only in `.local/spike/`, outside git. |
-| Before adding a file | Check §10 "Where does a new file go?". Do not invent a package. |
+| Before writing code | Read §2–§10 of this file, [`docs/07_TECH_SPEC.md`](docs/07_TECH_SPEC.md), and [`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md). |
+| Before adding a file | Check §10 "Where does a new file go?". Do not invent an unlisted package or module. |
 | After adding, moving, renaming, or deleting a package, module, layer, or architectural rule | Update this file in the same commit. |
 | After fixing something in §11 | Move the row from "Open" to "Fixed" with the commit reference. |
-| Never | Copy a pattern from a file listed in §11 as a known deviation. |
+| Never | Copy a pattern from a file listed in §11 as a known deviation, or import `android.*` / `androidx.compose.*` in ViewModels, Contracts, `:core:model`, or `:core:domain`. |
 
 ---
 
 ## 2. Module graph
 
-**TBD (Phase 6).**
+Native Android application (**Kotlin + Jetpack Compose**, **MVI + Clean Architecture**, **Hilt + KSP**), built with **AGP `9.4.1` (Built-in Kotlin)** + **Gradle `9.6.0`** (`compileSdk = 37`, `targetSdk = 36`, `minSdk = 26`). No `org.jetbrains.kotlin.android` or `kapt` plugins are applied anywhere.
 
-Already fixed:
-- One native Android application in **Kotlin + Jetpack Compose**, following **MVI + Clean Architecture**
-  ([`GEMINI.md`](GEMINI.md)). No iOS target and no XML ViewBinding.
+- **Build Logic:** `build-logic/convention` (`evora.kotlin.jvm`, `evora.android.library`, `evora.android.compose`, `evora.android.hilt`, `evora.android.feature`, `evora.android.application`) `[Active — T-003]`
+- **App Shell:** `:app` (`com.evora.technologies.office`) `[Active — T-003]` -> depends on `:core:*`, active `:engine:*`, active `:feature:*`
+- **Core Layer:**
+  - `:core:model` (pure JVM, zero dependencies) `[Active — T-003]`
+  - `:core:domain` (pure JVM, depends only on `:core:model` + `kotlinx-coroutines-core` + `javax.inject`) `[Active — T-003]`
+  - `:core:mvi` (Android Library + Compose runtime, depends on AndroidX Lifecycle) `[Active — T-003]`
+  - `:core:designsystem` (Android Library + Compose Material 3) `[Active — T-003/T-004]`
+  - `:core:database` (Room `2.8.5` + KSP + Hilt) `[Active — T-003/T-005]`
+  - `:core:datastore` (DataStore Preferences + Hilt) `[Active — T-003/T-005]`
+  - `:core:data` (Hilt `@Binds` implementations of `:core:domain` ports + `WorkManager` `@HiltWorker` + `CD-07` monetization stubs; depends on `:core:model`, `:core:domain`, `:core:database`, `:core:datastore`) `[Active — T-003/T-005]`
+- **Engine Layer (isolated SDK/JNI wrappers implementing `:core:domain` ports):**
+  - `:engine:pdf` (`io.legere:pdfiumandroid:2.0.3` + `PDFBox-Android 2.0.27.0` + `BouncyCastle 1.80`) `[Active — T-003/T-008/T-010..T-013]`
+  - `:engine:office` (`LibreOfficeNativeBridge` `16 KB` JNI bridge + `OoxmlOfficeEngine` OOXML/ODF parser/serializer + `DraftSnapshotSerializer`) `[Active — T-003/T-015..T-017; awaiting R-01 .so]`
+  - `:engine:hwp` (`kr.dogfoot:hwplib:1.1.11` + `hwpxlib:1.0.9` offline HTML sanitizer + `EPUB`/`TXT`/`CSV`/`MD` reader) `[Active — T-009]`
+  - `:engine:archive` (`Apache Commons Compress 1.28.0` + `XZ 1.12` `.zip`/`.7z`) `[Active — T-009]`
+  - `:engine:scanner` (`CameraX 1.7.0` + `ML Kit` Doc Scanner `16.0.0` / 5-Script OCR `16.0.1` / Barcode `17.3.0`) `[Active — Sprint 2 T-014]`
+  - `:engine:transfer` (`Ktor CIO` Wi-Fi HTTP/FTP + `TileService`) `[Planned — Sprint 3 T-019]`
+  - `:engine:cloud` (`Google Drive REST v3` + `OneDrive MSAL`) `[Planned — Sprint 3 T-020]`
+  - `:engine:monetization` (`Play Billing 8.0.0`, `UMP CMP`, `AdMob Mediation`, `Firebase Remote Config`) `[Planned — Sprint 4 T-023/T-024 per CD-07]`
+- **Feature Layer (isolated; `:feature:*` NEVER depends on another `:feature:*`):**
+  - `:feature:onboarding` (`SplashRoute`, `LanguageSelectRoute`, `OnboardingIntroRoute`, `StoragePermissionRoute`) `[Active — T-006]`
+  - `:feature:library` (`HomeDocumentsRoute`, `RecentBookmarksRoute`, `SearchDocumentsRoute`, `EvoraTemplatesSheet`) `[Active — T-007/T-015; Storage/Glance Sprint 3]`
+  - `:feature:reader` (`DocumentReaderRoute`, `ArchiveInspectorRoute`) `[Active — T-008/T-009]`
+  - `:feature:editor` (`PdfEditorRoute`, `SignaturePadRoute`, `OfficeEditorRoute`, `SlideShowRoute`) `[Active — Sprint 2 T-010/T-011/T-015/T-016/T-017]`
+  - `:feature:tools` (`ToolsHubRoute`, `PdfToolConfigRoute`) `[Active — Sprint 2 T-012/T-013]`
+  - `:feature:scanner` (`ScannerFlowRoute`) `[Active — Sprint 2 T-014]`
+  - `:feature:cloud` `[Planned — Sprint 3 T-020]`
+  - `:feature:transfer` `[Planned — Sprint 3 T-019]`
+  - `:feature:monetization` (`PaywallRoute`, `RewardGateSheet` shell wired to `ProEntitlementPort`) `[Active — T-006 shell / Sprint 4 T-023]`
+  - `:feature:settings` `[Planned — Sprint 3 T-022]`
+- **Performance:** `:baselineprofile` `[Planned — Sprint 4 T-025]`
 
 ---
 
 ## 3. Package layout
 
-**TBD (Phase 6).** Root `applicationId` / package namespace is locked at `com.evora.technologies.office`
-(Launcher name: `Evora Office`; Play Store title: `Evora Office: DOCX, PDF, XLSX` per Charter `CD-05`,
-2026-11-25). Feature module and subpackage layout remain **TBD (Phase 6)**.
+Root namespace is locked at `com.evora.technologies.office` (`CD-05`, Launcher name `Evora Office`, Play Store title `Evora Office: DOCX, PDF, XLSX`).
+
+| Module | Base Package | Notes |
+|---|---|---|
+| `:app` | `com.evora.technologies.office` | `EvoraApplication`, `MainActivity`, `navigation.AppNavHost` |
+| `:core:model` | `com.evora.technologies.office.core.model` | Pure Kotlin immutable models & enums |
+| `:core:domain` | `com.evora.technologies.office.core.domain` | `.port.*` interfaces, `.usecase.*`, `.common.AppResult` |
+| `:core:mvi` | `com.evora.technologies.office.core.mvi` | `MviViewModel`, `UiState`, `UiIntent`, `UiEffect`, `CollectEffects` |
+| `:core:designsystem` | `com.evora.technologies.office.core.designsystem` | `.theme.*`, `.component.*`, `.icon.*` |
+| `:core:database` | `com.evora.technologies.office.core.database` | `.entity.*`, `.dao.*`, `.di.DatabaseModule`, `EvoraOfficeDatabase` |
+| `:core:datastore` | `com.evora.technologies.office.core.datastore` | `EvoraPreferencesDataSource`, `.di.DataStoreModule` |
+| `:core:data` | `com.evora.technologies.office.core.data` | `.repository.*`, `.worker.*`, `.di.DataModule`, `.di.DispatchersModule` |
+| `:engine:<name>` | `com.evora.technologies.office.engine.<name>` | Engine adapters, `.di.<Name>EngineModule` |
+| `:feature:<name>` | `com.evora.technologies.office.feature.<name>` | Subpackages per screen (`<screen>/XContract.kt`, `XViewModel.kt`, `XRoute.kt`, `XScreen.kt`) |
 
 ---
 
 ## 4. The MVI core
 
-**TBD (Phase 6).** The base class must follow
-[`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md) §1:
-`MviViewModel<S, I, E>`, `launchSafely` (always rethrowing `CancellationException`), one-shot
-effects through `Channel(Channel.BUFFERED).receiveAsFlow()`, and `CollectEffects`.
+Package `com.evora.technologies.office.core.mvi` inside `:core:mvi` implements
+[`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md) §1 & §4
+(`core/mvi/src/main/kotlin/com/evora/technologies/office/core/mvi/MviViewModel.kt` and `CollectEffects.kt`):
+
+```kotlin
+abstract class MviViewModel<S : UiState, I : UiIntent, E : UiEffect>(
+    initialState: S,
+) : ViewModel() {
+
+    private val _state = MutableStateFlow(initialState)
+    val state: StateFlow<S> = _state.asStateFlow()
+
+    private val _effects = Channel<E>(Channel.BUFFERED)
+    val effects = _effects.receiveAsFlow()
+
+    protected val currentState: S get() = _state.value
+
+    abstract fun onIntent(intent: I)
+
+    protected fun setState(reducer: S.() -> S) = _state.update { it.reducer() }
+
+    protected fun sendEffect(effect: E) {
+        viewModelScope.launch { _effects.send(effect) }
+    }
+
+    protected fun launchSafely(
+        onError: (Throwable) -> Unit = {},
+        block: suspend CoroutineScope.() -> Unit,
+    ): Job = viewModelScope.launch {
+        try {
+            block()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (throwable: Throwable) {
+            onError(throwable)
+        }
+    }
+}
+```
 
 ---
 
 ## 5. Anatomy of a feature package
 
-**TBD (Phase 6).** `XContract.kt`, `XViewModel.kt`, `XRoute` / `XScreen` split per
-[`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md) §2–§4.
+Every screen feature under `:feature:<name>/src/main/kotlin/.../feature/<name>/<screen>/` strictly contains:
+1. `<Screen>Contract.kt` — Immutable `data class <Screen>State : UiState`, `sealed interface <Screen>Intent : UiIntent`, `sealed interface <Screen>Effect : UiEffect`.
+2. `<Screen>ViewModel.kt` — `@HiltViewModel class <Screen>ViewModel @Inject constructor(...) : MviViewModel<...>` with `onIntent` as its **sole public method**, zero `android.*` / `androidx.compose.*` imports.
+3. `<Screen>Route.kt` — Public composable resolving `hiltViewModel()`, collecting `state.collectAsStateWithLifecycle()`, wiring `CollectEffects`, passing `state` + `viewModel::onIntent` to `<Screen>Screen`.
+4. `<Screen>Screen.kt` — `internal` stateless composable rendering `Loading`, `Empty`, `Error`, `Content` states + Compose `@Preview` functions.
 
 ---
 
 ## 6. Dependency injection
 
-**TBD (Phase 6).** [`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md)
-§5 supports Koin or Hilt; the choice is locked in `docs/07_TECH_SPEC.md`.
+Locked by CEO (`CD-11`, `2026-11-25`): **Hilt with KSP (`com.google.dagger:hilt-android:2.60.1` + `com.google.devtools.ksp:2.3.14`)**.
+- `:app` hosts `@HiltAndroidApp class EvoraApplication : Application(), Configuration.Provider` (injecting `HiltWorkerFactory`) and `@AndroidEntryPoint class MainActivity : ComponentActivity()`.
+- Android modules using Hilt apply convention plugin `evora.android.hilt` (never `kapt`).
+- `:core:domain` uses pure `javax.inject:javax.inject:1` (`@Inject` constructors) or constructor parameters wired in `:core:data` `@Module` bindings, keeping `:core:domain` 100% Android-free.
+- Glance widgets (`W-01`/`W-02`) resolve domain ports via `@EntryPoint @InstallIn(SingletonComponent::class)` and `EntryPointAccessors.fromApplication(...)`.
+- `CD-07` Enforcement: Sprints 1–3 bind `ProEntitlementPort` and `AdPlacementHook` to `:core:data`'s local stub/no-op implementations; Sprint 4 swaps in `:engine:monetization` implementations.
 
 ---
 
 ## 7. Navigation
 
-**TBD (Phase 6).** Navigation is always a one-shot `UiEffect`, never a boolean or destination flag
-stored in `UiState`.
+- Single-activity Compose Navigation (`androidx.navigation:navigation-compose`) hosted in `:app` (`AppNavHost`).
+- Feature modules emit navigation strictly as one-shot `UiEffect` events (`sendEffect(XEffect.NavigateTo...)`) and receive lambda callbacks in `XRoute` — never boolean navigation flags in `UiState` and never cross-feature Gradle dependencies.
+- External `ACTION_VIEW` URIs resolve via magic-byte sniffing and jump straight to Reader/Editor without pre-launch ads.
 
 ---
 
 ## 8. Compose stability
 
-**TBD (Phase 6).** Domain types passed into Compose state must be immutable and declared in
-`compose-stability.conf` (or `@Immutable`) so screen composables remain skippable.
+- Shared stability rules live at root `compose-stability.conf`, wired via `composeCompiler { stabilityConfigurationFiles.add(...) }` inside `evora.android.compose`.
+- Domain models in `:core:model` are immutable `data class` / `enum class` types listed in `compose-stability.conf` (so `:core:model` stays free of Compose runtime imports while remaining strong-skippable).
+- UI-only wrapper models in `:core:designsystem` or `:feature:*` use `@Immutable` where collections are exposed.
 
 ---
 
 ## 9. Testing layout
 
-**TBD (Phase 6).** Unit tests for ViewModels (Turbine + Kotlin Coroutines Test) and `:domain`
-policies using readable fakes rather than fragile mocks where feasible.
+- **MVI / ViewModel / Domain unit tests (JVM):** `src/test/kotlin/...` in each module using `junit4`, `kotlinx-coroutines-test`, and **`app.cash.turbine:turbine`** with readable fakes (zero Robolectric in ViewModels).
+- **Room / DataStore instrumentation or JVM tests:** `:core:database` and `:core:datastore` under `src/test/` or `src/androidTest/`.
+- **Binary 16 KB Alignment Gate:** `python3 -I scripts/verify_16kb_elf.py <apk|aab|dir>` verifies `ELF64 PT_LOAD p_align == 0x4000` on every bundled `.so`.
 
 ---
 
 ## 10. Where does a new file go?
 
-**TBD (Phase 6).** Until this section is populated from `docs/07_TECH_SPEC.md`, no product source
-file has a home. See §1.
+| File Purpose | Exact Module & Path |
+|---|---|
+| Gradle Version Catalog | `gradle/libs.versions.toml` |
+| Gradle Convention Plugins | `build-logic/convention/src/main/kotlin/...` |
+| Application, Manifest `<activity-alias>`, `AppNavHost`, ProGuard | `app/src/main/kotlin/com/evora/technologies/office/...` |
+| Pure Kotlin Domain Models (`DocFormat`, `DocumentItem`, `ProStatus`, etc.) | `core/model/src/main/kotlin/com/evora/technologies/office/core/model/...` |
+| Pure Kotlin Ports & UseCases (`ProEntitlementPort`, `DocumentRepository`, etc.) | `core/domain/src/main/kotlin/com/evora/technologies/office/core/domain/...` |
+| MVI Base (`MviViewModel`, `UiState`, `UiIntent`, `UiEffect`, `CollectEffects`) | `core/mvi/src/main/kotlin/com/evora/technologies/office/core/mvi/...` |
+| Material 3 Theme (`Style B`), Format Colors, Fonts, Shared Components (`EvoraRewardGateSheet`, `EvoraTemplatesSheet`, `AndroidPrintHelper`) | `core/designsystem/src/main/kotlin/com/evora/technologies/office/core/designsystem/...` |
+| Room Entities, DAOs, `EvoraOfficeDatabase`, `DatabaseModule` | `core/database/src/main/kotlin/com/evora/technologies/office/core/database/...` |
+| DataStore Preferences, Local Entitlement Cache, `DataStoreModule` | `core/datastore/src/main/kotlin/com/evora/technologies/office/core/datastore/...` |
+| Repository Implementations, `MediaStore` Indexer, `TrashPurgeWorker`, `SignatureRepositoryImpl`, `DraftRecoveryRepositoryImpl`, `TemplateRepositoryImpl`, `assets/templates/`, `CD-07` Stubs | `core/data/src/main/kotlin/.../core/data/...` & `core/data/src/main/assets/templates/` |
+| PDF Engine (`PdfiumAndroid`, `PDFBox-Android`, `BouncyCastle`, `PdfBoxPowerEngine`) | `engine/pdf/src/main/kotlin/com/evora/technologies/office/engine/pdf/...` |
+| Office Engine (`LibreOfficeNativeBridge`, `OoxmlOfficeEngine`, `DraftSnapshotSerializer`) | `engine/office/src/main/kotlin/com/evora/technologies/office/engine/office/...` & `engine/office/src/main/jniLibs/arm64-v8a/` |
+| Hangul Engine (`hwplib`, `hwpxlib`, Sanitized HTML WebView Bridge) | `engine/hwp/src/main/kotlin/com/evora/technologies/office/engine/hwp/...` |
+| Archive Engine (`Commons Compress` `.zip`/`.7z`) | `engine/archive/src/main/kotlin/com/evora/technologies/office/engine/archive/...` |
+| Scanner Engine (`CameraX`, `ML Kit` Doc/OCR/QR, `MlKitScannerEngine`, Dual ID Card) | `engine/scanner/src/main/kotlin/com/evora/technologies/office/engine/scanner/...` |
+| Wi-Fi Transfer Engine (`Ktor CIO` HTTP/FTP, `TileService`) | `engine/transfer/src/main/kotlin/com/evora/technologies/office/engine/transfer/...` *(Sprint 3 T-019)* |
+| Cloud Engine (`Google Drive v3`, `OneDrive MSAL`, Keystore) | `engine/cloud/src/main/kotlin/com/evora/technologies/office/engine/cloud/...` *(Sprint 3 T-020)* |
+| Monetization Engine (`BillingClient 8`, `UMP`, `AdMob Mediation`, `RemoteConfig`) | `engine/monetization/src/main/kotlin/com/evora/technologies/office/engine/monetization/...` *(Sprint 4 T-023/T-024 per CD-07)* |
+| Feature UI Screens (`XContract`, `XViewModel`, `XRoute`, `XScreen`) | `feature/<domain>/src/main/kotlin/com/evora/technologies/office/feature/<domain>/<screen>/...` |
+| CI Workflows & Build/ELF Checks | `.github/workflows/*.yml`, `scripts/verify_16kb_elf.py` |
 
 ---
 
@@ -103,7 +200,8 @@ file has a home. See §1.
 
 ### Open
 
-None. There is no product code yet.
+- **`T-015` Native `LibreOfficeKit` Binary Pending `R-01` CI Dispatch:** `LibreOfficeNativeBridge` and `LOKDispatcher` are wired in `:engine:office`, and `OoxmlOfficeEngine` provides full offline `.docx`/`.xlsx`/`.pptx`/ODF editing, formulas, Track Changes, and 15s atomic `DraftRecoveryEntity` persistence until `liblo-native-code.so` / `libsofficeapp.so` lands from GitHub Actions `lok-android-16kb.yml` (`T-002`).
+- **BouncyCastle Version Resolution:** `pdfbox-android:2.0.27.0` transitively pulls `bc*-jdk15to18:1.72`; `:engine:pdf` and `:app` exclude `-jdk15to18` in favor of `bcprov-jdk18on:1.80` + `bcpkix-jdk18on:1.80`.
 
 ### Fixed
 
@@ -113,13 +211,15 @@ None.
 
 ## 12. What is already right — keep it
 
-None yet.
+- **Gradle Build Logic & Catalog (`T-003`):** `gradle/libs.versions.toml`, `compose-stability.conf`, and `build-logic/convention` cleanly compile AGP `9.4.1` built-in Kotlin + Compose + Hilt `2.60.1` (KSP `2.3.14`) + Room `2.8.5` without `kapt` or `kotlin-android`.
+- **Clean Architecture & MVI Foundation (`T-003`–`T-007`):** `:core:model` and `:core:domain` (`MagicByteSniffer`, `FileNameValidator`, `PageRangeParser`, `ExcelFormulaEvaluator`, `QrPayloadParser`, `OoxmlDocxWriter`) are pure JVM modules; `:core:mvi` enforces `MviViewModel` + `Channel(BUFFERED)` + `CollectEffects` + `CancellationException` rethrow verified in `MviViewModelTest`; `:core:designsystem` bundles `Poppins` + `JetBrains Mono` (`tnum`) and Style B tokens/components (`EvoraRewardGateSheet`, `EvoraTemplatesSheet`, `AndroidPrintHelper`); `:core:database` exports all 5 Room entities (`EvoraOfficeDatabaseTest`); `:core:data` runs `TrashPurgeWorker`, `MediaStore` scanner, `SignatureRepositoryImpl`, `DraftRecoveryRepositoryImpl`, `TemplateRepositoryImpl` (`8` real OOXML templates); `:app` hosts `AppNavHost`, 10 localized `strings.xml`, `FileProvider`, and granular `<activity-alias>` targets.
+- **Universal Readers & Archives (`T-008`–`T-009`):** `:engine:pdf` (`PdfiumAndroid`), `:engine:hwp` (`hwplib`/`hwpxlib` + XSS sanitizer + `EPUB`/`TXT`/`CSV`), and `:engine:archive` (`Commons Compress` + `XZ` with Zip-Slip checks & `.rar` guard) drive `DocumentReaderRoute` and `ArchiveInspectorRoute`.
+- **Sprint 2 PDF Power, Scanner & Office Editors (`T-010`–`T-017`):** `:engine:pdf` (`PdfBoxPowerEngine` annotations, signatures, PKCS#7, AES-128/256, merge, split, compress, watermark, offline `PDF->DOCX` w/ ML Kit OCR fallback), `:engine:scanner` (`CameraX`, ML Kit Doc Scanner, 5-script OCR, Dual-Side ID Card A4, QR), `:engine:office` (`OoxmlOfficeEngine` + `LibreOfficeNativeBridge`), and `:feature:tools`, `:feature:scanner`, `:feature:editor` (`PdfEditorRoute`, `SignaturePadRoute`, `OfficeEditorRoute`, `SlideShowRoute`) compile, pass unit tests + Lint, and enforce zero `SAVE_HEADER` locks.
+- **16 KB Native Gate (`T-002`/`T-003`/`T-014`):** `scripts/verify_16kb_elf.py` verifies `16/16` bundled `.so` binaries (`arm64-v8a` + `x86_64`) pass `0x4000` alignment across `PdfiumAndroid`, `CameraX`, `ML Kit` OCR/Barcode, `DataStore`, and `androidx.graphics.path`.
 
 ---
 
-## 13. Constraints already fixed (inputs to Phase 6)
-
-These come from project setup and CEO decisions. Phase 6 builds on them rather than reopening them.
+## 13. Constraints already fixed (inputs to Phase 6+)
 
 | Constraint | Value | Source |
 |---|---|---|
@@ -128,4 +228,5 @@ These come from project setup and CEO decisions. Phase 6 builds on them rather t
 | Documentation & lifecycle | 8-phase Company Bot lifecycle (`docs/01_*.md` to `docs/10_*.md`) in English; CEO communication & `README.md` in Vietnamese | [`GEMINI.md`](GEMINI.md); [`.gemini/rules/product-lifecycle-workflow.md`](.gemini/rules/product-lifecycle-workflow.md) |
 | Untrusted / temp competitor data | `.local/` only, never committed; release builds must never ship competitor assets | [`GEMINI.md`](GEMINI.md) §6 |
 | SDK levels, versioning & monetization | `minSdk 26`, `targetSdk 36` (Android 16), `16 KB` ELF alignment; `versionName "1.0.0"`, `versionCode 100`; Track A Open-Source (`$0` royalty, `100%` offline `$0` server); Hybrid Play Billing + UMP CMP + AdMob Mediation (**ads implementation deferred until core features are Done per `CD-07`**); Tier B UA (`$1k–$5k/mo`) | [`02_PROJECT_CHARTER.md`](docs/02_PROJECT_CHARTER.md) (`CD-01`–`CD-07`, 25/11/2026) |
-| Brand, package, style & build infra | App name `Evora Office` (`Evora Office: DOCX, PDF, XLSX`), `applicationId = com.evora.technologies.office`, **Style B (Familiar Vibrant Utility)**, App logo deferred (`CD-06`), Interactive HTML Gate 2 wireframes (`CD-08`), LOK `16 KB` C++ spike via **GitHub Actions Linux Runner** (`CD-08`), Personal Play account 14d/12-tester gate ignored (`CD-09`) | [`02_PROJECT_CHARTER.md`](docs/02_PROJECT_CHARTER.md) (`CD-05`–`CD-09`, 25/11/2026) |
+| Brand, package, style & account scope | App name `Evora Office` (`Evora Office: DOCX, PDF, XLSX`), `applicationId = com.evora.technologies.office`, **Style B (Familiar Vibrant Utility)**, App logo deferred (`CD-06`), Interactive HTML Gate 2 wireframes (`CD-08`), Personal Play account 14d/12-tester gate ignored (`CD-09`) | [`02_PROJECT_CHARTER.md`](docs/02_PROJECT_CHARTER.md) (`CD-05`–`CD-09`, 25/11/2026); [`05_DESIGN_SYSTEM.md`](docs/05_DESIGN_SYSTEM.md) (`CD-10`) |
+| DI Framework & GitHub CI (`CD-11`, `CD-12`) | **Hilt with KSP (`2.60.1` + `KSP 2.3.14`)**, zero `kapt`; use existing GitHub repo `Evora-Technologies-Global/E05-EvoraOffice-DOCX_PDF_XLSX` for Android CI and `R-01` Linux LOK `16 KB` builds | CEO Decision (`CD-11`, `CD-12`, 25/11/2026); [`07_TECH_SPEC.md`](docs/07_TECH_SPEC.md) |

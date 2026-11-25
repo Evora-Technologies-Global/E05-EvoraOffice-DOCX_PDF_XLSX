@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <files-path name="app_documents" path="documents/" />
+    <cache-path name="external_imports" path="external_imports/" />
+    <external-files-path name="external_files" path="." />
+    <external-path name="external_storage" path="." />
+</paths>

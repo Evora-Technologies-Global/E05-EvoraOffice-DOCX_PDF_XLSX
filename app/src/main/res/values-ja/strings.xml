@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Evora Office</string>
+    <string name="tab_home">ホーム</string>
+    <string name="tab_recent">最近</string>
+    <string name="tab_storage">ストレージ</string>
+    <string name="tab_tools">ツール</string>
+    <string name="action_scan">スキャン</string>
+    <string name="action_continue">続ける</string>
+    <string name="action_skip">スキップ</string>
+</resources>
