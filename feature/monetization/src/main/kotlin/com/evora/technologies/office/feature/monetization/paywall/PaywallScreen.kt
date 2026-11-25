@@ -35,8 +35,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.evora.technologies.office.core.designsystem.component.EvoraBrandMark
 import com.evora.technologies.office.core.designsystem.component.EvoraIconButton
-import com.evora.technologies.office.core.designsystem.component.EvoraOutlinedButton
 import com.evora.technologies.office.core.designsystem.component.EvoraPrimaryButton
+import com.evora.technologies.office.core.designsystem.component.EvoraRewardGateSheet
 import com.evora.technologies.office.core.designsystem.theme.EvoraRadii
 import com.evora.technologies.office.core.designsystem.theme.EvoraSpacing
 import com.evora.technologies.office.core.designsystem.theme.EvoraTheme
@@ -251,7 +251,6 @@ internal fun PaywallScreen(
  * Honest pre-action RewardGateSheet per CD-07 / US-110.
  * Shown upfront before a Pro power tool starts rather than locking Save.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RewardGateSheet(
     featureTitle: String,
@@ -259,45 +258,12 @@ fun RewardGateSheet(
     onUpgradePro: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val extra = EvoraThemeTokens.colors
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = EvoraSpacing.xl, vertical = EvoraSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(EvoraSpacing.md),
-        ) {
-            Surface(
-                shape = EvoraRadii.full,
-                color = extra.proGoldContainer,
-            ) {
-                Text(
-                    text = "PRO UTILITY",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = extra.onProGoldContainer,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                )
-            }
-            Text(
-                text = "Unlock $featureTitle",
-                style = MaterialTheme.typography.titleLarge,
-            )
-            Text(
-                text = "Choose how to proceed before processing starts. Standard viewing and editing remain 100% free.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            EvoraPrimaryButton(
-                text = "Unlock 24h Pass (Preview)",
-                onClick = onWatchRewardedPass,
-            )
-            EvoraOutlinedButton(
-                text = "Upgrade to Evora Pro",
-                onClick = onUpgradePro,
-            )
-            Spacer(modifier = Modifier.height(EvoraSpacing.lg))
-        }
-    }
+    EvoraRewardGateSheet(
+        featureTitle = featureTitle,
+        onWatchRewardedPass = onWatchRewardedPass,
+        onUpgradePro = onUpgradePro,
+        onDismiss = onDismiss,
+    )
 }
 
 @Preview(showBackground = true)

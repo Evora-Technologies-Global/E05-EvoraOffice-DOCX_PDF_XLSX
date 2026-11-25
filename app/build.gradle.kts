@@ -37,6 +37,12 @@ android {
     }
 }
 
+configurations.configureEach {
+    exclude(group = "org.bouncycastle", module = "bcprov-jdk15to18")
+    exclude(group = "org.bouncycastle", module = "bcpkix-jdk15to18")
+    exclude(group = "org.bouncycastle", module = "bcutil-jdk15to18")
+}
+
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:domain"))
@@ -49,10 +55,14 @@ dependencies {
     implementation(project(":engine:office"))
     implementation(project(":engine:hwp"))
     implementation(project(":engine:archive"))
+    implementation(project(":engine:scanner"))
     implementation(project(":feature:onboarding"))
     implementation(project(":feature:monetization"))
     implementation(project(":feature:library"))
     implementation(project(":feature:reader"))
+    implementation(project(":feature:editor"))
+    implementation(project(":feature:tools"))
+    implementation(project(":feature:scanner"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

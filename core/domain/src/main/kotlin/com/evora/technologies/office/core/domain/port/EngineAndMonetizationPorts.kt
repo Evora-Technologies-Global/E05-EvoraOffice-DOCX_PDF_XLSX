@@ -26,6 +26,8 @@ interface ProEntitlementPort {
     suspend fun grantRewardedPass(hours: Int)
     suspend fun restorePurchases(): Boolean
     suspend fun setQaProOverride(enabled: Boolean) = Unit
+    suspend fun hasFreeDailyPdfToDocxAvailable(): Boolean = false
+    suspend fun consumeFreeDailyPdfToDocx(): Unit = Unit
 }
 
 /**

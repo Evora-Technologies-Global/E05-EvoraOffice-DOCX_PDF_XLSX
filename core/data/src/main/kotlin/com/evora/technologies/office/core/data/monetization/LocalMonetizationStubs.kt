@@ -11,6 +11,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -54,6 +55,17 @@ class LocalProEntitlementRepository @Inject constructor(
 
     override suspend fun setQaProOverride(enabled: Boolean) {
         preferences.setQaProOverride(enabled)
+    }
+
+    override suspend fun hasFreeDailyPdfToDocxAvailable(): Boolean {
+        if (proStatus.value.isUnlocked) return true
+        val today = System.currentTimeMillis() / 86_400_000L
+        return preferences.pdfToDocxFreeUsedEpochDay.first() < today
+    }
+
+    override suspend fun consumeFreeDailyPdfToDocx() {
+        val today = System.currentTimeMillis() / 86_400_000L
+        preferences.setPdfToDocxFreeUsedEpochDay(today)
     }
 }
 

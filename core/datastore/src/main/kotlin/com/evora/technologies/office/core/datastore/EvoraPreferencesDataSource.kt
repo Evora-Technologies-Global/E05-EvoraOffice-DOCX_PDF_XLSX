@@ -39,6 +39,7 @@ class EvoraPreferencesDataSource @Inject constructor(
         val entitlementHmacPayload = stringPreferencesKey("entitlement_hmac_payload")
         val defaultAppPromptDismissed = booleanPreferencesKey("default_prompt_dismissed")
         val externalOpenCount = intPreferencesKey("external_open_count")
+        val pdfToDocxFreeUsedDay = longPreferencesKey("pdf_to_docx_free_used_day")
     }
 
     val onboardingCompleted: Flow<Boolean> =
@@ -76,6 +77,9 @@ class EvoraPreferencesDataSource @Inject constructor(
 
     val externalOpenCount: Flow<Int> =
         dataStore.data.map { it[Keys.externalOpenCount] ?: 0 }
+
+    val pdfToDocxFreeUsedEpochDay: Flow<Long> =
+        dataStore.data.map { it[Keys.pdfToDocxFreeUsedDay] ?: -1L }
 
     suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { it[Keys.onboardingCompleted] = completed }
@@ -124,6 +128,10 @@ class EvoraPreferencesDataSource @Inject constructor(
             val current = prefs[Keys.externalOpenCount] ?: 0
             prefs[Keys.externalOpenCount] = current + 1
         }
+    }
+
+    suspend fun setPdfToDocxFreeUsedEpochDay(epochDay: Long) {
+        dataStore.edit { it[Keys.pdfToDocxFreeUsedDay] = epochDay }
     }
 }
 

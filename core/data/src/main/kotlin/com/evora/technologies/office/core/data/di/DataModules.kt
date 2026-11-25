@@ -3,13 +3,19 @@ package com.evora.technologies.office.core.data.di
 import com.evora.technologies.office.core.data.monetization.LocalProEntitlementRepository
 import com.evora.technologies.office.core.data.monetization.NoOpAdPlacementHook
 import com.evora.technologies.office.core.data.repository.DocumentRepositoryImpl
+import com.evora.technologies.office.core.data.repository.DraftRecoveryRepositoryImpl
 import com.evora.technologies.office.core.data.repository.LocalDocumentScanner
 import com.evora.technologies.office.core.data.repository.MediaStoreDocumentScanner
 import com.evora.technologies.office.core.data.repository.PreferencesRepositoryImpl
+import com.evora.technologies.office.core.data.repository.SignatureRepositoryImpl
+import com.evora.technologies.office.core.data.repository.TemplateRepositoryImpl
 import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.DocumentRepository
+import com.evora.technologies.office.core.domain.port.DraftRecoveryRepository
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
 import com.evora.technologies.office.core.domain.port.ProEntitlementPort
+import com.evora.technologies.office.core.domain.port.SignatureRepository
+import com.evora.technologies.office.core.domain.port.TemplateRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -70,4 +76,16 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindDocumentRepository(impl: DocumentRepositoryImpl): DocumentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSignatureRepository(impl: SignatureRepositoryImpl): SignatureRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDraftRecoveryRepository(impl: DraftRecoveryRepositoryImpl): DraftRecoveryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTemplateRepository(impl: TemplateRepositoryImpl): TemplateRepository
 }

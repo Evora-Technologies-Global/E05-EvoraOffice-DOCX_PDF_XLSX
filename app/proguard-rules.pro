@@ -14,3 +14,15 @@
 # Apache Commons Compress & XZ
 -keep class org.apache.commons.compress.** { *; }
 -keep class org.tukaani.xz.** { *; }
+
+# PDFBox-Android & BouncyCastle
+-keep class com.tom_roush.pdfbox.** { *; }
+-keep class org.bouncycastle.** { *; }
+-dontwarn org.bouncycastle.**
+
+# ML Kit & CameraX
+-keep class com.google.mlkit.** { *; }
+-keep class androidx.camera.** { *; }
+
+# LibreOfficeKit JNI callbacks
+-keep class com.evora.technologies.office.engine.office.** { *; }

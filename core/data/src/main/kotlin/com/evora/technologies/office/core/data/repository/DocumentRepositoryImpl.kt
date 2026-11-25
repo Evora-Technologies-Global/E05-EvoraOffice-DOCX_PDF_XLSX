@@ -572,6 +572,11 @@ class DocumentRepositoryImpl @Inject constructor(
             val format = DocFormat.fromExtension(ext) ?: DocFormat.PDF
             val size = querySizeBytes(uri)
             val now = System.currentTimeMillis()
+            val parentLabel = if (uri.scheme == "file" && uri.path != null) {
+                File(uri.path!!).parentFile?.name ?: "Evora Office"
+            } else {
+                "Folder Picker (SAF)"
+            }
             val item = DocumentItem(
                 id = uriString,
                 uriString = uriString,
@@ -580,7 +585,7 @@ class DocumentRepositoryImpl @Inject constructor(
                 format = format,
                 sizeBytes = size,
                 modifiedAtEpochMs = now,
-                parentFolderName = "Folder Picker (SAF)",
+                parentFolderName = parentLabel,
             )
             documentMetaDao.upsert(item.toEntity())
             Result.success(item)

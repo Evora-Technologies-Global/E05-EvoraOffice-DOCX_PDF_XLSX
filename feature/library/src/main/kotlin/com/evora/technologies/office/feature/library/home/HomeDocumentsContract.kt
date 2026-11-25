@@ -1,7 +1,9 @@
 package com.evora.technologies.office.feature.library.home
 
 import com.evora.technologies.office.core.model.DocFormat
+import com.evora.technologies.office.core.model.DocTemplatePreset
 import com.evora.technologies.office.core.model.DocumentItem
+import com.evora.technologies.office.core.model.OfficeKind
 import com.evora.technologies.office.core.model.SortOrder
 import com.evora.technologies.office.core.mvi.UiEffect
 import com.evora.technologies.office.core.mvi.UiIntent
@@ -19,6 +21,10 @@ data class HomeDocumentsState(
     val renameTargetDocId: String? = null,
     val renameError: String? = null,
     val propertiesDocId: String? = null,
+    val showTemplatesSheet: Boolean = false,
+    val templates: List<DocTemplatePreset> = emptyList(),
+    val selectedTemplateFilter: OfficeKind? = null,
+    val isCreatingTemplate: Boolean = false,
     val errorMessage: String? = null,
 ) : UiState {
     val selectedPreviewDoc: DocumentItem?
@@ -55,10 +61,18 @@ sealed interface HomeDocumentsIntent : UiIntent {
     data object OpenDefaultAppSettings : HomeDocumentsIntent
     data object ImportViaSafClicked : HomeDocumentsIntent
     data class SafDocumentPicked(val uriString: String?) : HomeDocumentsIntent
+    data object OpenTemplatesSheet : HomeDocumentsIntent
+    data object DismissTemplatesSheet : HomeDocumentsIntent
+    data class FilterTemplates(val kind: OfficeKind?) : HomeDocumentsIntent
+    data class CreateFromTemplate(val preset: DocTemplatePreset) : HomeDocumentsIntent
+    data class EditDocument(val document: DocumentItem) : HomeDocumentsIntent
+    data class ConvertDocumentToPdf(val document: DocumentItem) : HomeDocumentsIntent
 }
 
 sealed interface HomeDocumentsEffect : UiEffect {
     data class OpenDocument(val document: DocumentItem) : HomeDocumentsEffect
+    data class OpenEditor(val document: DocumentItem) : HomeDocumentsEffect
+    data class OpenConvertToPdf(val document: DocumentItem) : HomeDocumentsEffect
     data class OpenArchiveInspector(val document: DocumentItem) : HomeDocumentsEffect
     data class ShareDocumentUri(val document: DocumentItem) : HomeDocumentsEffect
     data class PinHomeShortcut(val document: DocumentItem) : HomeDocumentsEffect

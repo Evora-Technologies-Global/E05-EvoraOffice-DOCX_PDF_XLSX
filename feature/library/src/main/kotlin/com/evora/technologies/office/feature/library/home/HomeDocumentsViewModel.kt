@@ -3,7 +3,9 @@ package com.evora.technologies.office.feature.library.home
 import androidx.lifecycle.viewModelScope
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
+import com.evora.technologies.office.core.domain.port.TemplateRepository
 import com.evora.technologies.office.core.model.DocFormat
+import com.evora.technologies.office.core.model.DocTemplatePreset
 import com.evora.technologies.office.core.model.DocumentItem
 import com.evora.technologies.office.core.model.SortOrder
 import com.evora.technologies.office.core.mvi.MviViewModel
@@ -22,8 +24,9 @@ import javax.inject.Inject
 class HomeDocumentsViewModel @Inject constructor(
     private val documentRepository: DocumentRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val templateRepository: TemplateRepository,
 ) : MviViewModel<HomeDocumentsState, HomeDocumentsIntent, HomeDocumentsEffect>(
-    HomeDocumentsState(),
+    HomeDocumentsState(templates = templateRepository.getAvailableTemplates()),
 ) {
     private val filterFlow = MutableStateFlow<DocFormat?>(null)
     private val sortFlow = MutableStateFlow(SortOrder.MODIFIED_DESC)
@@ -109,6 +112,33 @@ class HomeDocumentsViewModel @Inject constructor(
             HomeDocumentsIntent.OpenDefaultAppSettings -> sendEffect(HomeDocumentsEffect.LaunchDefaultAppSettings)
             HomeDocumentsIntent.ImportViaSafClicked -> sendEffect(HomeDocumentsEffect.LaunchSafPicker)
             is HomeDocumentsIntent.SafDocumentPicked -> registerSafDocument(intent.uriString)
+            HomeDocumentsIntent.OpenTemplatesSheet -> setState { copy(showTemplatesSheet = true) }
+            HomeDocumentsIntent.DismissTemplatesSheet -> setState { copy(showTemplatesSheet = false) }
+            is HomeDocumentsIntent.FilterTemplates -> setState { copy(selectedTemplateFilter = intent.kind) }
+            is HomeDocumentsIntent.CreateFromTemplate -> createFromTemplate(intent.preset)
+            is HomeDocumentsIntent.EditDocument -> {
+                setState { copy(contextMenuDocId = null) }
+                sendEffect(HomeDocumentsEffect.OpenEditor(intent.document))
+            }
+            is HomeDocumentsIntent.ConvertDocumentToPdf -> {
+                setState { copy(contextMenuDocId = null) }
+                sendEffect(HomeDocumentsEffect.OpenConvertToPdf(intent.document))
+            }
+        }
+    }
+
+    private fun createFromTemplate(preset: DocTemplatePreset) {
+        if (currentState.isCreatingTemplate) return
+        launchSafely(
+            onError = { err ->
+                setState { copy(isCreatingTemplate = false) }
+                sendEffect(HomeDocumentsEffect.ShowMessage(err.message ?: "Unable to create document"))
+            },
+        ) {
+            setState { copy(isCreatingTemplate = true) }
+            val created = templateRepository.createDocumentFromTemplate(preset).getOrThrow()
+            setState { copy(isCreatingTemplate = false, showTemplatesSheet = false) }
+            sendEffect(HomeDocumentsEffect.OpenEditor(created))
         }
     }
 

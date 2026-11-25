@@ -26,12 +26,16 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.AppShortcut
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.DriveFileRenameOutline
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Sort
@@ -73,6 +77,7 @@ import com.evora.technologies.office.core.designsystem.component.EvoraBrandMark
 import com.evora.technologies.office.core.designsystem.component.EvoraIconButton
 import com.evora.technologies.office.core.designsystem.component.EvoraOutlinedButton
 import com.evora.technologies.office.core.designsystem.component.EvoraPrimaryButton
+import com.evora.technologies.office.core.designsystem.component.EvoraTemplatesSheet
 import com.evora.technologies.office.core.designsystem.component.FormatBadge
 import com.evora.technologies.office.core.designsystem.component.FormatFilterChip
 import com.evora.technologies.office.core.designsystem.component.ShimmerDocListSkeleton
@@ -114,6 +119,8 @@ fun HomeDocumentsRoute(
     onOpenSearch: () -> Unit,
     onOpenPaywall: () -> Unit,
     onOpenDocument: (DocumentItem) -> Unit,
+    onOpenEditor: (DocumentItem) -> Unit = onOpenDocument,
+    onConvertDocumentToPdf: (DocumentItem) -> Unit = {},
     onOpenArchiveInspector: (DocumentItem) -> Unit,
     onShowMessage: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -139,6 +146,8 @@ fun HomeDocumentsRoute(
     CollectEffects(viewModel.effects) { effect ->
         when (effect) {
             is HomeDocumentsEffect.OpenDocument -> onOpenDocument(effect.document)
+            is HomeDocumentsEffect.OpenEditor -> onOpenEditor(effect.document)
+            is HomeDocumentsEffect.OpenConvertToPdf -> onConvertDocumentToPdf(effect.document)
             is HomeDocumentsEffect.OpenArchiveInspector -> onOpenArchiveInspector(effect.document)
             is HomeDocumentsEffect.ShareDocumentUri -> {
                 shareDocument(context, effect.document, onShowMessage)
@@ -209,6 +218,9 @@ internal fun HomeDocumentsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         EvoraIconButton(onClick = onOpenSearch) {
                             Icon(Icons.Outlined.Search, contentDescription = "Search documents")
+                        }
+                        EvoraIconButton(onClick = { onIntent(HomeDocumentsIntent.OpenTemplatesSheet) }) {
+                            Icon(Icons.AutoMirrored.Outlined.NoteAdd, contentDescription = "New document from template")
                         }
                         EvoraIconButton(onClick = { onIntent(HomeDocumentsIntent.ImportViaSafClicked) }) {
                             Icon(Icons.Outlined.Add, contentDescription = "Open file with Folder Picker")
@@ -439,6 +451,20 @@ internal fun HomeDocumentsScreen(
                         )
                     }
                 }
+                if (doc.format in setOf(DocFormat.PDF, DocFormat.WORD, DocFormat.EXCEL, DocFormat.PPT, DocFormat.ODF)) {
+                    ListItem(
+                        headlineContent = { Text("Edit / Annotate") },
+                        leadingContent = { Icon(Icons.Outlined.Edit, null) },
+                        modifier = Modifier.clickableRow { onIntent(HomeDocumentsIntent.EditDocument(doc)) },
+                    )
+                }
+                if (doc.format != DocFormat.PDF && doc.format != DocFormat.ARCHIVE) {
+                    ListItem(
+                        headlineContent = { Text("Convert to PDF") },
+                        leadingContent = { Icon(Icons.Outlined.PictureAsPdf, null) },
+                        modifier = Modifier.clickableRow { onIntent(HomeDocumentsIntent.ConvertDocumentToPdf(doc)) },
+                    )
+                }
                 ListItem(
                     headlineContent = { Text("Rename") },
                     leadingContent = { Icon(Icons.Outlined.DriveFileRenameOutline, null) },
@@ -525,6 +551,17 @@ internal fun HomeDocumentsScreen(
                     Text("Close")
                 }
             },
+        )
+    }
+
+    if (state.showTemplatesSheet) {
+        EvoraTemplatesSheet(
+            templates = state.templates,
+            selectedKind = state.selectedTemplateFilter,
+            isCreating = state.isCreatingTemplate,
+            onSelectKind = { onIntent(HomeDocumentsIntent.FilterTemplates(it)) },
+            onTemplateClicked = { onIntent(HomeDocumentsIntent.CreateFromTemplate(it)) },
+            onDismiss = { onIntent(HomeDocumentsIntent.DismissTemplatesSheet) },
         )
     }
 }

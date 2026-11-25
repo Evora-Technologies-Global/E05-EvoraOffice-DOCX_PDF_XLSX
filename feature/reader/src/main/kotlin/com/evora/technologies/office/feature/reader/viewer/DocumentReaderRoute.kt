@@ -45,6 +45,7 @@ import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Fullscreen
 import androidx.compose.material.icons.outlined.FullscreenExit
 import androidx.compose.material.icons.outlined.PlayArrow
@@ -124,6 +125,7 @@ fun DocumentReaderRoute(
     displayName: String,
     format: DocFormat,
     onBack: () -> Unit,
+    onOpenEditor: (uriString: String, displayName: String, format: DocFormat) -> Unit = { _, _, _ -> },
     onShowMessage: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DocumentReaderViewModel = hiltViewModel(),
@@ -230,6 +232,10 @@ fun DocumentReaderRoute(
             is DocumentReaderEffect.LaunchSystemPrint -> {
                 printHtmlOrText(context, effect.title, effect.content, effect.isHtml, onShowMessage)
             }
+            is DocumentReaderEffect.NavigateToEditor -> {
+                (context as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                onOpenEditor(effect.uriString, effect.displayName, effect.format)
+            }
             DocumentReaderEffect.NavigateBack -> {
                 (context as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 onBack()
@@ -311,6 +317,15 @@ internal fun DocumentReaderScreen(
                                 contentDescription = "Print",
                                 tint = formatPalette.headerContent,
                             )
+                        }
+                        if (state.format in setOf(DocFormat.PDF, DocFormat.WORD, DocFormat.EXCEL, DocFormat.PPT, DocFormat.ODF)) {
+                            EvoraIconButton(onClick = { onIntent(DocumentReaderIntent.EditClicked) }) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Edit,
+                                    contentDescription = "Edit document",
+                                    tint = formatPalette.headerContent,
+                                )
+                            }
                         }
                         EvoraIconButton(onClick = { onIntent(DocumentReaderIntent.ToggleFullscreen) }) {
                             Icon(

@@ -3,13 +3,16 @@ package com.evora.technologies.office.feature.library
 import app.cash.turbine.test
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
+import com.evora.technologies.office.core.domain.port.TemplateRepository
 import com.evora.technologies.office.core.domain.util.DocumentListProcessor
 import com.evora.technologies.office.core.domain.util.FileNameValidationResult
 import com.evora.technologies.office.core.domain.util.FileNameValidator
 import com.evora.technologies.office.core.model.AppThemeMode
 import com.evora.technologies.office.core.model.DocFormat
+import com.evora.technologies.office.core.model.DocTemplatePreset
 import com.evora.technologies.office.core.model.DocumentItem
 import com.evora.technologies.office.core.model.ExternalIntentPayload
+import com.evora.technologies.office.core.model.OfficeKind
 import com.evora.technologies.office.core.model.ReaderBookmarkState
 import com.evora.technologies.office.core.model.ReaderTheme
 import com.evora.technologies.office.core.model.SortOrder
@@ -138,6 +141,14 @@ private class FakeLibraryDocRepo : DocumentRepository {
         Result.failure(UnsupportedOperationException())
 }
 
+private class FakeLibraryTemplateRepo : TemplateRepository {
+    override fun getAvailableTemplates(): List<DocTemplatePreset> = listOf(
+        DocTemplatePreset("t1", "Blank Word", "Clean doc", OfficeKind.WORD, "blank_word.docx", "Untitled.docx"),
+    )
+    override suspend fun createDocumentFromTemplate(preset: DocTemplatePreset, customBaseName: String?): Result<DocumentItem> =
+        Result.success(DocumentItem("tpl", "file:///docs/Untitled.docx", "Untitled.docx", "docx", DocFormat.WORD, 128L, 1L, "Docs"))
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class LibraryViewModelsTest {
     private val dispatcher = StandardTestDispatcher()
@@ -155,7 +166,7 @@ class LibraryViewModelsTest {
     @Test
     fun `home chip filtering, rename extension guard, and soft trash work`() = runTest {
         val repo = FakeLibraryDocRepo()
-        val vm = HomeDocumentsViewModel(repo, FakeLibraryPrefsRepo())
+        val vm = HomeDocumentsViewModel(repo, FakeLibraryPrefsRepo(), FakeLibraryTemplateRepo())
         advanceUntilIdle()
         assertEquals(2, vm.state.value.documents.size)
 

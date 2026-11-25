@@ -75,9 +75,9 @@ class MainActivity : AppCompatActivity() {
             )
         }
         return when (intent.action) {
-            "com.evora.technologies.office.ACTION_SCAN" -> IncomingLaunchAction.ToolShortcut("Document Scanner activates in Sprint 2 (T-014)")
-            "com.evora.technologies.office.ACTION_SIGN" -> IncomingLaunchAction.ToolShortcut("PDF Signer activates in Sprint 2 (T-010)")
-            "com.evora.technologies.office.ACTION_OCR" -> IncomingLaunchAction.ToolShortcut("5-Script OCR activates in Sprint 2 (T-014)")
+            "com.evora.technologies.office.ACTION_SCAN" -> IncomingLaunchAction.OpenScanner("DOCUMENT")
+            "com.evora.technologies.office.ACTION_SIGN" -> IncomingLaunchAction.OpenPdfSignTool
+            "com.evora.technologies.office.ACTION_OCR" -> IncomingLaunchAction.OpenScanner("OCR")
             else -> null
         }
     }

@@ -104,6 +104,16 @@ class DocumentReaderViewModel @Inject constructor(
             DocumentReaderIntent.NextSearchMatch -> stepSearchMatch(+1)
             DocumentReaderIntent.PrevSearchMatch -> stepSearchMatch(-1)
             DocumentReaderIntent.PrintClicked -> triggerPrint()
+            DocumentReaderIntent.EditClicked -> {
+                stopAllPlayback()
+                sendEffect(
+                    DocumentReaderEffect.NavigateToEditor(
+                        uriString = currentState.uriString,
+                        displayName = currentState.displayName,
+                        format = currentState.format,
+                    ),
+                )
+            }
             DocumentReaderIntent.BackClicked -> {
                 stopAllPlayback()
                 sendEffect(DocumentReaderEffect.NavigateBack)

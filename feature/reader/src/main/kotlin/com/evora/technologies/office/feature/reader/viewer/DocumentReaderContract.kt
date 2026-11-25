@@ -95,6 +95,7 @@ sealed interface DocumentReaderIntent : UiIntent {
     data object PrevSearchMatch : DocumentReaderIntent
 
     data object PrintClicked : DocumentReaderIntent
+    data object EditClicked : DocumentReaderIntent
     data object BackClicked : DocumentReaderIntent
 }
 
@@ -104,6 +105,7 @@ sealed interface DocumentReaderEffect : UiEffect {
     data object StopTts : DocumentReaderEffect
     data class ApplyOrientation(val landscape: Boolean) : DocumentReaderEffect
     data class LaunchSystemPrint(val title: String, val content: String, val isHtml: Boolean) : DocumentReaderEffect
+    data class NavigateToEditor(val uriString: String, val displayName: String, val format: DocFormat) : DocumentReaderEffect
     data object NavigateBack : DocumentReaderEffect
     data class ShowMessage(val message: String) : DocumentReaderEffect
 }

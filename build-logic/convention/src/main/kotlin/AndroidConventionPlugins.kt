@@ -59,6 +59,12 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                         excludes += setOf(
                             "/META-INF/{AL2.0,LGPL2.1}",
                             "META-INF/DEPENDENCIES",
+                            "META-INF/LICENSE*",
+                            "META-INF/NOTICE*",
+                            "META-INF/versions/9/OSGI-INF/MANIFEST.MF",
+                            "META-INF/BCKEY.*",
+                            "META-INF/BC1024KE.*",
+                            "META-INF/BC2048KE.*",
                         )
                     }
                 }
