@@ -1,0 +1,123 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "61f3a8259cf2d8b55d6af049c0d45ea6",
+    "entities": [
+      {
+        "tableName": "document_meta",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri_string` TEXT NOT NULL, `display_name` TEXT NOT NULL, `format` TEXT NOT NULL, `size_bytes` INTEGER NOT NULL, `modified_at_epoch_ms` INTEGER NOT NULL, `last_opened_at_epoch_ms` INTEGER, `last_page_index` INTEGER NOT NULL, `last_total_pages` INTEGER NOT NULL, `last_scroll_offset_y` REAL NOT NULL, `last_zoom` REAL NOT NULL, `reader_theme` TEXT NOT NULL, `is_continuous_scroll` INTEGER NOT NULL, `is_favorite` INTEGER NOT NULL, PRIMARY KEY(`uri_string`))",
+        "fields": [
+          {
+            "fieldPath": "uriString",
+            "columnName": "uri_string",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "display_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "format",
+            "columnName": "format",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sizeBytes",
+            "columnName": "size_bytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modifiedAtEpochMs",
+            "columnName": "modified_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastOpenedAtEpochMs",
+            "columnName": "last_opened_at_epoch_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastPageIndex",
+            "columnName": "last_page_index",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastTotalPages",
+            "columnName": "last_total_pages",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastScrollOffsetY",
+            "columnName": "last_scroll_offset_y",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastZoom",
+            "columnName": "last_zoom",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "readerTheme",
+            "columnName": "reader_theme",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isContinuousScroll",
+            "columnName": "is_continuous_scroll",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFavorite",
+            "columnName": "is_favorite",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "uri_string"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_document_meta_last_opened_at_epoch_ms",
+            "unique": false,
+            "columnNames": [
+              "last_opened_at_epoch_ms"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_document_meta_last_opened_at_epoch_ms` ON `${TABLE_NAME}` (`last_opened_at_epoch_ms`)"
+          },
+          {
+            "name": "index_document_meta_is_favorite_modified_at_epoch_ms",
+            "unique": false,
+            "columnNames": [
+              "is_favorite",
+              "modified_at_epoch_ms"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_document_meta_is_favorite_modified_at_epoch_ms` ON `${TABLE_NAME}` (`is_favorite`, `modified_at_epoch_ms`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '61f3a8259cf2d8b55d6af049c0d45ea6')"
+    ]
+  }
+}

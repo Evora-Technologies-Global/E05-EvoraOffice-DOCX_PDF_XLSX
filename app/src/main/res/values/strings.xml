@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Evora Office</string>
+    <string name="bootstrap_subtitle">DOCX · PDF · XLSX · HWP · Offline Suite</string>
+    <string name="bootstrap_ready">Architecture Shell Ready (Hilt + KSP + MVI)</string>
+    <string name="bootstrap_check_action">Verify DI &amp; Engine State</string>
+</resources>
