@@ -1,0 +1,133 @@
+name: R-01 LibreOfficeKit Android ARM64 16 KB Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      core_repo:
+        description: 'LibreOffice / Collabora Core Git URL (MPLv2/LGPLv3)'
+        required: true
+        default: 'https://github.com/LibreOffice/core.git'
+        type: string
+      core_ref:
+        description: 'Branch or tag to cross-compile'
+        required: true
+        default: 'libreoffice-25-2'
+        type: string
+      distro:
+        description: 'LibreOffice distro config (LibreOfficeAndroidAarch64 or CPAndroid)'
+        required: true
+        default: 'LibreOfficeAndroidAarch64'
+        type: string
+      ndk_version:
+        description: 'Android NDK version (>= r27 for 16 KB alignment)'
+        required: true
+        default: '28.2.13676358'
+        type: string
+
+jobs:
+  build-lok-arm64-16kb:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout E05 scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scripts/verify_16kb_elf.py
+
+      - name: Maximize build disk space for LibreOffice C++ build
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 4096
+          temp-reserve-mb: 2048
+          remove-dotnet: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-android: 'false'
+
+      - name: Install LibreOffice Linux build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            autoconf automake bison ccache flex g++ gettext git gperf \
+            intltool libarchive-zip-perl libfontconfig1-dev libfreetype6-dev \
+            libglib2.0-dev libxslt1-dev make nasm pkg-config python3 \
+            python3-dev unzip xsltproc zip openjdk-17-jdk llvm
+
+      - name: Set up Android SDK & NDK ${{ inputs.ndk_version }}
+        uses: android-actions/setup-android@v3
+        with:
+          ndk-version: ${{ inputs.ndk_version }}
+          packages: 'platforms;android-36 build-tools;36.0.0'
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: lok-ccache-${{ inputs.distro }}-${{ inputs.ndk_version }}-${{ github.sha }}
+          restore-keys: |
+            lok-ccache-${{ inputs.distro }}-${{ inputs.ndk_version }}-
+            lok-ccache-${{ inputs.distro }}-
+
+      - name: Shallow clone LibreOffice Core (${{ inputs.core_ref }})
+        run: |
+          git clone --depth 1 --branch "${{ inputs.core_ref }}" "${{ inputs.core_repo }}" lo-core
+          git -C lo-core rev-parse HEAD > lo-core-commit.txt
+
+      - name: Configure LibreOfficeKit ARM64 with 16 KB linker flags
+        working-directory: lo-core
+        env:
+          ANDROID_NDK_PATH: ${{ env.ANDROID_SDK_ROOT }}/ndk/${{ inputs.ndk_version }}
+          JAVA_HOME_PATH: /usr/lib/jvm/java-17-openjdk-amd64
+        run: |
+          cat > autogen.input <<EOF
+          --build=x86_64-unknown-linux-gnu
+          --with-jdk-home=${JAVA_HOME_PATH}
+          --with-android-sdk=${{ env.ANDROID_SDK_ROOT }}
+          --with-android-ndk=${ANDROID_NDK_PATH}
+          --with-distro=${{ inputs.distro }}
+          --enable-ccache
+          --disable-odk
+          --without-junit
+          --without-help
+          --without-myspell-dicts
+          EOF
+          export LDFLAGS="-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"
+          export AR=llvm-ar
+          export RANLIB=llvm-ranlib
+          export STRIP=llvm-strip
+          ./autogen.sh
+
+      - name: Cross-compile LibreOfficeKit Android ARM64
+        working-directory: lo-core
+        env:
+          LDFLAGS: "-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"
+        run: |
+          mkdir -p "$HOME/.ccache"
+          export CCACHE_DIR="$HOME/.ccache"
+          ccache -M 8G || true
+          make -j"$(nproc)" || make -j2
+
+      - name: Collect .so binaries and verify 16 KB alignment
+        run: |
+          mkdir -p out/jniLibs/arm64-v8a out/mplv2-disclosure
+          find lo-core -type f \( -name "liblo-native-code.so" -o -name "libsofficeapp.so" -o -path "*arm64*/*.so" \) | while read -r so; do
+            cp -v "$so" out/jniLibs/arm64-v8a/
+          done
+          python3 -I scripts/verify_16kb_elf.py out/jniLibs/arm64-v8a
+          cp lo-core/autogen.input lo-core-commit.txt out/mplv2-disclosure/
+          git -C lo-core diff > out/mplv2-disclosure/lok_patches.diff || true
+
+      - name: Upload 16 KB ARM64 Native Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lok-android-arm64-16kb
+          path: out/jniLibs/arm64-v8a/*.so
+          retention-days: 30
+
+      - name: Upload MPLv2 Source & Build Recipe Disclosure
+        uses: actions/upload-artifact@v4
+        with:
+          name: lok-mplv2-source-manifest
+          path: out/mplv2-disclosure/
+          retention-days: 90
