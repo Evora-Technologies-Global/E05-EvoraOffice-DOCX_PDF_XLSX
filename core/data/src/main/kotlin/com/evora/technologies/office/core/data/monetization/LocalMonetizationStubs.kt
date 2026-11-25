@@ -10,7 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,20 +26,22 @@ class LocalProEntitlementRepository @Inject constructor(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    override val proStatus: StateFlow<ProStatus> = preferences.rewardPassExpiresAtEpochMs
-        .map { expiresAt ->
-            val activeReward = expiresAt > System.currentTimeMillis()
-            ProStatus(
-                isPro = false,
-                hasRewardedPass = activeReward,
-                rewardPassExpiresAtEpochMs = expiresAt,
-            )
-        }
-        .stateIn(
-            scope = scope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = ProStatus(),
+    override val proStatus: StateFlow<ProStatus> = combine(
+        preferences.rewardPassExpiresAtEpochMs,
+        preferences.qaProOverride,
+    ) { expiresAt, qaOverride ->
+        val activeReward = expiresAt > System.currentTimeMillis()
+        ProStatus(
+            isPro = qaOverride,
+            hasRewardedPass = activeReward,
+            rewardPassExpiresAtEpochMs = expiresAt,
+            activeSku = if (qaOverride) "qa_local_pro" else null,
         )
+    }.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = ProStatus(),
+    )
 
     override suspend fun hasAccess(feature: ProFeature): Boolean = proStatus.value.isUnlocked
 
@@ -49,6 +51,10 @@ class LocalProEntitlementRepository @Inject constructor(
     }
 
     override suspend fun restorePurchases(): Boolean = false
+
+    override suspend fun setQaProOverride(enabled: Boolean) {
+        preferences.setQaProOverride(enabled)
+    }
 }
 
 /**

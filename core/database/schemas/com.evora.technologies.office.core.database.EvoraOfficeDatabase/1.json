@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "61f3a8259cf2d8b55d6af049c0d45ea6",
+    "identityHash": "a18ef7229522f8d12fcc33ae76658785",
     "entities": [
       {
         "tableName": "document_meta",
@@ -113,11 +113,201 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_document_meta_is_favorite_modified_at_epoch_ms` ON `${TABLE_NAME}` (`is_favorite`, `modified_at_epoch_ms`)"
           }
         ]
+      },
+      {
+        "tableName": "trash_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`trash_id` TEXT NOT NULL, `original_uri_string` TEXT NOT NULL, `cached_file_path` TEXT NOT NULL, `display_name` TEXT NOT NULL, `format` TEXT NOT NULL, `size_bytes` INTEGER NOT NULL, `trashed_at_epoch_ms` INTEGER NOT NULL, `expires_at_epoch_ms` INTEGER NOT NULL, PRIMARY KEY(`trash_id`))",
+        "fields": [
+          {
+            "fieldPath": "trashId",
+            "columnName": "trash_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originalUriString",
+            "columnName": "original_uri_string",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cachedFilePath",
+            "columnName": "cached_file_path",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "display_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "format",
+            "columnName": "format",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sizeBytes",
+            "columnName": "size_bytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trashedAtEpochMs",
+            "columnName": "trashed_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiresAtEpochMs",
+            "columnName": "expires_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "trash_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "idx_trash_expires_at",
+            "unique": false,
+            "columnNames": [
+              "expires_at_epoch_ms"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_trash_expires_at` ON `${TABLE_NAME}` (`expires_at_epoch_ms`)"
+          }
+        ]
+      },
+      {
+        "tableName": "draft_recovery",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`target_uri_string` TEXT NOT NULL, `draft_cache_path` TEXT NOT NULL, `display_name` TEXT NOT NULL, `updated_at_epoch_ms` INTEGER NOT NULL, `has_pending_recovery` INTEGER NOT NULL, PRIMARY KEY(`target_uri_string`))",
+        "fields": [
+          {
+            "fieldPath": "targetUriString",
+            "columnName": "target_uri_string",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "draftCachePath",
+            "columnName": "draft_cache_path",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "display_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updated_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasPendingRecovery",
+            "columnName": "has_pending_recovery",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "target_uri_string"
+          ]
+        }
+      },
+      {
+        "tableName": "signatures",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `asset_path` TEXT NOT NULL, `created_at_epoch_ms` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "assetPath",
+            "columnName": "asset_path",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "created_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "cloud_accounts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `provider` TEXT NOT NULL, `email` TEXT NOT NULL, `display_name` TEXT NOT NULL, `avatar_uri` TEXT, `encrypted_token_alias` TEXT NOT NULL, PRIMARY KEY(`account_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "provider",
+            "columnName": "provider",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "display_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "avatarUri",
+            "columnName": "avatar_uri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "encryptedTokenAlias",
+            "columnName": "encrypted_token_alias",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '61f3a8259cf2d8b55d6af049c0d45ea6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a18ef7229522f8d12fcc33ae76658785')"
     ]
   }
 }

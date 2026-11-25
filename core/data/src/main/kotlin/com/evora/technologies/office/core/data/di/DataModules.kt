@@ -2,7 +2,13 @@ package com.evora.technologies.office.core.data.di
 
 import com.evora.technologies.office.core.data.monetization.LocalProEntitlementRepository
 import com.evora.technologies.office.core.data.monetization.NoOpAdPlacementHook
+import com.evora.technologies.office.core.data.repository.DocumentRepositoryImpl
+import com.evora.technologies.office.core.data.repository.LocalDocumentScanner
+import com.evora.technologies.office.core.data.repository.MediaStoreDocumentScanner
+import com.evora.technologies.office.core.data.repository.PreferencesRepositoryImpl
 import com.evora.technologies.office.core.domain.port.AdPlacementHook
+import com.evora.technologies.office.core.domain.port.DocumentRepository
+import com.evora.technologies.office.core.domain.port.PreferencesRepository
 import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import dagger.Binds
 import dagger.Module
@@ -52,4 +58,16 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindAdPlacementHook(impl: NoOpAdPlacementHook): AdPlacementHook
+
+    @Binds
+    @Singleton
+    abstract fun bindPreferencesRepository(impl: PreferencesRepositoryImpl): PreferencesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLocalDocumentScanner(impl: MediaStoreDocumentScanner): LocalDocumentScanner
+
+    @Binds
+    @Singleton
+    abstract fun bindDocumentRepository(impl: DocumentRepositoryImpl): DocumentRepository
 }

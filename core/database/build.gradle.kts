@@ -6,6 +6,9 @@ plugins {
 
 android {
     namespace = "com.evora.technologies.office.core.database"
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 room {
@@ -17,4 +20,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 }
