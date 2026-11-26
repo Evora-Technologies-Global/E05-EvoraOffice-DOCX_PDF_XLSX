@@ -21,6 +21,10 @@ concurrency:
   group: android-ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   verify-android:
     runs-on: ubuntu-24.04
@@ -43,8 +47,13 @@ jobs:
       - name: Configure Gradle caching
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Make gradlew executable
-        run: chmod +x gradlew
+      - name: Make gradlew and helper scripts executable
+        run: chmod +x gradlew scripts/fetch_lok_prebuilt.sh
+
+      - name: Fetch R-01 LibreOfficeKit prebuilt binaries
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/fetch_lok_prebuilt.sh --ci --allow-missing
 
       - name: Run unit tests and Android Lint
         run: ./gradlew testDebugUnitTest lintDebug --no-daemon

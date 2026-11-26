@@ -11,6 +11,12 @@ __pycache__/
 .venv/
 venv/
 
+# Prebuilt LibreOfficeKit .so binaries (>100 MB exceeds GitHub file limit; fetched/verified via scripts/fetch_lok_prebuilt.sh)
+engine/office/src/main/jniLibs/**/*.so
+engine/office/src/main/assets/program/
+engine/office/src/main/assets/share/
+engine/office/src/main/assets/unpack/
+
 # Local-only competitor data, temp assets, and throwaway spikes (see GEMINI.md)
 .local/
 scratch/

@@ -140,9 +140,11 @@ jobs:
           ccache -M 4G || true
           make -j"$(nproc)" || make -j2
 
-      - name: Collect .so binaries and verify 16 KB alignment
+      - name: Collect .so binaries, runtime assets and verify 16 KB alignment
         run: |
           mkdir -p out/jniLibs/arm64-v8a out/mplv2-disclosure
+          mkdir -p out/assets/unpack/program out/assets/unpack/etc/fonts out/assets/unpack/user/fonts
+          mkdir -p out/assets/program/resource out/assets/program/services out/assets/share/registry/res out/assets/share/config
           if [ -d lo-core/android/jniLibs/arm64-v8a ]; then
             cp -v lo-core/android/jniLibs/arm64-v8a/*.so out/jniLibs/arm64-v8a/
           fi
@@ -151,6 +153,72 @@ jobs:
           fi
           ls -lh out/jniLibs/arm64-v8a
           python3 -I scripts/verify_16kb_elf.py out/jniLibs/arm64-v8a
+
+          # Stage LibreOfficeKit runtime UNO registries, config, and RC files required by lo-bootstrap.c
+          INSTDIR="lo-core/instdir"
+          WORKDIR="lo-core/workdir"
+          cp -f "$INSTDIR"/program/types/offapi.rdb "$INSTDIR"/program/types/oovbaapi.rdb out/assets/unpack/program/ 2>/dev/null || true
+          if [ -f "$INSTDIR/program/types.rdb" ]; then
+            cp -f "$INSTDIR/program/types.rdb" out/assets/unpack/program/udkapi.rdb
+          elif [ -f "$INSTDIR/ure/share/misc/types.rdb" ]; then
+            cp -f "$INSTDIR/ure/share/misc/types.rdb" out/assets/unpack/program/udkapi.rdb
+          fi
+          cp -f lo-core/android/source/fonts.conf out/assets/unpack/etc/fonts/fonts.conf 2>/dev/null || true
+          find "$INSTDIR/share/fonts/truetype" -maxdepth 1 -type f \( -name "Liberation*.ttf" -o -name "Caladea-*.ttf" -o -name "Carlito-*.ttf" -o -name "Gen*.ttf" -o -name "opens___.ttf" \) -exec cp -f {} out/assets/unpack/user/fonts/ \; 2>/dev/null || true
+
+          cp -f "$INSTDIR/program/services.rdb" out/assets/program/ 2>/dev/null || true
+          cp -f "$INSTDIR/program/services/services.rdb" out/assets/program/services/ 2>/dev/null || true
+          cp -f "$INSTDIR"/program/resource/*en-US.res out/assets/program/resource/ 2>/dev/null || true
+          cp -R "$INSTDIR/share/filter" out/assets/share/ 2>/dev/null || true
+          if [ -d "$INSTDIR/share/config" ]; then
+            (cd "$INSTDIR/share/config" && find . -maxdepth 1 -name "images_*.zip" -exec cp -f {} "$GITHUB_WORKSPACE/out/assets/share/config/" \;) || true
+            (cd "$INSTDIR/share/config" && find . -type f \( -path "*/simpress/*.xml" -o -name "annotation.ui" -o -name "hfmenubutton.ui" -o -name "inforeadonlydialog.ui" -o -name "pbmenubutton.ui" -o -name "scrollbars.ui" -o -name "tabbuttons.ui" -o -name "tabbuttonsmirrored.ui" -o -name "tabviewbar.ui" \) -exec cp --parents -f {} "$GITHUB_WORKSPACE/out/assets/share/config/" \;) || true
+          fi
+          cp -R "$INSTDIR/share/registry"/* out/assets/share/registry/ 2>/dev/null || true
+          if [ -f "$INSTDIR/share/registry/main.xcd" ] && [ -f "lo-core/android/mobile-config.py" ]; then
+            python3 lo-core/android/mobile-config.py "$INSTDIR/share/registry/main.xcd" out/assets/share/registry/main.xcd
+          fi
+          if [ -f "$INSTDIR/share/registry/res/registry_en-US.xcd" ] && [ -f "lo-core/android/mobile-config.py" ]; then
+            python3 lo-core/android/mobile-config.py "$INSTDIR/share/registry/res/registry_en-US.xcd" out/assets/share/registry/res/registry_en-US.xcd
+          fi
+          find "$WORKDIR/CustomTarget/i18npool/breakiterator" -maxdepth 1 -name "*.data" -exec cp -f {} out/assets/share/ \; 2>/dev/null || true
+
+          cat > out/assets/unpack/program/sofficerc << 'EOF'
+          [Bootstrap]
+          Logo=1
+          NativeProgress=1
+          URE_BOOTSTRAP=file:///assets/program/fundamentalrc
+          HOME=$APP_DATA_DIR/cache
+          OSL_SOCKET_PATH=$APP_DATA_DIR/cache
+          EOF
+          cat > out/assets/program/fundamentalrc << 'EOF'
+          [Bootstrap]
+          LO_LIB_DIR=file://$APP_DATA_DIR/lib/
+          BRAND_BASE_DIR=file:///assets
+          BRAND_SHARE_SUBDIR=share
+          CONFIGURATION_LAYERS=xcsxcu:${BRAND_BASE_DIR}/share/registry res:${BRAND_BASE_DIR}/share/registry
+          URE_BIN_DIR=file:///assets/ure/bin/dir/nothing-here/we-can/exec-anyway
+          EOF
+          cat > out/assets/program/bootstraprc << 'EOF'
+          [Bootstrap]
+          InstallMode=<installmode>
+          ProductKey=LibreOffice 25.8
+          UserInstallation=file://$APP_DATA_DIR
+          EOF
+          cat > out/assets/program/unorc << 'EOF'
+          [Bootstrap]
+          URE_INTERNAL_LIB_DIR=file://$APP_DATA_DIR/lib/
+          UNO_TYPES=file://$APP_DATA_DIR/program/udkapi.rdb file://$APP_DATA_DIR/program/offapi.rdb file://$APP_DATA_DIR/program/oovbaapi.rdb
+          UNO_SERVICES=file:///assets/program/services.rdb file:///assets/program/services/services.rdb
+          EOF
+          COMMIT_SHA="$(cat lo-core-commit.txt)"
+          cat > out/assets/program/versionrc << EOF
+          [Version]
+          AllLanguages=en-US
+          buildid=${COMMIT_SHA}
+          ReferenceOOoMajorMinor=4.1
+          EOF
+
           cp lo-core/autogen.input lo-core-commit.txt out/mplv2-disclosure/
           git -C lo-core diff > out/mplv2-disclosure/lok_patches.diff || true
 
@@ -159,6 +227,13 @@ jobs:
         with:
           name: lok-android-arm64-16kb
           path: out/jniLibs/arm64-v8a/*.so
+          retention-days: 30
+
+      - name: Upload LibreOfficeKit Runtime Assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: lok-android-runtime-assets
+          path: out/assets/
           retention-days: 30
 
       - name: Upload MPLv2 Source & Build Recipe Disclosure
