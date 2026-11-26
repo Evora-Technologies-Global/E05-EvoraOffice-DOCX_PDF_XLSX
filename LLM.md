@@ -5,7 +5,7 @@
 > where a new file belongs. For *how* to write an MVI screen, read
 > [`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md).
 
-**Status (26/11/2026): Sprints 1–3 Core Engineering Complete (`F-01`–`F-09 = Done`; `T-001`, `T-003`–`T-022` done; `T-015` JNI bridge + OOXML/ODF serializer + 15s atomic draft recovery + 8 templates done; awaiting `R-01` Linux LOK `.so` artifact placement from `T-002`; `CD-07` Core Gate approved to unlock Sprint 4 Monetization).** Architecture and module boundaries are
+**Status (26/11/2026): Sprints 1–3 Core Engineering Complete (`F-01`–`F-09 = Done`; `T-001`–`T-022` done; `R-01` `14/14` `16 KB` ARM64 `.so` binaries from CI run `45768969780` + `org.libreoffice.kit` JNI bindings & asset unpacker integrated in `:engine:office`; `CD-07` Core Gate approved to unlock Sprint 4 Monetization).** Architecture and module boundaries are
 defined in [`docs/07_TECH_SPEC.md`](docs/07_TECH_SPEC.md). Modules marked `[Active]` are compiled and verified; modules marked `[Planned — Sprint N]` activate in their respective sprint.
 Code snippets in §4–§6 are copied strictly from real E05 code as modules land.
 
@@ -39,7 +39,7 @@ Native Android application (**Kotlin + Jetpack Compose**, **MVI + Clean Architec
   - `:core:data` (Hilt `@Binds` implementations of `:core:domain` ports + `WorkManager` `@HiltWorker` + `CD-07` monetization stubs; depends on `:core:model`, `:core:domain`, `:core:database`, `:core:datastore`) `[Active — T-003/T-005]`
 - **Engine Layer (isolated SDK/JNI wrappers implementing `:core:domain` ports):**
   - `:engine:pdf` (`io.legere:pdfiumandroid:2.0.3` + `PDFBox-Android 2.0.27.0` + `BouncyCastle 1.80`) `[Active — T-003/T-008/T-010..T-013]`
-  - `:engine:office` (`LibreOfficeNativeBridge` `16 KB` JNI bridge + `OoxmlOfficeEngine` OOXML/ODF parser/serializer + `DraftSnapshotSerializer`) `[Active — T-003/T-015..T-017; awaiting R-01 .so]`
+  - `:engine:office` (`LibreOfficeKit` `14` `16 KB` `.so` + `org.libreoffice.kit` JNI + `LibreOfficeNativeBridge` + `LibreOfficeAssetHelper` + `OoxmlOfficeEngine` + `DraftSnapshotSerializer`) `[Active — T-002/T-003/T-015..T-017]`
   - `:engine:hwp` (`kr.dogfoot:hwplib:1.1.11` + `hwpxlib:1.0.9` offline HTML sanitizer + `EPUB`/`TXT`/`CSV`/`MD` reader) `[Active — T-009]`
   - `:engine:archive` (`Apache Commons Compress 1.28.0` + `XZ 1.12` `.zip`/`.7z`) `[Active — T-009]`
   - `:engine:scanner` (`CameraX 1.7.0` + `ML Kit` Doc Scanner `16.0.0` / 5-Script OCR `16.0.1` / Barcode `17.3.0`) `[Active — Sprint 2 T-014]`
@@ -184,7 +184,7 @@ Locked by CEO (`CD-11`, `2026-11-25`): **Hilt with KSP (`com.google.dagger:hilt-
 | DataStore Preferences, Local Entitlement Cache, `DataStoreModule` | `core/datastore/src/main/kotlin/com/evora/technologies/office/core/datastore/...` |
 | Repository Implementations, `MediaStore` Indexer, `TrashPurgeWorker`, `StorageBrowserRepositoryImpl`, `SignatureRepositoryImpl`, `DraftRecoveryRepositoryImpl`, `TemplateRepositoryImpl`, `assets/templates/`, `CD-07` Stubs | `core/data/src/main/kotlin/.../core/data/...` & `core/data/src/main/assets/templates/` |
 | PDF Engine (`PdfiumAndroid`, `PDFBox-Android`, `BouncyCastle`, `PdfBoxPowerEngine`) | `engine/pdf/src/main/kotlin/com/evora/technologies/office/engine/pdf/...` |
-| Office Engine (`LibreOfficeNativeBridge`, `OoxmlOfficeEngine`, `DraftSnapshotSerializer`) | `engine/office/src/main/kotlin/com/evora/technologies/office/engine/office/...` & `engine/office/src/main/jniLibs/arm64-v8a/` |
+| Office Engine (`LibreOfficeNativeBridge`, `LibreOfficeAssetHelper`, `org.libreoffice.kit.*`, `OoxmlOfficeEngine`, `DraftSnapshotSerializer`) | `engine/office/src/main/kotlin/.../engine/office/`, `engine/office/src/main/java/org/libreoffice/kit/`, `engine/office/src/main/jniLibs/arm64-v8a/` *(gitignored >100MB; fetched via `scripts/fetch_lok_prebuilt.sh`)*, `engine/office/mplv2-disclosure/` |
 | Hangul Engine (`hwplib`, `hwpxlib`, Sanitized HTML WebView Bridge) | `engine/hwp/src/main/kotlin/com/evora/technologies/office/engine/hwp/...` |
 | Archive Engine (`Commons Compress` `.zip`/`.7z`) | `engine/archive/src/main/kotlin/com/evora/technologies/office/engine/archive/...` |
 | Scanner Engine (`CameraX`, `ML Kit` Doc/OCR/QR, `MlKitScannerEngine`, Dual ID Card) | `engine/scanner/src/main/kotlin/com/evora/technologies/office/engine/scanner/...` |
@@ -193,7 +193,7 @@ Locked by CEO (`CD-11`, `2026-11-25`): **Hilt with KSP (`com.google.dagger:hilt-
 | Monetization Engine (`BillingClient 8`, `UMP`, `AdMob Mediation`, `RemoteConfig`) | `engine/monetization/src/main/kotlin/com/evora/technologies/office/engine/monetization/...` *(Sprint 4 T-023/T-024 per CD-07)* |
 | Glance Widgets & App Shortcuts (`QuickBarGlanceWidget`, `RecentDocsGlanceWidget`) | `feature/library/src/main/kotlin/.../widget/` & `app/src/main/res/xml/shortcuts.xml` |
 | Feature UI Screens (`XContract`, `XViewModel`, `XRoute`, `XScreen`) | `feature/<domain>/src/main/kotlin/com/evora/technologies/office/feature/<domain>/<screen>/...` |
-| CI Workflows & Build/ELF Checks | `.github/workflows/*.yml`, `scripts/verify_16kb_elf.py` |
+| CI Workflows & Build/ELF Checks | `.github/workflows/*.yml`, `scripts/verify_16kb_elf.py`, `scripts/fetch_lok_prebuilt.sh` |
 
 ---
 
@@ -201,12 +201,12 @@ Locked by CEO (`CD-11`, `2026-11-25`): **Hilt with KSP (`com.google.dagger:hilt-
 
 ### Open
 
-- **`T-015` Native `LibreOfficeKit` Binary Pending `R-01` CI Dispatch:** `LibreOfficeNativeBridge` and `LOKDispatcher` are wired in `:engine:office`, and `OoxmlOfficeEngine` provides full offline `.docx`/`.xlsx`/`.pptx`/ODF editing, formulas, Track Changes, and 15s atomic `DraftRecoveryEntity` persistence until `liblo-native-code.so` / `libsofficeapp.so` lands from GitHub Actions `lok-android-16kb.yml` (`T-002`).
+- **`T-015` LOK Runtime UNO Assets (`.rdb`/`.xcd`) Pending Next `lok-android-16kb.yml` Run:** All `14/14` `16 KB` ARM64 `.so` libraries (`liblo-native-code.so` + `13` NSS/NSPR/SQLite/`libc++_shared` deps) from CI run `45768969780` are integrated into `engine/office/src/main/jniLibs/arm64-v8a/` (SHA-256 locked in `engine/office/lok-prebuilt.sha256` and gitignored to respect GitHub's 100 MB limit) alongside `org.libreoffice.kit` JNI bindings and `LibreOfficeAssetHelper`. Because run `45768969780` only uploaded `.so` files, `lok-android-16kb.yml` has been updated to also emit `lok-android-runtime-assets`; until re-dispatched (warm `lok-ccache`), `LibreOfficeAssetHelper` safely detects absent `.rdb` assets and keeps `OoxmlOfficeEngine` active without crashing `libreofficekit_hook`.
 - **BouncyCastle Version Resolution:** `pdfbox-android:2.0.27.0` transitively pulls `bc*-jdk15to18:1.72`; `:engine:pdf` and `:app` exclude `-jdk15to18` in favor of `bcprov-jdk18on:1.80` + `bcpkix-jdk18on:1.80`.
 
 ### Fixed
 
-None.
+- **`T-002` / `T-015` `R-01` `LibreOfficeKit` `16 KB` `.so` Placement & JNI Bindings:** Built on GitHub Actions (`45768969780`), verified `14/14` `PT_LOAD p_align == 0x4000`, wired to `org.libreoffice.kit` JNI classes + `LibreOfficeNativeBridge` (`lokDispatcher`) + `LibreOfficeEngineAdapter` + `OoxmlOfficeEngine` + `PdfBoxPowerEngine`.
 
 ---
 
