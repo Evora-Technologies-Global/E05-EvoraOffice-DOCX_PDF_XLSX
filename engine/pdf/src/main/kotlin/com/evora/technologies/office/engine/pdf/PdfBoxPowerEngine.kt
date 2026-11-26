@@ -826,22 +826,31 @@ class PdfBoxPowerEngine @Inject constructor(
             val ext = sourceUriString.substringAfterLast('.', "").lowercase()
             val format = DocFormat.fromExtension(ext) ?: DocFormat.WORD
             onProgress(0.25f)
-            val plainText = when (format) {
-                DocFormat.HWP -> hwpEngine.renderToSanitizedHtml(sourceUriString).plainText
-                DocFormat.WORD, DocFormat.EXCEL, DocFormat.PPT, DocFormat.ODF ->
-                    officeEngine.extractReadablePreview(sourceUriString, format).fullPlainText
-                DocFormat.EPUB, DocFormat.TEXT ->
-                    textEpubEngine.loadDocument(sourceUriString, format).fullPlainText
-                else -> "Unsupported source format for PDF conversion"
-            }
-            onProgress(0.60f)
             val outFile = uniqueExportFile("${base}_converted.pdf")
-            writeLinesToPdf(
-                lines = plainText.lines().ifEmpty { listOf(base) },
-                rect = PDRectangle.A4,
-                outFile = outFile,
-                onProgress = { p -> onProgress(0.60f + p * 0.40f) },
-            )
+            val convertedNatively = if (format in setOf(DocFormat.WORD, DocFormat.EXCEL, DocFormat.PPT, DocFormat.ODF)) {
+                officeEngine.convertToPdfIfAvailable(sourceUriString, outFile.absolutePath)
+            } else {
+                false
+            }
+            if (!convertedNatively) {
+                val plainText = when (format) {
+                    DocFormat.HWP -> hwpEngine.renderToSanitizedHtml(sourceUriString).plainText
+                    DocFormat.WORD, DocFormat.EXCEL, DocFormat.PPT, DocFormat.ODF ->
+                        officeEngine.extractReadablePreview(sourceUriString, format).fullPlainText
+                    DocFormat.EPUB, DocFormat.TEXT ->
+                        textEpubEngine.loadDocument(sourceUriString, format).fullPlainText
+                    else -> "Unsupported source format for PDF conversion"
+                }
+                onProgress(0.60f)
+                writeLinesToPdf(
+                    lines = plainText.lines().ifEmpty { listOf(base) },
+                    rect = PDRectangle.A4,
+                    outFile = outFile,
+                    onProgress = { p -> onProgress(0.60f + p * 0.40f) },
+                )
+            } else {
+                onProgress(1.0f)
+            }
             val outUri = outFile.toURI().toString()
             documentRepository.registerSafUri(outUri)
             Result.success(

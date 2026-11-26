@@ -48,6 +48,10 @@ android {
             )
         }
     }
+
+    androidResources {
+        noCompress += listOf("rdb", "xcd", "res", "data", "ttf", "rc", "ini", "ui", "zip")
+    }
 }
 
 configurations.configureEach {

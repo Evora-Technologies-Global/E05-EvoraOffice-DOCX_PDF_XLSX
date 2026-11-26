@@ -23,17 +23,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Office engine boundary awaiting LibreOfficeKit 16 KB native artifact from R-01 CI (T-002 / T-015).
- * Provides an offline pure-Kotlin OOXML/ODF text preview extractor until LOK .so lands in Sprint 2.
+ * Office engine adapter wiring LibreOfficeKit 16 KB native libraries (R-01 CI artifact)
+ * with pure-Kotlin OOXML/ODF text fallback when LOK runtime assets are unavailable.
  */
 @Singleton
 class LibreOfficeEngineAdapter @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) : OfficeEnginePort {
-    override fun isNativeEngineAvailable(): Boolean = runCatching {
-        System.loadLibrary("lo-native-code")
-        true
-    }.getOrDefault(false)
+
+    override fun isNativeEngineAvailable(): Boolean = LibreOfficeNativeBridge.ensureLoaded()
 
     override suspend fun extractReadablePreview(
         uriString: String,
@@ -41,16 +39,29 @@ class LibreOfficeEngineAdapter @Inject constructor(
     ): ParsedTextDocument = withContext(Dispatchers.IO) {
         val uri = Uri.parse(uriString)
         val title = uri.lastPathSegment?.substringAfterLast('/') ?: "Office Document"
+
+        val lokText = extractViaLokIfActive(uriString, format)
+        if (!lokText.isNullOrBlank()) {
+            return@withContext ParsedTextDocument(
+                title = title,
+                chapters = listOf(TextChapter(title = title, body = lokText)),
+                fullPlainText = lokText,
+            )
+        }
+
         val stream = openStream(uri, uriString)
             ?: return@withContext ParsedTextDocument(title, listOf(TextChapter("Preview", "Unable to open file.")), "")
 
         stream.use { input ->
             val extracted = runCatching { extractZipXmlText(input, format) }.getOrNull().orEmpty()
             val body = extracted.ifBlank {
-                if (!isNativeEngineAvailable()) {
-                    "Binary legacy Office format preview requires LibreOfficeKit 16 KB native library (R-01 CI artifact)."
-                } else {
-                    "Ready in LibreOfficeKit."
+                when {
+                    !isNativeEngineAvailable() ->
+                        "Binary legacy Office format preview requires LibreOfficeKit 16 KB native library."
+                    !LibreOfficeNativeBridge.isRuntimeInitialized ->
+                        "LibreOfficeKit native libraries loaded; runtime UNO assets (.rdb/.xcd) required for legacy binary format."
+                    else ->
+                        "Unable to extract text from document."
                 }
             }
             ParsedTextDocument(
@@ -58,6 +69,44 @@ class LibreOfficeEngineAdapter @Inject constructor(
                 chapters = listOf(TextChapter(title = title, body = body)),
                 fullPlainText = body,
             )
+        }
+    }
+
+    override suspend fun convertToPdfIfAvailable(
+        sourceUriString: String,
+        outPdfPath: String,
+    ): Boolean = withContext(Dispatchers.IO) {
+        if (!LibreOfficeNativeBridge.ensureInitialized(context)) {
+            return@withContext false
+        }
+        val tmpSrc = LibreOfficeAssetHelper.copyUriToTempFile(context, sourceUriString, "docx")
+            ?: return@withContext false
+        try {
+            LibreOfficeNativeBridge.convertDocument(
+                context = context,
+                sourcePath = tmpSrc.absolutePath,
+                targetPath = outPdfPath,
+                targetFormat = "pdf",
+            )
+        } finally {
+            tmpSrc.delete()
+        }
+    }
+
+    private suspend fun extractViaLokIfActive(uriString: String, format: DocFormat): String? {
+        if (!LibreOfficeNativeBridge.ensureInitialized(context)) return null
+        val fallbackExt = when (format) {
+            DocFormat.WORD -> "docx"
+            DocFormat.EXCEL -> "xlsx"
+            DocFormat.PPT -> "pptx"
+            DocFormat.ODF -> "odt"
+            else -> "docx"
+        }
+        val tmpSrc = LibreOfficeAssetHelper.copyUriToTempFile(context, uriString, fallbackExt) ?: return null
+        return try {
+            LibreOfficeNativeBridge.extractPlainText(context, tmpSrc.absolutePath)
+        } finally {
+            tmpSrc.delete()
         }
     }
 

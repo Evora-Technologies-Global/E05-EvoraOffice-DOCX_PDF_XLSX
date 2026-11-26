@@ -1,0 +1,42 @@
+/* -*- Mode: Java; c-basic-offset: 4; tab-width: 20; indent-tabs-mode: nil; -*-
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.libreoffice.kit;
+
+import java.nio.ByteBuffer;
+
+public final class DirectBufferAllocator {
+    private DirectBufferAllocator() {
+    }
+
+    public static ByteBuffer allocate(int size) {
+        if (size <= 0) {
+            throw new IllegalArgumentException("Invalid allocation size: " + size);
+        }
+        ByteBuffer directBuffer = ByteBuffer.allocateDirect(size);
+        if (!directBuffer.isDirect()) {
+            throw new AssertionError("allocateDirect() did not return a direct buffer");
+        }
+        return directBuffer;
+    }
+
+    public static ByteBuffer free(ByteBuffer buffer) {
+        if (buffer != null && !buffer.isDirect()) {
+            throw new IllegalArgumentException("ByteBuffer must be direct");
+        }
+        return null;
+    }
+
+    public static ByteBuffer guardedAllocate(int size) {
+        if (size <= 0) {
+            return null;
+        }
+        try {
+            return allocate(size);
+        } catch (OutOfMemoryError oomException) {
+            return null;
+        }
+    }
+}

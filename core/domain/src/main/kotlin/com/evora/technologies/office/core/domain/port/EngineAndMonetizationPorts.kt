@@ -188,4 +188,5 @@ interface ArchiveEnginePort {
 interface OfficeEnginePort {
     fun isNativeEngineAvailable(): Boolean
     suspend fun extractReadablePreview(uriString: String, format: DocFormat): ParsedTextDocument
+    suspend fun convertToPdfIfAvailable(sourceUriString: String, outPdfPath: String): Boolean = false
 }

@@ -1,0 +1,13 @@
+--build=x86_64-unknown-linux-gnu
+--with-jdk-home=/usr/lib/jvm/java-17-openjdk-amd64
+--with-android-sdk=/usr/local/lib/android/sdk
+--with-android-ndk=/usr/local/lib/android/sdk/ndk/28.2.13676358
+--with-android-api-level=26
+--with-distro=LibreOfficeAndroidAarch64
+--enable-android-lok
+--enable-android-editing
+--enable-ccache
+--disable-odk
+--without-junit
+--without-help
+--without-myspell-dicts

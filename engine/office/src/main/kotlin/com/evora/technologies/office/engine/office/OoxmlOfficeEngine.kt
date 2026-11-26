@@ -37,6 +37,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -78,9 +79,13 @@ class OoxmlOfficeEngine @Inject constructor(
     override suspend fun loadWordDocument(uriString: String): Result<WordDocumentSnapshot> =
         withContext(ioDispatcher) {
             try {
-                val lokReady = isNativeLokLoaded()
+                val (entries, lokActive) = loadEntriesWithLokFallback(
+                    uriString = uriString,
+                    fallbackExt = "doc",
+                    targetOoxmlFormat = "docx",
+                ) { keys -> "word/document.xml" in keys || "content.xml" in keys }
+                val lokReady = lokActive || isNativeLokLoaded()
                 val title = resolveFileName(uriString, "Document.docx")
-                val entries = readZipEntries(uriString)
                 val docXml = entries["word/document.xml"] ?: entries["content.xml"]
                 if (docXml == null) {
                     return@withContext Result.success(
@@ -115,7 +120,12 @@ class OoxmlOfficeEngine @Inject constructor(
         snapshot: WordDocumentSnapshot,
     ): Result<DocumentItem> = withContext(ioDispatcher) {
         try {
-            val bytes = OoxmlDocxWriter.buildFromWordSnapshot(snapshot)
+            val bytes = maybeConvertWithLokOnSave(
+                targetUriString = uriString,
+                title = snapshot.title,
+                ooxmlExt = "docx",
+                ooxmlBytes = OoxmlDocxWriter.buildFromWordSnapshot(snapshot),
+            )
             writeBytesAndSyncMeta(uriString, snapshot.title, "docx", DocFormat.WORD, bytes)
         } catch (c: CancellationException) {
             throw c
@@ -127,9 +137,13 @@ class OoxmlOfficeEngine @Inject constructor(
     override suspend fun loadWorkbook(uriString: String): Result<WorkbookSnapshot> =
         withContext(ioDispatcher) {
             try {
-                val lokReady = isNativeLokLoaded()
+                val (entries, lokActive) = loadEntriesWithLokFallback(
+                    uriString = uriString,
+                    fallbackExt = "xls",
+                    targetOoxmlFormat = "xlsx",
+                ) { keys -> keys.any { it.startsWith("xl/") } }
+                val lokReady = lokActive || isNativeLokLoaded()
                 val title = resolveFileName(uriString, "Workbook.xlsx")
-                val entries = readZipEntries(uriString)
                 val sharedStrings = entries["xl/sharedStrings.xml"]?.let(::parseSharedStrings).orEmpty()
                 val sheetRefs = entries["xl/workbook.xml"]?.let(::parseWorkbookSheets).orEmpty()
 
@@ -178,7 +192,12 @@ class OoxmlOfficeEngine @Inject constructor(
         snapshot: WorkbookSnapshot,
     ): Result<DocumentItem> = withContext(ioDispatcher) {
         try {
-            val bytes = buildXlsxZip(snapshot)
+            val bytes = maybeConvertWithLokOnSave(
+                targetUriString = uriString,
+                title = snapshot.title,
+                ooxmlExt = "xlsx",
+                ooxmlBytes = buildXlsxZip(snapshot),
+            )
             writeBytesAndSyncMeta(uriString, snapshot.title, "xlsx", DocFormat.EXCEL, bytes)
         } catch (c: CancellationException) {
             throw c
@@ -190,9 +209,13 @@ class OoxmlOfficeEngine @Inject constructor(
     override suspend fun loadSlideDeck(uriString: String): Result<SlideDeckSnapshot> =
         withContext(ioDispatcher) {
             try {
-                val lokReady = isNativeLokLoaded()
+                val (entries, lokActive) = loadEntriesWithLokFallback(
+                    uriString = uriString,
+                    fallbackExt = "ppt",
+                    targetOoxmlFormat = "pptx",
+                ) { keys -> keys.any { it.startsWith("ppt/slides/") && it.endsWith(".xml") } }
+                val lokReady = lokActive || isNativeLokLoaded()
                 val title = resolveFileName(uriString, "Presentation.pptx")
-                val entries = readZipEntries(uriString)
                 val slideKeys = entries.keys
                     .filter { it.startsWith("ppt/slides/slide") && it.endsWith(".xml") }
                     .sortedBy { extractTrailingNumber(it) }
@@ -241,7 +264,12 @@ class OoxmlOfficeEngine @Inject constructor(
         snapshot: SlideDeckSnapshot,
     ): Result<DocumentItem> = withContext(ioDispatcher) {
         try {
-            val bytes = buildPptxZip(snapshot)
+            val bytes = maybeConvertWithLokOnSave(
+                targetUriString = uriString,
+                title = snapshot.title,
+                ooxmlExt = "pptx",
+                ooxmlBytes = buildPptxZip(snapshot),
+            )
             writeBytesAndSyncMeta(uriString, snapshot.title, "pptx", DocFormat.PPT, bytes)
         } catch (c: CancellationException) {
             throw c
@@ -849,6 +877,74 @@ class OoxmlOfficeEngine @Inject constructor(
         return file.toURI().toString()
     }
 
+    private suspend fun loadEntriesWithLokFallback(
+        uriString: String,
+        fallbackExt: String,
+        targetOoxmlFormat: String,
+        hasExpectedEntries: (Set<String>) -> Boolean,
+    ): Pair<Map<String, ByteArray>, Boolean> {
+        val directEntries = readZipEntries(uriString)
+        if (hasExpectedEntries(directEntries.keys)) {
+            return directEntries to LibreOfficeNativeBridge.isRuntimeInitialized
+        }
+        val lokActive = LibreOfficeNativeBridge.ensureInitialized(context)
+        if (!lokActive) {
+            return directEntries to false
+        }
+        val tmpSrc = LibreOfficeAssetHelper.copyUriToTempFile(context, uriString, fallbackExt)
+            ?: return directEntries to true
+        val tmpOut = File.createTempFile("lok_conv_", ".$targetOoxmlFormat", context.cacheDir)
+        return try {
+            val converted = LibreOfficeNativeBridge.convertDocument(
+                context = context,
+                sourcePath = tmpSrc.absolutePath,
+                targetPath = tmpOut.absolutePath,
+                targetFormat = targetOoxmlFormat,
+            )
+            if (converted && tmpOut.exists()) {
+                readZipEntriesFromFile(tmpOut) to true
+            } else {
+                directEntries to true
+            }
+        } finally {
+            tmpSrc.delete()
+            tmpOut.delete()
+        }
+    }
+
+    private suspend fun maybeConvertWithLokOnSave(
+        targetUriString: String,
+        title: String,
+        ooxmlExt: String,
+        ooxmlBytes: ByteArray,
+    ): ByteArray {
+        val ext = (Uri.parse(targetUriString).lastPathSegment ?: title)
+            .substringAfterLast('.', "")
+            .lowercase()
+        val legacyOrOdfExts = setOf("doc", "odt", "xls", "ods", "ppt", "odp")
+        if (ext !in legacyOrOdfExts || !LibreOfficeNativeBridge.ensureInitialized(context)) {
+            return ooxmlBytes
+        }
+        val tmpIn = File.createTempFile("lok_save_in_", ".$ooxmlExt", context.cacheDir)
+        val tmpOut = File.createTempFile("lok_save_out_", ".$ext", context.cacheDir)
+        return try {
+            FileOutputStream(tmpIn).use { it.write(ooxmlBytes) }
+            val converted = LibreOfficeNativeBridge.convertDocument(
+                context = context,
+                sourcePath = tmpIn.absolutePath,
+                targetPath = tmpOut.absolutePath,
+                targetFormat = ext,
+            )
+            if (converted && tmpOut.exists() && tmpOut.length() > 0L) tmpOut.readBytes() else ooxmlBytes
+        } finally {
+            tmpIn.delete()
+            tmpOut.delete()
+        }
+    }
+
+    private fun readZipEntriesFromFile(file: File): Map<String, ByteArray> =
+        FileInputStream(file).use(::readZipStream)
+
     private fun readZipEntries(uriString: String): Map<String, ByteArray> {
         val uri = Uri.parse(uriString)
         val input = if (uri.scheme == "file" && uri.path != null) {
@@ -858,16 +954,18 @@ class OoxmlOfficeEngine @Inject constructor(
                 ?: runCatching { FileInputStream(File(uriString)) }.getOrNull()
                 ?: error("Unable to open Office file: $uriString")
         }
+        return input.use(::readZipStream)
+    }
+
+    private fun readZipStream(stream: InputStream): Map<String, ByteArray> {
         val map = LinkedHashMap<String, ByteArray>()
-        input.use { stream ->
-            ZipInputStream(stream).use { zis ->
-                var entry = zis.nextEntry
-                while (entry != null) {
-                    if (!entry.isDirectory) {
-                        map[entry.name] = zis.readBytes()
-                    }
-                    entry = zis.nextEntry
+        ZipInputStream(stream).use { zis ->
+            var entry = zis.nextEntry
+            while (entry != null) {
+                if (!entry.isDirectory) {
+                    map[entry.name] = zis.readBytes()
                 }
+                entry = zis.nextEntry
             }
         }
         return map
