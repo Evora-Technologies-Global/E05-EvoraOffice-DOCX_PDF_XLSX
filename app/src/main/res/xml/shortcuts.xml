@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_camera"
+        android:shortcutId="scan_doc"
+        android:shortcutShortLabel="@string/evora_action_scan">
+        <intent
+            android:action="com.evora.technologies.office.ACTION_SCAN"
+            android:targetClass="com.evora.technologies.office.MainActivity"
+            android:targetPackage="com.evora.technologies.office" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_search"
+        android:shortcutId="search_docs"
+        android:shortcutShortLabel="@string/evora_action_search">
+        <intent
+            android:action="com.evora.technologies.office.ACTION_WIDGET_SEARCH"
+            android:targetClass="com.evora.technologies.office.MainActivity"
+            android:targetPackage="com.evora.technologies.office" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_add"
+        android:shortcutId="new_template"
+        android:shortcutShortLabel="@string/evora_widget_new_doc">
+        <intent
+            android:action="com.evora.technologies.office.ACTION_WIDGET_NEW_DOC"
+            android:targetClass="com.evora.technologies.office.MainActivity"
+            android:targetPackage="com.evora.technologies.office" />
+    </shortcut>
+</shortcuts>

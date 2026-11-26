@@ -35,6 +35,19 @@ android {
     buildFeatures {
         buildConfig = true
     }
+
+    packaging {
+        resources {
+            excludes += listOf(
+                "META-INF/INDEX.LIST",
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE.md",
+                "META-INF/LICENSE-notice.md",
+                "META-INF/NOTICE.md",
+                "META-INF/io.netty.versions.properties",
+            )
+        }
+    }
 }
 
 configurations.configureEach {
@@ -56,6 +69,8 @@ dependencies {
     implementation(project(":engine:hwp"))
     implementation(project(":engine:archive"))
     implementation(project(":engine:scanner"))
+    implementation(project(":engine:transfer"))
+    implementation(project(":engine:cloud"))
     implementation(project(":feature:onboarding"))
     implementation(project(":feature:monetization"))
     implementation(project(":feature:library"))
@@ -63,6 +78,9 @@ dependencies {
     implementation(project(":feature:editor"))
     implementation(project(":feature:tools"))
     implementation(project(":feature:scanner"))
+    implementation(project(":feature:transfer"))
+    implementation(project(":feature:cloud"))
+    implementation(project(":feature:settings"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -74,6 +92,7 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
+    implementation(libs.microsoft.msal)
     ksp(libs.androidx.hilt.compiler)
 
     testImplementation(libs.junit)

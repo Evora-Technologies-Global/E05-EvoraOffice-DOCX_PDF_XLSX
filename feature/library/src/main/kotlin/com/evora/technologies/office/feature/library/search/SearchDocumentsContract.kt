@@ -21,9 +21,11 @@ sealed interface SearchDocumentsIntent : UiIntent {
     data object ClearQuery : SearchDocumentsIntent
     data class DocumentClicked(val document: DocumentItem) : SearchDocumentsIntent
     data class ToggleFavorite(val uriString: String) : SearchDocumentsIntent
+    data object BackClicked : SearchDocumentsIntent
 }
 
 sealed interface SearchDocumentsEffect : UiEffect {
+    data object NavigateBack : SearchDocumentsEffect
     data class OpenDocument(val document: DocumentItem) : SearchDocumentsEffect
     data class OpenArchiveInspector(val document: DocumentItem) : SearchDocumentsEffect
 }

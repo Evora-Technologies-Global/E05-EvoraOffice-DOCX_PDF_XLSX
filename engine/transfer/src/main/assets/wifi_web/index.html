@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evora Office — Wi-Fi File Transfer</title>
+  <style>
+    :root {
+      --bg: #F2F4F8;
+      --card: #FFFFFF;
+      --subtle: #E9EEF5;
+      --primary: #186FD4;
+      --accent: #2489FF;
+      --text: #0F172A;
+      --muted: #526075;
+      --border: #CBD5E1;
+      --ok: #1E7D5E;
+      --err: #C82828;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 24px 16px; }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      color: #fff; font-weight: 700; display: grid; place-items: center;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    .sub { font-size: 13px; color: var(--muted); margin: 0; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .dropzone {
+      border: 2px dashed var(--accent);
+      border-radius: 12px;
+      background: #E6F1FF;
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .dropzone.drag { background: #D2E6FF; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 0;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .btn.secondary {
+      background: var(--subtle);
+      color: var(--text);
+    }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    input[type="password"], input[type="text"] {
+      height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border); font-size: 14px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--subtle); font-size: 14px; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .status { font-size: 13px; margin-top: 10px; min-height: 20px; }
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--err); }
+    .crumbs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .crumb {
+      background: var(--subtle); border: 0; border-radius: 8px; padding: 4px 10px;
+      cursor: pointer; font-size: 13px; color: var(--text);
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">EO</div>
+        <div>
+          <h1>Evora Office</h1>
+          <p class="sub">100% Offline LAN Wi-Fi File Transfer</p>
+        </div>
+      </div>
+      <div class="row">
+        <input id="pinInput" type="password" placeholder="PIN (if locked)" />
+        <button class="btn secondary" onclick="loadFiles(currentPath)">Refresh</button>
+      </div>
+    </div>
+
+    <div class="card" id="uploadCard">
+      <div id="dropzone" class="dropzone" onclick="document.getElementById('fileInput').click()">
+        <strong>Drag &amp; drop PDF, DOCX, XLSX, PPTX, HWP, or ZIP files here</strong>
+        <div class="sub" style="margin-top:6px;">or click to browse from your computer</div>
+        <input id="fileInput" type="file" multiple class="hidden" />
+      </div>
+      <div id="uploadStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+      <div class="crumbs" id="breadcrumbs"></div>
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Size</th><th>Action</th></tr>
+        </thead>
+        <tbody id="fileRows">
+          <tr><td colspan="3" class="sub">Loading shared files…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let currentPath = "";
+
+    function authHeaders() {
+      const pin = document.getElementById("pinInput").value.trim();
+      return pin ? { "X-Evora-Pin": pin } : {};
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1048576) return Math.round(bytes / 1024) + " KB";
+      return (bytes / 1048576).toFixed(1) + " MB";
+    }
+
+    function renderBreadcrumbs() {
+      const box = document.getElementById("breadcrumbs");
+      box.innerHTML = "";
+      const rootBtn = document.createElement("button");
+      rootBtn.className = "crumb";
+      rootBtn.textContent = "Shared Root";
+      rootBtn.onclick = () => loadFiles("");
+      box.appendChild(rootBtn);
+
+      if (!currentPath) return;
+      let acc = "";
+      currentPath.split("/").filter(Boolean).forEach((seg) => {
+        acc = acc ? acc + "/" + seg : seg;
+        const target = acc;
+        const btn = document.createElement("button");
+        btn.className = "crumb";
+        btn.textContent = "/ " + seg;
+        btn.onclick = () => loadFiles(target);
+        box.appendChild(btn);
+      });
+    }
+
+    async function loadFiles(path) {
+      currentPath = path || "";
+      renderBreadcrumbs();
+      const tbody = document.getElementById("fileRows");
+      const status = document.getElementById("uploadStatus");
+      try {
+        const res = await fetch("/api/files?path=" + encodeURIComponent(currentPath), {
+          headers: authHeaders()
+        });
+        if (!res.ok) {
+          const msg = await res.text();
+          tbody.innerHTML = '<tr><td colspan="3" class="status err">' + escapeHtml(msg || ("HTTP " + res.status)) + '</td></tr>';
+          return;
+        }
+        const data = await res.json();
+        document.getElementById("uploadCard").style.display = data.readOnly ? "none" : "block";
+        if (!data.entries.length) {
+          tbody.innerHTML = '<tr><td colspan="3" class="sub">No files in this folder yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = "";
+        data.entries.forEach((entry) => {
+          const tr = document.createElement("tr");
+          const tdName = document.createElement("td");
+          if (entry.isDirectory) {
+            const link = document.createElement("a");
+            link.href = "#";
+            link.textContent = "[Folder] " + entry.name;
+            link.onclick = (e) => { e.preventDefault(); loadFiles(entry.path); };
+            tdName.appendChild(link);
+          } else {
+            tdName.textContent = entry.name;
+          }
+          const tdSize = document.createElement("td");
+          tdSize.textContent = entry.isDirectory ? "-" : formatSize(entry.sizeBytes);
+          const tdAction = document.createElement("td");
+          if (!entry.isDirectory) {
+            const dl = document.createElement("button");
+            dl.className = "btn secondary";
+            dl.textContent = "Download";
+            dl.onclick = () => downloadEntry(entry.path, entry.name);
+            tdAction.appendChild(dl);
+          }
+          tr.appendChild(tdName);
+          tr.appendChild(tdSize);
+          tr.appendChild(tdAction);
+          tbody.appendChild(tr);
+        });
+        status.textContent = "";
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="3" class="status err">Connection error</td></tr>';
+      }
+    }
+
+    async function downloadEntry(relPath, fileName) {
+      const res = await fetch("/api/download?path=" + encodeURIComponent(relPath), {
+        headers: authHeaders()
+      });
+      if (!res.ok) {
+        setStatus("Download failed (" + res.status + ")", true);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function uploadFiles(fileList) {
+      if (!fileList || !fileList.length) return;
+      const form = new FormData();
+      for (const file of fileList) {
+        form.append("file", file, file.name);
+      }
+      setStatus("Uploading " + fileList.length + " file(s)…", false);
+      try {
+        const res = await fetch("/api/upload?path=" + encodeURIComponent(currentPath), {
+          method: "POST",
+          headers: authHeaders(),
+          body: form
+        });
+        const txt = await res.text();
+        if (!res.ok) {
+          setStatus(txt || ("Upload failed (" + res.status + ")"), true);
+        } else {
+          setStatus(txt || "Uploaded to EvoraOffice", false);
+          loadFiles(currentPath);
+        }
+      } catch (e) {
+        setStatus("Upload failed", true);
+      }
+    }
+
+    function setStatus(msg, isError) {
+      const el = document.getElementById("uploadStatus");
+      el.textContent = msg;
+      el.className = "status " + (isError ? "err" : "ok");
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
+    }
+
+    const dz = document.getElementById("dropzone");
+    const fi = document.getElementById("fileInput");
+    fi.addEventListener("change", (e) => uploadFiles(e.target.files));
+    dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("drag"); });
+    dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
+    dz.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dz.classList.remove("drag");
+      uploadFiles(e.dataTransfer.files);
+    });
+
+    loadFiles("");
+  </script>
+</body>
+</html>

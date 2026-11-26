@@ -38,7 +38,6 @@ data class ScannerFlowState(
     val pendingOpenUrlConfirm: String? = null,
     // Shared status
     val showRewardGateTitle: String? = null,
-    val pendingProAction: (() -> Unit)? = null,
     val isBusy: Boolean = false,
     val exportResult: PdfToolResult? = null,
     val errorMessage: String? = null,

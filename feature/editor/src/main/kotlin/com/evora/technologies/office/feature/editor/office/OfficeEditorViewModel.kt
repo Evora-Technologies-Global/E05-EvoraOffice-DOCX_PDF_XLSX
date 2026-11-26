@@ -42,6 +42,7 @@ class OfficeEditorViewModel @Inject constructor(
     OfficeEditorState(),
 ) {
     private var loadJob: Job? = null
+    private var loadedDocumentKey: String? = null
     private var autosaveTickerJob: Job? = null
     private val undoStack = ArrayDeque<EditorMemento>()
     private val redoStack = ArrayDeque<EditorMemento>()
@@ -176,6 +177,15 @@ class OfficeEditorViewModel @Inject constructor(
     }
 
     private fun openDocument(uriString: String, displayName: String, kind: OfficeKind) {
+        val docKey = "$uriString|$kind"
+        val hasSnapshot = when (kind) {
+            OfficeKind.WORD -> currentState.wordSnapshot != null
+            OfficeKind.EXCEL -> currentState.workbookSnapshot != null
+            OfficeKind.PPT -> currentState.slideDeckSnapshot != null
+        }
+        if (loadedDocumentKey == docKey && hasSnapshot && currentState.errorMessage == null) {
+            return
+        }
         loadJob?.cancel()
         autosaveTickerJob?.cancel()
         undoStack.clear()
@@ -199,6 +209,7 @@ class OfficeEditorViewModel @Inject constructor(
             when (kind) {
                 OfficeKind.WORD -> {
                     val doc = officeEditorPort.loadWordDocument(uriString).getOrThrow()
+                    loadedDocumentKey = docKey
                     setState {
                         copy(
                             isLoading = false,
@@ -211,6 +222,7 @@ class OfficeEditorViewModel @Inject constructor(
                 OfficeKind.EXCEL -> {
                     val wb = officeEditorPort.loadWorkbook(uriString).getOrThrow()
                     val firstCell = wb.sheets.firstOrNull()?.cells?.get("0,0")?.rawInput.orEmpty()
+                    loadedDocumentKey = docKey
                     setState {
                         copy(
                             isLoading = false,
@@ -223,6 +235,7 @@ class OfficeEditorViewModel @Inject constructor(
                 }
                 OfficeKind.PPT -> {
                     val deck = officeEditorPort.loadSlideDeck(uriString).getOrThrow()
+                    loadedDocumentKey = docKey
                     setState {
                         copy(
                             isLoading = false,
@@ -309,6 +322,15 @@ class OfficeEditorViewModel @Inject constructor(
 
     private fun saveDocument() {
         if (currentState.isSaving) return
+        val word = currentState.wordSnapshot
+        val workbook = currentState.workbookSnapshot
+        val deck = currentState.slideDeckSnapshot
+        val hasTarget = when (currentState.kind) {
+            OfficeKind.WORD -> word != null
+            OfficeKind.EXCEL -> workbook != null
+            OfficeKind.PPT -> deck != null
+        }
+        if (!hasTarget) return
         // Zero SAVE_HEADER lock (CD-04 / 03_PRD.md §4.3)
         launchSafely(
             onError = { err ->
@@ -318,18 +340,9 @@ class OfficeEditorViewModel @Inject constructor(
         ) {
             setState { copy(isSaving = true) }
             val savedItem = when (currentState.kind) {
-                OfficeKind.WORD -> {
-                    val doc = currentState.wordSnapshot ?: return@launchSafely
-                    officeEditorPort.saveWordDocument(currentState.uriString, doc).getOrThrow()
-                }
-                OfficeKind.EXCEL -> {
-                    val wb = currentState.workbookSnapshot ?: return@launchSafely
-                    officeEditorPort.saveWorkbook(currentState.uriString, wb).getOrThrow()
-                }
-                OfficeKind.PPT -> {
-                    val deck = currentState.slideDeckSnapshot ?: return@launchSafely
-                    officeEditorPort.saveSlideDeck(currentState.uriString, deck).getOrThrow()
-                }
+                OfficeKind.WORD -> officeEditorPort.saveWordDocument(currentState.uriString, word!!).getOrThrow()
+                OfficeKind.EXCEL -> officeEditorPort.saveWorkbook(currentState.uriString, workbook!!).getOrThrow()
+                OfficeKind.PPT -> officeEditorPort.saveSlideDeck(currentState.uriString, deck!!).getOrThrow()
             }
             draftRecoveryRepository.discardDraft(currentState.uriString)
             setState {

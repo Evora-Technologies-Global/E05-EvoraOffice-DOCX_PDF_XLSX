@@ -61,6 +61,7 @@ private class FakePrefsRepo(initialOnboarding: Boolean = false) : PreferencesRep
 
     override suspend fun setThemeMode(mode: AppThemeMode) = Unit
     override suspend fun setDefaultSortOrder(sortOrder: SortOrder) = Unit
+    override suspend fun setAutosaveIntervalSec(seconds: Int) = Unit
     override suspend fun setDefaultAppPromptDismissed(dismissed: Boolean) = Unit
     override suspend fun incrementExternalOpenCount() = Unit
 }

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="evora_nav_home">ホーム</string>
+    <string name="evora_nav_recent">最近</string>
+    <string name="evora_nav_storage">ストレージ</string>
+    <string name="evora_nav_tools">ツール</string>
+    <string name="evora_nav_scan_cd">文書をスキャン</string>
+    <string name="evora_action_scan">スキャン</string>
+    <string name="evora_action_search">検索</string>
+
+    <string name="evora_storage_title">ストレージ管理</string>
+    <string name="evora_storage_internal">内部ストレージ</string>
+    <string name="evora_storage_downloads">ダウンロード</string>
+    <string name="evora_storage_sd_card">SDカード</string>
+    <string name="evora_storage_pick_saf">フォルダを追加 (SAF)</string>
+    <string name="evora_storage_new_folder">新しいフォルダ</string>
+    <string name="evora_storage_move">移動</string>
+    <string name="evora_storage_copy">コピー</string>
+    <string name="evora_storage_delete">ゴミ箱</string>
+    <string name="evora_storage_share">共有</string>
+    <string name="evora_storage_merge_pdf">PDF結合</string>
+    <string name="evora_storage_empty_title">フォルダは空です</string>
+    <string name="evora_storage_empty_desc">新しいフォルダを作成するか、フォルダ選択 (SAF) で開いてください。</string>
+
+    <string name="evora_wifi_title">Wi-Fi Web &amp; FTP 転送</string>
+    <string name="evora_wifi_start">サーバー開始</string>
+    <string name="evora_wifi_stop">サーバー停止</string>
+    <string name="evora_wifi_running">稼働中</string>
+    <string name="evora_wifi_stopped">停止中</string>
+    <string name="evora_wifi_copy_url">URLをコピー</string>
+    <string name="evora_wifi_ftp_toggle">FTPサーバー</string>
+    <string name="evora_wifi_readonly">読み取り専用</string>
+    <string name="evora_wifi_pin_lock">PINロック</string>
+    <string name="evora_wifi_idle_prefix">自動停止まで</string>
+    <string name="evora_wifi_tip">PCのブラウザでHTTP URLを開くと、Wi-Fi経由でファイルをドラッグ＆ドロップできます。</string>
+
+    <string name="evora_cloud_title">クラウドドライブ</string>
+    <string name="evora_cloud_google_drive">Google Drive</string>
+    <string name="evora_cloud_onedrive">OneDrive</string>
+    <string name="evora_cloud_connect">接続</string>
+    <string name="evora_cloud_disconnect">切断</string>
+    <string name="evora_cloud_upload">アップロード</string>
+    <string name="evora_cloud_search_hint">クラウドファイルを検索</string>
+    <string name="evora_cloud_empty">このフォルダにファイルはありません</string>
+
+    <string name="evora_settings_title">設定</string>
+    <string name="evora_settings_appearance">外観</string>
+    <string name="evora_settings_theme">アプリテーマ</string>
+    <string name="evora_settings_theme_system">システム</string>
+    <string name="evora_settings_theme_light">ライト</string>
+    <string name="evora_settings_theme_dark">ダーク</string>
+    <string name="evora_settings_language">言語</string>
+    <string name="evora_settings_files_defaults">ファイルと既定</string>
+    <string name="evora_settings_default_handler">既定のファイルアプリ</string>
+    <string name="evora_settings_autosave">下書き自動保存間隔</string>
+    <string name="evora_settings_account_pro">アカウントとPro</string>
+    <string name="evora_settings_manage_pro">Evora Pro 管理</string>
+    <string name="evora_settings_restore_purchases">購入を復元</string>
+    <string name="evora_settings_connected_clouds">接続済みクラウド</string>
+    <string name="evora_settings_privacy_legal">プライバシーと法的情報</string>
+    <string name="evora_settings_ump_privacy">プライバシー同意設定</string>
+    <string name="evora_settings_oss_licenses">オープンソースライセンス</string>
+
+    <string name="evora_widget_quick_name">Evora クイックバー</string>
+    <string name="evora_widget_quick_desc">検索、スキャン、新規テンプレート作成を素早く起動。</string>
+    <string name="evora_widget_recent_name">Evora 最近の文書</string>
+    <string name="evora_widget_recent_desc">最近開いた3つのファイルにすぐアクセスできます。</string>
+    <string name="evora_widget_search_hint">文書を検索…</string>
+    <string name="evora_widget_new_doc">新規</string>
+    <string name="evora_widget_recent_empty">Evora Officeで文書を開くとここに表示されます。</string>
+</resources>

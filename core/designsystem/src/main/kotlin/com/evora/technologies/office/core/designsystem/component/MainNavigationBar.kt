@@ -37,23 +37,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.evora.technologies.office.core.designsystem.R
 import com.evora.technologies.office.core.designsystem.theme.EvoraRadii
 import com.evora.technologies.office.core.designsystem.theme.EvoraSpacing
 import com.evora.technologies.office.core.designsystem.theme.EvoraThemeTokens
 
 enum class MainTab(
-    val label: String,
     val icon: ImageVector,
+    val labelRes: Int,
 ) {
-    HOME("Home", Icons.Outlined.Home),
-    RECENT("Recent", Icons.Outlined.History),
-    STORAGE("Storage", Icons.Outlined.FolderOpen),
-    TOOLS("Tools", Icons.Outlined.Build),
+    HOME(Icons.Outlined.Home, R.string.evora_nav_home),
+    RECENT(Icons.Outlined.History, R.string.evora_nav_recent),
+    STORAGE(Icons.Outlined.FolderOpen, R.string.evora_nav_storage),
+    TOOLS(Icons.Outlined.Build, R.string.evora_nav_tools),
 }
 
 @Composable
@@ -92,7 +94,7 @@ fun MainBottomBar(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.DocumentScanner,
-                    contentDescription = "Scan document",
+                    contentDescription = stringResource(R.string.evora_nav_scan_cd),
                 )
             }
 
@@ -127,7 +129,7 @@ private fun RowScope.BottomTabItem(
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = tab.label,
+            text = stringResource(tab.labelRes),
             style = MaterialTheme.typography.labelSmall,
             color = tint,
             maxLines = 1,
@@ -162,24 +164,25 @@ fun MainNavigationRail(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.DocumentScanner,
-                    contentDescription = "Scan document",
+                    contentDescription = stringResource(R.string.evora_nav_scan_cd),
                 )
             }
         },
     ) {
         MainTab.entries.forEach { tab ->
+            val label = stringResource(tab.labelRes)
             NavigationRailItem(
                 selected = selectedTab == tab,
                 onClick = { onTabSelected(tab) },
                 icon = {
                     Icon(
                         imageVector = tab.icon,
-                        contentDescription = tab.label,
+                        contentDescription = label,
                     )
                 },
                 label = {
                     Text(
-                        text = tab.label,
+                        text = label,
                         style = MaterialTheme.typography.labelSmall,
                         maxLines = 1,
                     )

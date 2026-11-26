@@ -29,6 +29,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.File
 
 private class StubOfficeDocRepo : DocumentRepository {
@@ -56,6 +57,7 @@ private class StubOfficeDocRepo : DocumentRepository {
 }
 
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35])
 class OoxmlOfficeEngineTest {
     @Test
     fun `word track changes, excel formulas, and ppt notes roundtrip cleanly`() = runTest {

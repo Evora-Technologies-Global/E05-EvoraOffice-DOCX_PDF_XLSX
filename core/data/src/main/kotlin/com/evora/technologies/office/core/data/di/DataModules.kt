@@ -8,6 +8,7 @@ import com.evora.technologies.office.core.data.repository.LocalDocumentScanner
 import com.evora.technologies.office.core.data.repository.MediaStoreDocumentScanner
 import com.evora.technologies.office.core.data.repository.PreferencesRepositoryImpl
 import com.evora.technologies.office.core.data.repository.SignatureRepositoryImpl
+import com.evora.technologies.office.core.data.repository.StorageBrowserRepositoryImpl
 import com.evora.technologies.office.core.data.repository.TemplateRepositoryImpl
 import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.DocumentRepository
@@ -15,6 +16,7 @@ import com.evora.technologies.office.core.domain.port.DraftRecoveryRepository
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
 import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.domain.port.SignatureRepository
+import com.evora.technologies.office.core.domain.port.StorageBrowserRepository
 import com.evora.technologies.office.core.domain.port.TemplateRepository
 import dagger.Binds
 import dagger.Module
@@ -88,4 +90,8 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindTemplateRepository(impl: TemplateRepositoryImpl): TemplateRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindStorageBrowserRepository(impl: StorageBrowserRepositoryImpl): StorageBrowserRepository
 }

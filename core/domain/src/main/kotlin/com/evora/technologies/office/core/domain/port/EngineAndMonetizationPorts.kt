@@ -52,6 +52,7 @@ interface PreferencesRepository {
     suspend fun setSelectedLocaleTag(tag: String)
     suspend fun setThemeMode(mode: AppThemeMode)
     suspend fun setDefaultSortOrder(sortOrder: SortOrder)
+    suspend fun setAutosaveIntervalSec(seconds: Int)
     suspend fun setDefaultAppPromptDismissed(dismissed: Boolean)
     suspend fun incrementExternalOpenCount()
 }

@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.evora.technologies.office.core.database.EvoraOfficeDatabase
 import com.evora.technologies.office.core.datastore.EvoraPreferencesDataSource
+import com.evora.technologies.office.core.domain.port.WidgetRefreshPort
 import com.evora.technologies.office.core.model.DocFormat
 import com.evora.technologies.office.core.model.DocumentItem
 import kotlinx.coroutines.Dispatchers
@@ -82,6 +83,9 @@ class DocumentRepositoryImplTest {
             trashDao = db.trashDao(),
             draftRecoveryDao = db.draftRecoveryDao(),
             preferencesRepository = prefsRepo,
+            widgetRefreshPort = object : WidgetRefreshPort {
+                override suspend fun refreshAllWidgets() = Unit
+            },
             ioDispatcher = Dispatchers.Unconfined,
         )
 

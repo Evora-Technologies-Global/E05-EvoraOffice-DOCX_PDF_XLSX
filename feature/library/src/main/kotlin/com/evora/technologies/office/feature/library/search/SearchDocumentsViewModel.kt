@@ -73,6 +73,7 @@ class SearchDocumentsViewModel @Inject constructor(
             is SearchDocumentsIntent.ToggleFavorite -> launchSafely {
                 documentRepository.toggleFavorite(intent.uriString)
             }
+            SearchDocumentsIntent.BackClicked -> sendEffect(SearchDocumentsEffect.NavigateBack)
         }
     }
 }

@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.OpenableColumns
+import androidx.documentfile.provider.DocumentFile
 import com.evora.technologies.office.core.data.di.IoDispatcher
 import com.evora.technologies.office.core.database.dao.DocumentMetaDao
 import com.evora.technologies.office.core.database.dao.DraftRecoveryDao
@@ -14,6 +15,7 @@ import com.evora.technologies.office.core.database.entity.DocumentMetaEntity
 import com.evora.technologies.office.core.database.entity.TrashEntity
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
+import com.evora.technologies.office.core.domain.port.WidgetRefreshPort
 import com.evora.technologies.office.core.domain.util.DocumentListProcessor
 import com.evora.technologies.office.core.domain.util.FileNameValidationResult
 import com.evora.technologies.office.core.domain.util.FileNameValidator
@@ -49,6 +51,7 @@ class DocumentRepositoryImpl @Inject constructor(
     private val trashDao: TrashDao,
     private val draftRecoveryDao: DraftRecoveryDao,
     private val preferencesRepository: PreferencesRepository,
+    private val widgetRefreshPort: WidgetRefreshPort,
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : DocumentRepository {
 
@@ -177,7 +180,7 @@ class DocumentRepositoryImpl @Inject constructor(
         when {
             fromScan != null -> fromScan.mergeWith(meta, hasPendingDraft = false)
             meta != null -> meta.toDocumentItem(hasPendingDraft = false)
-            else -> resolveDirectFileItem(uriString)
+            else -> resolveDirectFileItem(uriString) ?: resolveContentUriItem(uriString)
         }
     }
 
@@ -217,6 +220,8 @@ class DocumentRepositoryImpl @Inject constructor(
             lastTotalPages = if (totalPages > 0) totalPages else existing?.lastTotalPages ?: 0,
         )
         documentMetaDao.upsert(updated)
+        runCatching { widgetRefreshPort.refreshAllWidgets() }
+        Unit
     }
 
     override suspend fun updateReadingPosition(
@@ -256,6 +261,8 @@ class DocumentRepositoryImpl @Inject constructor(
                 isContinuousScroll = isContinuousScroll,
             )
         }
+        runCatching { widgetRefreshPort.refreshAllWidgets() }
+        Unit
     }
 
     override suspend fun renameDocument(uriString: String, newBaseName: String): Result<DocumentItem> =
@@ -342,6 +349,7 @@ class DocumentRepositoryImpl @Inject constructor(
                 expiresAtEpochMs = expiresAt,
             )
             trashDao.upsert(entity)
+            runCatching { widgetRefreshPort.refreshAllWidgets() }
             Result.success(
                 TrashItem(
                     trashId = entity.trashId,
@@ -379,6 +387,7 @@ class DocumentRepositoryImpl @Inject constructor(
             }
             trashDao.deleteById(trashId)
             refreshMediaStoreIndex()
+            runCatching { widgetRefreshPort.refreshAllWidgets() }
             Result.success(Unit)
         } catch (c: CancellationException) {
             throw c
@@ -494,7 +503,11 @@ class DocumentRepositoryImpl @Inject constructor(
             val tempFile = File(importDir, "import_${System.nanoTime()}.tmp")
 
             val inputStream = if (uri.scheme == "file" && uri.path != null) {
-                FileInputStream(File(uri.path!!))
+                val targetFile = File(uri.path!!)
+                if (isInsidePrivateAppStorage(targetFile)) {
+                    return@withContext Result.failure(SecurityException("Access to private app storage denied"))
+                }
+                FileInputStream(targetFile)
             } else {
                 context.contentResolver.openInputStream(uri)
                     ?: return@withContext Result.failure(IllegalStateException("Cannot open URI stream"))
@@ -567,9 +580,11 @@ class DocumentRepositoryImpl @Inject constructor(
     override suspend fun registerSafUri(uriString: String): Result<DocumentItem> = withContext(ioDispatcher) {
         try {
             val uri = Uri.parse(uriString)
-            val name = queryDisplayName(uri) ?: uri.lastPathSegment?.substringAfterLast('/') ?: "document.pdf"
+            val name = queryDisplayName(uri) ?: uri.lastPathSegment?.substringAfterLast('/') ?: "document"
             val ext = name.substringAfterLast('.', "").lowercase()
-            val format = DocFormat.fromExtension(ext) ?: DocFormat.PDF
+            val mime = if (uri.scheme == "content") context.contentResolver.getType(uri) else null
+            val format = resolveSupportedFormat(ext, mime)
+                ?: return@withContext Result.failure(IllegalArgumentException("Unsupported file format: $name"))
             val size = querySizeBytes(uri)
             val now = System.currentTimeMillis()
             val parentLabel = if (uri.scheme == "file" && uri.path != null) {
@@ -641,9 +656,12 @@ class DocumentRepositoryImpl @Inject constructor(
             }
             return
         }
-        val deleted = context.contentResolver.delete(uri, null, null)
+        val deleted = runCatching { context.contentResolver.delete(uri, null, null) }.getOrDefault(0)
         if (deleted <= 0) {
-            error("System denied deleting this shared file; grant All-Files access to delete.")
+            val doc = DocumentFile.fromSingleUri(context, uri)
+            if (doc == null || !doc.delete()) {
+                error("System denied deleting this shared file; grant All-Files access to delete.")
+            }
         }
     }
 
@@ -668,13 +686,55 @@ class DocumentRepositoryImpl @Inject constructor(
         return restored.toURI().toString()
     }
 
-    private fun pruneOldExternalImports(importDir: File) {
+    private suspend fun pruneOldExternalImports(importDir: File) {
         val cutoff = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000
         importDir.listFiles()?.forEach { file ->
-            if (file.lastModified() < cutoff) {
-                file.delete()
+            if (file.lastModified() < cutoff && file.delete()) {
+                documentMetaDao.deleteByUri(file.toURI().toString())
             }
         }
+    }
+
+    private fun isInsidePrivateAppStorage(file: File): Boolean {
+        val path = runCatching { file.canonicalPath }.getOrNull() ?: return true
+        val blockedRoots = listOfNotNull(
+            runCatching { context.dataDir?.canonicalPath }.getOrNull(),
+            runCatching { context.filesDir.canonicalPath }.getOrNull(),
+            runCatching { context.cacheDir.canonicalPath }.getOrNull(),
+            runCatching { context.noBackupFilesDir?.canonicalPath }.getOrNull(),
+            runCatching { context.codeCacheDir?.canonicalPath }.getOrNull(),
+        )
+        return blockedRoots.any { root -> path == root || path.startsWith(root + File.separator) }
+    }
+
+    private fun resolveSupportedFormat(ext: String, mime: String?): DocFormat? {
+        DocFormat.fromExtension(ext)?.let { return it }
+        return when {
+            mime == "application/pdf" -> DocFormat.PDF
+            mime?.startsWith("text/") == true -> DocFormat.TEXT
+            mime == "application/epub+zip" -> DocFormat.EPUB
+            mime == "application/zip" || mime == "application/x-7z-compressed" -> DocFormat.ARCHIVE
+            else -> null
+        }
+    }
+
+    private fun resolveContentUriItem(uriString: String): DocumentItem? {
+        val uri = Uri.parse(uriString)
+        if (uri.scheme != "content") return null
+        val name = queryDisplayName(uri) ?: return null
+        val ext = name.substringAfterLast('.', "").lowercase()
+        val mime = runCatching { context.contentResolver.getType(uri) }.getOrNull()
+        val format = resolveSupportedFormat(ext, mime) ?: DocFormat.TEXT
+        return DocumentItem(
+            id = uriString,
+            uriString = uriString,
+            displayName = name,
+            extension = ext,
+            format = format,
+            sizeBytes = querySizeBytes(uri),
+            modifiedAtEpochMs = System.currentTimeMillis(),
+            parentFolderName = "Shared Storage",
+        )
     }
 
     private fun queryDisplayName(uri: Uri): String? {

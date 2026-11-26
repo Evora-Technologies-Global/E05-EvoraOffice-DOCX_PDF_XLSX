@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="evora_nav_home">홈</string>
+    <string name="evora_nav_recent">최근</string>
+    <string name="evora_nav_storage">저장소</string>
+    <string name="evora_nav_tools">도구</string>
+    <string name="evora_nav_scan_cd">문서 스캔</string>
+    <string name="evora_action_scan">스캔</string>
+    <string name="evora_action_search">검색</string>
+
+    <string name="evora_storage_title">저장소 탐색기</string>
+    <string name="evora_storage_internal">내부 저장소</string>
+    <string name="evora_storage_downloads">다운로드</string>
+    <string name="evora_storage_sd_card">SD 카드</string>
+    <string name="evora_storage_pick_saf">폴더 추가 (SAF)</string>
+    <string name="evora_storage_new_folder">새 폴더</string>
+    <string name="evora_storage_move">이동</string>
+    <string name="evora_storage_copy">복사</string>
+    <string name="evora_storage_delete">휴지통</string>
+    <string name="evora_storage_share">공유</string>
+    <string name="evora_storage_merge_pdf">PDF 병합</string>
+    <string name="evora_storage_empty_title">폴더가 비어 있습니다</string>
+    <string name="evora_storage_empty_desc">새 폴더를 만들거나 폴더 선택기(SAF)로 다른 경로를 여세요.</string>
+
+    <string name="evora_wifi_title">Wi-Fi 웹 &amp; FTP 전송</string>
+    <string name="evora_wifi_start">서버 시작</string>
+    <string name="evora_wifi_stop">서버 중지</string>
+    <string name="evora_wifi_running">실행 중</string>
+    <string name="evora_wifi_stopped">중지됨</string>
+    <string name="evora_wifi_copy_url">URL 복사</string>
+    <string name="evora_wifi_ftp_toggle">FTP 서버</string>
+    <string name="evora_wifi_readonly">읽기 전용 모드</string>
+    <string name="evora_wifi_pin_lock">PIN 잠금</string>
+    <string name="evora_wifi_idle_prefix">유휴 자동 중지</string>
+    <string name="evora_wifi_tip">PC 브라우저에서 HTTP 주소를 열어 Wi-Fi로 문서를 드래그 앤 드롭하세요.</string>
+
+    <string name="evora_cloud_title">클라우드 드라이브</string>
+    <string name="evora_cloud_google_drive">Google Drive</string>
+    <string name="evora_cloud_onedrive">OneDrive</string>
+    <string name="evora_cloud_connect">연결</string>
+    <string name="evora_cloud_disconnect">연결 해제</string>
+    <string name="evora_cloud_upload">파일 업로드</string>
+    <string name="evora_cloud_search_hint">클라우드 파일 검색</string>
+    <string name="evora_cloud_empty">이 폴더에 파일이 없습니다</string>
+
+    <string name="evora_settings_title">설정</string>
+    <string name="evora_settings_appearance">화면 표시</string>
+    <string name="evora_settings_theme">앱 테마</string>
+    <string name="evora_settings_theme_system">시스템</string>
+    <string name="evora_settings_theme_light">라이트</string>
+    <string name="evora_settings_theme_dark">다크</string>
+    <string name="evora_settings_language">언어</string>
+    <string name="evora_settings_files_defaults">파일 및 기본값</string>
+    <string name="evora_settings_default_handler">기본 문서 앱 설정</string>
+    <string name="evora_settings_autosave">임시 저장 주기</string>
+    <string name="evora_settings_account_pro">계정 및 Pro</string>
+    <string name="evora_settings_manage_pro">Evora Pro 관리</string>
+    <string name="evora_settings_restore_purchases">구매 복원</string>
+    <string name="evora_settings_connected_clouds">연결된 클라우드</string>
+    <string name="evora_settings_privacy_legal">개인정보 및 법적 고지</string>
+    <string name="evora_settings_ump_privacy">개인정보 동의 설정</string>
+    <string name="evora_settings_oss_licenses">오픈소스 라이선스</string>
+
+    <string name="evora_widget_quick_name">Evora 빠른 막대</string>
+    <string name="evora_widget_quick_desc">빠른 검색, 문서 스캔 및 새 템플릿 실행.</string>
+    <string name="evora_widget_recent_name">Evora 최근 문서</string>
+    <string name="evora_widget_recent_desc">최근 열어본 문서 3개로 바로 이동합니다.</string>
+    <string name="evora_widget_search_hint">문서 검색…</string>
+    <string name="evora_widget_new_doc">새로 만들기</string>
+    <string name="evora_widget_recent_empty">Evora Office에서 문서를 열면 여기에 표시됩니다.</string>
+</resources>

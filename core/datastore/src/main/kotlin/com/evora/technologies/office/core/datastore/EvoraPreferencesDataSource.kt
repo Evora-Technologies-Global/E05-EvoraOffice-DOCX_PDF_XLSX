@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.evora.technologies.office.core.model.AppThemeMode
 import com.evora.technologies.office.core.model.SortOrder
@@ -40,6 +41,7 @@ class EvoraPreferencesDataSource @Inject constructor(
         val defaultAppPromptDismissed = booleanPreferencesKey("default_prompt_dismissed")
         val externalOpenCount = intPreferencesKey("external_open_count")
         val pdfToDocxFreeUsedDay = longPreferencesKey("pdf_to_docx_free_used_day")
+        val safTreeUris = stringSetPreferencesKey("saf_tree_uris")
     }
 
     val onboardingCompleted: Flow<Boolean> =
@@ -80,6 +82,9 @@ class EvoraPreferencesDataSource @Inject constructor(
 
     val pdfToDocxFreeUsedEpochDay: Flow<Long> =
         dataStore.data.map { it[Keys.pdfToDocxFreeUsedDay] ?: -1L }
+
+    val safTreeUris: Flow<Set<String>> =
+        dataStore.data.map { it[Keys.safTreeUris] ?: emptySet() }
 
     suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { it[Keys.onboardingCompleted] = completed }
@@ -132,6 +137,20 @@ class EvoraPreferencesDataSource @Inject constructor(
 
     suspend fun setPdfToDocxFreeUsedEpochDay(epochDay: Long) {
         dataStore.edit { it[Keys.pdfToDocxFreeUsedDay] = epochDay }
+    }
+
+    suspend fun addSafTreeUri(treeUri: String) {
+        dataStore.edit { prefs ->
+            val next = (prefs[Keys.safTreeUris] ?: emptySet()) + treeUri
+            prefs[Keys.safTreeUris] = next
+        }
+    }
+
+    suspend fun removeSafTreeUri(treeUri: String) {
+        dataStore.edit { prefs ->
+            val next = (prefs[Keys.safTreeUris] ?: emptySet()) - treeUri
+            prefs[Keys.safTreeUris] = next
+        }
     }
 }
 

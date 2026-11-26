@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="evora_nav_home">Beranda</string>
+    <string name="evora_nav_recent">Terbaru</string>
+    <string name="evora_nav_storage">Penyimpanan</string>
+    <string name="evora_nav_tools">Alat</string>
+    <string name="evora_nav_scan_cd">Pindai dokumen</string>
+    <string name="evora_action_scan">Pindai</string>
+    <string name="evora_action_search">Cari</string>
+
+    <string name="evora_storage_title">Penjelajah Berkas</string>
+    <string name="evora_storage_internal">Internal</string>
+    <string name="evora_storage_downloads">Unduhan</string>
+    <string name="evora_storage_sd_card">Kartu SD</string>
+    <string name="evora_storage_pick_saf">Tambah Folder (SAF)</string>
+    <string name="evora_storage_new_folder">Folder Baru</string>
+    <string name="evora_storage_move">Pindah</string>
+    <string name="evora_storage_copy">Salin</string>
+    <string name="evora_storage_delete">Sampah</string>
+    <string name="evora_storage_share">Bagikan</string>
+    <string name="evora_storage_merge_pdf">Gabung PDF</string>
+    <string name="evora_storage_empty_title">Folder kosong</string>
+    <string name="evora_storage_empty_desc">Buat folder atau gunakan Pemilih Folder (SAF) untuk menelusuri direktori.</string>
+
+    <string name="evora_wifi_title">Transfer Wi-Fi Web &amp; FTP</string>
+    <string name="evora_wifi_start">Mulai Server</string>
+    <string name="evora_wifi_stop">Hentikan Server</string>
+    <string name="evora_wifi_running">Berjalan</string>
+    <string name="evora_wifi_stopped">Berhenti</string>
+    <string name="evora_wifi_copy_url">Salin URL</string>
+    <string name="evora_wifi_ftp_toggle">Server FTP</string>
+    <string name="evora_wifi_readonly">Mode Baca Saja</string>
+    <string name="evora_wifi_pin_lock">Kunci PIN</string>
+    <string name="evora_wifi_idle_prefix">Henti otomatis</string>
+    <string name="evora_wifi_tip">Buka URL HTTP di browser PC untuk seret &amp; lepas file melalui Wi-Fi lokal.</string>
+
+    <string name="evora_cloud_title">Drive Cloud</string>
+    <string name="evora_cloud_google_drive">Google Drive</string>
+    <string name="evora_cloud_onedrive">OneDrive</string>
+    <string name="evora_cloud_connect">Hubungkan</string>
+    <string name="evora_cloud_disconnect">Putuskan</string>
+    <string name="evora_cloud_upload">Unggah File</string>
+    <string name="evora_cloud_search_hint">Cari file cloud</string>
+    <string name="evora_cloud_empty">Tidak ada file di folder ini</string>
+
+    <string name="evora_settings_title">Pengaturan</string>
+    <string name="evora_settings_appearance">Tampilan</string>
+    <string name="evora_settings_theme">Tema Aplikasi</string>
+    <string name="evora_settings_theme_system">Sistem</string>
+    <string name="evora_settings_theme_light">Terang</string>
+    <string name="evora_settings_theme_dark">Gelap</string>
+    <string name="evora_settings_language">Bahasa</string>
+    <string name="evora_settings_files_defaults">Berkas &amp; Default</string>
+    <string name="evora_settings_default_handler">Aplikasi Pembuka Default</string>
+    <string name="evora_settings_autosave">Interval Simpan Otomatis</string>
+    <string name="evora_settings_account_pro">Akun &amp; Pro</string>
+    <string name="evora_settings_manage_pro">Kelola Evora Pro</string>
+    <string name="evora_settings_restore_purchases">Pulihkan Pembelian</string>
+    <string name="evora_settings_connected_clouds">Cloud Terhubung</string>
+    <string name="evora_settings_privacy_legal">Privasi &amp; Hukum</string>
+    <string name="evora_settings_ump_privacy">Pilihan Privasi &amp; Izin</string>
+    <string name="evora_settings_oss_licenses">Lisensi Sumber Terbuka</string>
+
+    <string name="evora_widget_quick_name">Bilah Cepat Evora</string>
+    <string name="evora_widget_quick_desc">Pencarian cepat, pindai dokumen, dan template baru.</string>
+    <string name="evora_widget_recent_name">Dokumen Terbaru Evora</string>
+    <string name="evora_widget_recent_desc">Akses langsung 3 dokumen terakhir Anda.</string>
+    <string name="evora_widget_search_hint">Cari dokumen…</string>
+    <string name="evora_widget_new_doc">Baru</string>
+    <string name="evora_widget_recent_empty">Buka dokumen di Evora Office agar tampil di sini.</string>
+</resources>

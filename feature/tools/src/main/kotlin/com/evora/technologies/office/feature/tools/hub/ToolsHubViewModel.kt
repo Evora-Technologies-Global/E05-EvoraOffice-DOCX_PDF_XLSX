@@ -54,6 +54,7 @@ class ToolsHubViewModel @Inject constructor(
             }
             ToolsHubIntent.DismissPrintPicker -> setState { copy(showPrintPickerSheet = false) }
             ToolsHubIntent.SettingsClicked -> sendEffect(ToolsHubEffect.NavigateToSettings)
+            ToolsHubIntent.PaywallClicked -> sendEffect(ToolsHubEffect.NavigateToPaywall)
         }
     }
 

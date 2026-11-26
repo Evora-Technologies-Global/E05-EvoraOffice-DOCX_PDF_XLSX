@@ -64,6 +64,7 @@ fun SearchDocumentsRoute(
 
     CollectEffects(viewModel.effects) { effect ->
         when (effect) {
+            SearchDocumentsEffect.NavigateBack -> onBack()
             is SearchDocumentsEffect.OpenDocument -> onOpenDocument(effect.document)
             is SearchDocumentsEffect.OpenArchiveInspector -> onOpenArchiveInspector(effect.document)
         }
@@ -71,7 +72,6 @@ fun SearchDocumentsRoute(
 
     SearchDocumentsScreen(
         state = state,
-        onBack = onBack,
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
@@ -80,7 +80,6 @@ fun SearchDocumentsRoute(
 @Composable
 internal fun SearchDocumentsScreen(
     state: SearchDocumentsState,
-    onBack: () -> Unit,
     onIntent: (SearchDocumentsIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -100,7 +99,7 @@ internal fun SearchDocumentsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    EvoraIconButton(onClick = onBack) {
+                    EvoraIconButton(onClick = { onIntent(SearchDocumentsIntent.BackClicked) }) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
                     }
                     OutlinedTextField(
@@ -266,7 +265,6 @@ private fun SearchDocumentsPreview() {
     EvoraTheme {
         SearchDocumentsScreen(
             state = SearchDocumentsState(query = "Contract"),
-            onBack = {},
             onIntent = {},
         )
     }

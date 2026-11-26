@@ -1,7 +1,9 @@
 package com.evora.technologies.office
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import java.io.File
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -33,7 +35,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        incomingActionState = extractIncomingAction(intent)
+        if (savedInstanceState == null) {
+            incomingActionState = extractIncomingAction(intent)
+        }
 
         setContent {
             val themeMode by preferencesRepository.themeMode
@@ -68,17 +72,56 @@ class MainActivity : AppCompatActivity() {
     private fun extractIncomingAction(intent: Intent?): IncomingLaunchAction? {
         if (intent == null) return null
         if (intent.action == Intent.ACTION_VIEW && intent.data != null) {
+            val uri = intent.data!!
+            if (isForbiddenPrivateUri(uri, allowExportDirs = false)) return null
             return IncomingLaunchAction.ViewDocument(
-                uriString = intent.data.toString(),
-                displayNameHint = intent.data?.lastPathSegment,
-                mimeTypeHint = intent.type ?: contentResolver.getType(intent.data!!),
+                uriString = uri.toString(),
+                displayNameHint = uri.lastPathSegment,
+                mimeTypeHint = intent.type ?: contentResolver.getType(uri),
             )
         }
         return when (intent.action) {
             "com.evora.technologies.office.ACTION_SCAN" -> IncomingLaunchAction.OpenScanner("DOCUMENT")
             "com.evora.technologies.office.ACTION_SIGN" -> IncomingLaunchAction.OpenPdfSignTool
             "com.evora.technologies.office.ACTION_OCR" -> IncomingLaunchAction.OpenScanner("OCR")
+            "com.evora.technologies.office.ACTION_WIDGET_SEARCH" -> IncomingLaunchAction.OpenSearch
+            "com.evora.technologies.office.ACTION_WIDGET_NEW_DOC" -> IncomingLaunchAction.OpenNewTemplate
+            "com.evora.technologies.office.ACTION_WIDGET_OPEN_DOC" -> {
+                val uri = intent.getStringExtra("extra_doc_uri")?.takeIf { it.isNotBlank() } ?: return null
+                val parsed = runCatching { Uri.parse(uri) }.getOrNull() ?: return null
+                if (parsed.scheme !in setOf("file", "content")) return null
+                if (isForbiddenPrivateUri(parsed, allowExportDirs = true)) return null
+                val name = intent.getStringExtra("extra_doc_name") ?: "document"
+                val fmt = intent.getStringExtra("extra_doc_format") ?: "PDF"
+                IncomingLaunchAction.OpenWidgetDocument(uri, name, fmt)
+            }
             else -> null
         }
+    }
+
+    private fun isForbiddenPrivateUri(uri: Uri, allowExportDirs: Boolean): Boolean {
+        if (uri.scheme != "file") return false
+        val path = uri.path ?: return true
+        val canonical = runCatching { File(path).canonicalPath }.getOrNull() ?: return true
+        val sensitiveRoots = if (allowExportDirs) {
+            listOfNotNull(
+                runCatching { File(filesDir, "cloud_vault").canonicalPath }.getOrNull(),
+                runCatching { File(filesDir, "datastore").canonicalPath }.getOrNull(),
+                runCatching { File(dataDir, "databases").canonicalPath }.getOrNull(),
+                runCatching { File(dataDir, "shared_prefs").canonicalPath }.getOrNull(),
+                runCatching { cacheDir.canonicalPath }.getOrNull(),
+                runCatching { codeCacheDir.canonicalPath }.getOrNull(),
+                runCatching { noBackupFilesDir.canonicalPath }.getOrNull(),
+            )
+        } else {
+            listOfNotNull(
+                runCatching { dataDir.canonicalPath }.getOrNull(),
+                runCatching { filesDir.canonicalPath }.getOrNull(),
+                runCatching { cacheDir.canonicalPath }.getOrNull(),
+                runCatching { codeCacheDir.canonicalPath }.getOrNull(),
+                runCatching { noBackupFilesDir.canonicalPath }.getOrNull(),
+            )
+        }
+        return sensitiveRoots.any { root -> canonical == root || canonical.startsWith(root + File.separator) }
     }
 }

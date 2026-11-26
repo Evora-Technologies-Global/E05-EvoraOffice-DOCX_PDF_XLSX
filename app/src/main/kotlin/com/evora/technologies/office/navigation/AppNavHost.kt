@@ -14,6 +14,7 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -25,10 +26,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.evora.technologies.office.core.designsystem.component.EmptyStateView
 import com.evora.technologies.office.core.designsystem.component.MainBottomBar
 import com.evora.technologies.office.core.designsystem.component.MainNavigationRail
 import com.evora.technologies.office.core.designsystem.component.MainTab
+import com.evora.technologies.office.core.model.CloudProvider
 import com.evora.technologies.office.core.model.DocFormat
 import com.evora.technologies.office.core.model.DocumentItem
 import com.evora.technologies.office.core.model.ExternalIntentPayload
@@ -36,6 +37,7 @@ import com.evora.technologies.office.core.model.OfficeKind
 import com.evora.technologies.office.core.model.PdfToolKind
 import com.evora.technologies.office.core.model.ScanMode
 import com.evora.technologies.office.core.model.SignatureItem
+import com.evora.technologies.office.feature.cloud.browser.CloudDriveBrowserRoute
 import com.evora.technologies.office.feature.editor.office.OfficeEditorRoute
 import com.evora.technologies.office.feature.editor.pdf.PdfEditorRoute
 import com.evora.technologies.office.feature.editor.signature.SignaturePadRoute
@@ -43,6 +45,7 @@ import com.evora.technologies.office.feature.editor.slideshow.SlideShowRoute
 import com.evora.technologies.office.feature.library.home.HomeDocumentsRoute
 import com.evora.technologies.office.feature.library.recent.RecentBookmarksRoute
 import com.evora.technologies.office.feature.library.search.SearchDocumentsRoute
+import com.evora.technologies.office.feature.library.storage.StorageBrowserRoute
 import com.evora.technologies.office.feature.monetization.paywall.PaywallRoute
 import com.evora.technologies.office.feature.onboarding.intro.OnboardingIntroRoute
 import com.evora.technologies.office.feature.onboarding.language.LanguageSelectRoute
@@ -51,8 +54,10 @@ import com.evora.technologies.office.feature.onboarding.splash.SplashRoute
 import com.evora.technologies.office.feature.reader.archive.ArchiveInspectorRoute
 import com.evora.technologies.office.feature.reader.viewer.DocumentReaderRoute
 import com.evora.technologies.office.feature.scanner.camera.ScannerFlowRoute
+import com.evora.technologies.office.feature.settings.SettingsRoute
 import com.evora.technologies.office.feature.tools.hub.ToolsHubRoute
 import com.evora.technologies.office.feature.tools.pdf.PdfToolConfigRoute
+import com.evora.technologies.office.feature.transfer.wifi.WifiTransferRoute
 import kotlinx.coroutines.launch
 
 sealed interface IncomingLaunchAction {
@@ -64,6 +69,13 @@ sealed interface IncomingLaunchAction {
 
     data class OpenScanner(val modeName: String) : IncomingLaunchAction
     data object OpenPdfSignTool : IncomingLaunchAction
+    data object OpenSearch : IncomingLaunchAction
+    data object OpenNewTemplate : IncomingLaunchAction
+    data class OpenWidgetDocument(
+        val uriString: String,
+        val displayName: String,
+        val formatName: String,
+    ) : IncomingLaunchAction
 }
 
 private object AppRoutes {
@@ -82,6 +94,9 @@ private object AppRoutes {
     const val SIGNATURE_PAD = "signature_pad"
     const val OFFICE_EDITOR = "office_editor?uri={uri}&name={name}&kind={kind}"
     const val SLIDE_SHOW = "slide_show?uri={uri}&start={start}"
+    const val CLOUD = "cloud?provider={provider}"
+    const val WIFI_TRANSFER = "wifi_transfer"
+    const val SETTINGS = "settings"
 
     fun paywall(fromOnboarding: Boolean): String = "paywall?onboarding=$fromOnboarding"
 
@@ -104,6 +119,8 @@ private object AppRoutes {
 
     fun slideShow(uriString: String, startIndex: Int): String =
         "slide_show?uri=${Uri.encode(uriString)}&start=$startIndex"
+
+    fun cloud(provider: CloudProvider): String = "cloud?provider=${Uri.encode(provider.name)}"
 }
 
 @Composable
@@ -118,6 +135,8 @@ fun AppNavHost(
     val scope = rememberCoroutineScope()
     var pendingSignatureId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingSignaturePath by rememberSaveable { mutableStateOf<String?>(null) }
+    var openTemplatesTrigger by rememberSaveable { mutableIntStateOf(0) }
+    var deferredDeepLink by remember { mutableStateOf<IncomingLaunchAction?>(null) }
 
     val showMessage: (String) -> Unit = remember(snackbarHostState) {
         { msg ->
@@ -168,6 +187,37 @@ fun AppNavHost(
         }
     }
 
+    val dispatchSecondaryAction: (IncomingLaunchAction) -> Unit = { action ->
+        when (action) {
+            is IncomingLaunchAction.OpenScanner -> {
+                val mode = runCatching { ScanMode.valueOf(action.modeName) }.getOrDefault(ScanMode.DOCUMENT)
+                navController.navigate(AppRoutes.scanner(mode)) { launchSingleTop = true }
+            }
+            IncomingLaunchAction.OpenPdfSignTool -> {
+                navController.navigate(AppRoutes.pdfTool(PdfToolKind.PKCS7_SIGN)) { launchSingleTop = true }
+            }
+            IncomingLaunchAction.OpenSearch -> {
+                navController.navigate(AppRoutes.SEARCH) { launchSingleTop = true }
+            }
+            IncomingLaunchAction.OpenNewTemplate -> {
+                openTemplatesTrigger++
+                if (navController.currentDestination?.route != AppRoutes.MAIN) {
+                    navController.navigate(AppRoutes.MAIN) { launchSingleTop = true }
+                }
+            }
+            is IncomingLaunchAction.OpenWidgetDocument -> {
+                val fmt = runCatching { DocFormat.valueOf(action.formatName) }.getOrDefault(DocFormat.PDF)
+                val target = if (fmt == DocFormat.ARCHIVE) {
+                    AppRoutes.archive(action.uriString, action.displayName)
+                } else {
+                    AppRoutes.reader(action.uriString, action.displayName, fmt)
+                }
+                navController.navigate(target) { launchSingleTop = true }
+            }
+            is IncomingLaunchAction.ViewDocument -> Unit
+        }
+    }
+
     LaunchedEffect(incomingAction) {
         when (incomingAction) {
             is IncomingLaunchAction.ViewDocument -> {
@@ -175,14 +225,18 @@ fun AppNavHost(
                     navController.navigate(AppRoutes.SPLASH) { launchSingleTop = true }
                 }
             }
-            is IncomingLaunchAction.OpenScanner -> {
+            is IncomingLaunchAction.OpenScanner,
+            IncomingLaunchAction.OpenPdfSignTool,
+            IncomingLaunchAction.OpenSearch,
+            IncomingLaunchAction.OpenNewTemplate,
+            is IncomingLaunchAction.OpenWidgetDocument,
+            -> {
                 onIncomingActionConsumed()
-                val mode = runCatching { ScanMode.valueOf(incomingAction.modeName) }.getOrDefault(ScanMode.DOCUMENT)
-                navController.navigate(AppRoutes.scanner(mode)) { launchSingleTop = true }
-            }
-            IncomingLaunchAction.OpenPdfSignTool -> {
-                onIncomingActionConsumed()
-                navController.navigate(AppRoutes.pdfTool(PdfToolKind.PKCS7_SIGN)) { launchSingleTop = true }
+                if (navController.currentDestination?.route == AppRoutes.SPLASH) {
+                    deferredDeepLink = incomingAction
+                } else {
+                    dispatchSecondaryAction(incomingAction)
+                }
             }
             null -> Unit
         }
@@ -215,6 +269,10 @@ fun AppNavHost(
                         onIncomingActionConsumed()
                         navController.navigate(AppRoutes.MAIN) {
                             popUpTo(AppRoutes.SPLASH) { inclusive = true }
+                        }
+                        deferredDeepLink?.let { pending ->
+                            deferredDeepLink = null
+                            dispatchSecondaryAction(pending)
                         }
                     },
                     onNavigateExternalDocument = openExternalPayload,
@@ -259,6 +317,10 @@ fun AppNavHost(
                         navController.navigate(AppRoutes.MAIN) {
                             popUpTo(AppRoutes.LANGUAGE_SELECT) { inclusive = true }
                         }
+                        deferredDeepLink?.let { pending ->
+                            deferredDeepLink = null
+                            dispatchSecondaryAction(pending)
+                        }
                     },
                     onShowMessage = showMessage,
                 )
@@ -267,6 +329,7 @@ fun AppNavHost(
             composable(AppRoutes.MAIN) {
                 MainShell(
                     windowWidthSizeClass = windowWidthSizeClass,
+                    openTemplatesTrigger = openTemplatesTrigger,
                     onOpenSearch = { navController.navigate(AppRoutes.SEARCH) },
                     onOpenPaywall = { navController.navigate(AppRoutes.paywall(fromOnboarding = false)) },
                     onOpenDocument = openTargetDocument,
@@ -277,8 +340,19 @@ fun AppNavHost(
                     onOpenArchiveInspector = { doc ->
                         navController.navigate(AppRoutes.archive(doc.uriString, doc.displayName))
                     },
+                    onOpenArchiveRaw = { uri, name ->
+                        navController.navigate(AppRoutes.archive(uri, name))
+                    },
+                    onOpenCloudDrive = { provider ->
+                        navController.navigate(AppRoutes.cloud(provider))
+                    },
                     onOpenPdfTool = { kind -> navController.navigate(AppRoutes.pdfTool(kind)) },
+                    onMergePdfUris = { uris ->
+                        navController.navigate(AppRoutes.pdfTool(PdfToolKind.MERGE, uris.joinToString("\n")))
+                    },
                     onOpenScanner = { mode -> navController.navigate(AppRoutes.scanner(mode)) },
+                    onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
+                    onOpenWifiTransfer = { navController.navigate(AppRoutes.WIFI_TRANSFER) },
                     onShowMessage = showMessage,
                 )
             }
@@ -468,6 +542,38 @@ fun AppNavHost(
                     onBack = { navController.popBackStack() },
                 )
             }
+
+            composable(
+                route = AppRoutes.CLOUD,
+                arguments = listOf(
+                    navArgument("provider") { type = NavType.StringType; defaultValue = CloudProvider.GOOGLE_DRIVE.name },
+                ),
+            ) { entry ->
+                val rawProv = entry.arguments?.getString("provider").orEmpty()
+                val provider = runCatching { CloudProvider.valueOf(rawProv) }.getOrDefault(CloudProvider.GOOGLE_DRIVE)
+                CloudDriveBrowserRoute(
+                    initialProvider = provider,
+                    onBack = { navController.popBackStack() },
+                    onOpenDownloadedDocument = openTargetDocument,
+                    onShowMessage = showMessage,
+                )
+            }
+
+            composable(AppRoutes.WIFI_TRANSFER) {
+                WifiTransferRoute(
+                    onBack = { navController.popBackStack() },
+                    onShowMessage = showMessage,
+                )
+            }
+
+            composable(AppRoutes.SETTINGS) {
+                SettingsRoute(
+                    onBack = { navController.popBackStack() },
+                    onOpenPaywall = { navController.navigate(AppRoutes.paywall(fromOnboarding = false)) },
+                    onOpenCloudDrives = { navController.navigate(AppRoutes.cloud(CloudProvider.GOOGLE_DRIVE)) },
+                    onShowMessage = showMessage,
+                )
+            }
         }
     }
 }
@@ -475,17 +581,28 @@ fun AppNavHost(
 @Composable
 private fun MainShell(
     windowWidthSizeClass: WindowWidthSizeClass,
+    openTemplatesTrigger: Int,
     onOpenSearch: () -> Unit,
     onOpenPaywall: () -> Unit,
     onOpenDocument: (DocumentItem) -> Unit,
     onOpenEditor: (DocumentItem) -> Unit,
     onConvertToPdf: (DocumentItem) -> Unit,
     onOpenArchiveInspector: (DocumentItem) -> Unit,
+    onOpenArchiveRaw: (uriString: String, displayName: String) -> Unit,
+    onOpenCloudDrive: (CloudProvider) -> Unit,
     onOpenPdfTool: (PdfToolKind) -> Unit,
+    onMergePdfUris: (List<String>) -> Unit,
     onOpenScanner: (ScanMode) -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenWifiTransfer: () -> Unit,
     onShowMessage: (String) -> Unit,
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
+    LaunchedEffect(openTemplatesTrigger) {
+        if (openTemplatesTrigger > 0) {
+            selectedTab = MainTab.HOME
+        }
+    }
     val isMediumOrExpanded = windowWidthSizeClass != WindowWidthSizeClass.Compact
     val isExpandedTwoPane = windowWidthSizeClass == WindowWidthSizeClass.Expanded
     val toolColumns = when (windowWidthSizeClass) {
@@ -530,19 +647,21 @@ private fun MainShell(
                         onOpenEditor = onOpenEditor,
                         onConvertDocumentToPdf = onConvertToPdf,
                         onOpenArchiveInspector = onOpenArchiveInspector,
+                        openTemplatesTrigger = openTemplatesTrigger,
                         onShowMessage = onShowMessage,
                     )
                     MainTab.RECENT -> RecentBookmarksRoute(
                         onOpenDocument = onOpenDocument,
                         onOpenArchiveInspector = onOpenArchiveInspector,
-                        onShowMessage = showMessage@{ onShowMessage(it) },
+                        onShowMessage = { onShowMessage(it) },
                     )
-                    MainTab.STORAGE -> EmptyStateView(
-                        title = "Storage Explorer (Sprint 3)",
-                        description = "Folder hierarchy and batch manager land in T-018. Use Home -> Search or + Picker now.",
-                        icon = Icons.Outlined.FolderOpen,
-                        primaryActionLabel = "Go to Home Library",
-                        onPrimaryAction = { selectedTab = MainTab.HOME },
+                    MainTab.STORAGE -> StorageBrowserRoute(
+                        isExpandedTwoPane = isExpandedTwoPane,
+                        onOpenDocument = onOpenDocument,
+                        onOpenArchiveInspector = onOpenArchiveRaw,
+                        onOpenCloudDrive = onOpenCloudDrive,
+                        onMergePdfs = onMergePdfUris,
+                        onShowMessage = onShowMessage,
                     )
                     MainTab.TOOLS -> ToolsHubRoute(
                         columns = toolColumns,
@@ -553,6 +672,8 @@ private fun MainShell(
                         },
                         onNavigateToPaywall = onOpenPaywall,
                         onOpenCreatedOfficeDoc = onOpenEditor,
+                        onNavigateToSettings = onOpenSettings,
+                        onNavigateToWifiTransfer = onOpenWifiTransfer,
                         onShowMessage = onShowMessage,
                     )
                 }
