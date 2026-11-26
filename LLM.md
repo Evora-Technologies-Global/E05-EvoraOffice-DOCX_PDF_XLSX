@@ -5,7 +5,7 @@
 > where a new file belongs. For *how* to write an MVI screen, read
 > [`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md).
 
-**Status (26/11/2026): Sprints 1–3 Core Engineering Complete (`F-01`–`F-09 = Done`; `T-001`–`T-022` done; `R-01` `14/14` `16 KB` ARM64 `.so` binaries from CI run `45768969780` + `org.libreoffice.kit` JNI bindings & asset unpacker integrated in `:engine:office`; `CD-07` Core Gate approved to unlock Sprint 4 Monetization).** Architecture and module boundaries are
+**Status (26/11/2026): Sprints 1–3 Core Engineering Complete (`F-01`–`F-09 = Done`; `T-001`–`T-022` done; `R-01` `14/14` `16 KB` ARM64 `.so` binaries from CI run `45768969780` + `org.libreoffice.kit` JNI bindings & asset unpacker integrated in `:engine:office`); Sprint 4 Underway (`T-023` `:engine:monetization` + Play Billing `8.0.0` + HMAC-signed offline entitlement cache + `PaywallRoute` / `RewardGateSheet` / `SettingsRoute` Restore done; `T-024` UMP/AdMob Mediation next).** Architecture and module boundaries are
 defined in [`docs/07_TECH_SPEC.md`](docs/07_TECH_SPEC.md). Modules marked `[Active]` are compiled and verified; modules marked `[Planned — Sprint N]` activate in their respective sprint.
 Code snippets in §4–§6 are copied strictly from real E05 code as modules land.
 
@@ -45,7 +45,7 @@ Native Android application (**Kotlin + Jetpack Compose**, **MVI + Clean Architec
   - `:engine:scanner` (`CameraX 1.7.0` + `ML Kit` Doc Scanner `16.0.0` / 5-Script OCR `16.0.1` / Barcode `17.3.0`) `[Active — Sprint 2 T-014]`
   - `:engine:transfer` (`Ktor CIO` Wi-Fi HTTP + `EmbeddedFtpServer` + `TransferPathSandbox` + `WifiTransferService` + `WifiTransferTileService`) `[Active — Sprint 3 T-019]`
   - `:engine:cloud` (`Google Drive REST v3` + `OneDrive MSAL / Graph v6` + `AndroidKeystoreTokenVault`) `[Active — Sprint 3 T-020]`
-  - `:engine:monetization` (`Play Billing 8.0.0`, `UMP CMP`, `AdMob Mediation`, `Firebase Remote Config`) `[Planned — Sprint 4 T-023/T-024 per CD-07]`
+  - `:engine:monetization` (`Play Billing 8.0.0` + `SignedEntitlementCache` + `ActiveActivityTracker` `[Active — Sprint 4 T-023]`; `UMP CMP`, `AdMob Mediation`, `Firebase Remote Config` `[Planned — T-024]`)
 - **Feature Layer (isolated; `:feature:*` NEVER depends on another `:feature:*`):**
   - `:feature:onboarding` (`SplashRoute`, `LanguageSelectRoute`, `OnboardingIntroRoute`, `StoragePermissionRoute`) `[Active — T-006]`
   - `:feature:library` (`HomeDocumentsRoute`, `RecentBookmarksRoute`, `SearchDocumentsRoute`, `StorageBrowserRoute`, `QuickBarGlanceWidget`, `RecentDocsGlanceWidget`, `EvoraTemplatesSheet`) `[Active — Sprints 1–3 T-007/T-015/T-018/T-021]`
@@ -55,7 +55,7 @@ Native Android application (**Kotlin + Jetpack Compose**, **MVI + Clean Architec
   - `:feature:scanner` (`ScannerFlowRoute`) `[Active — Sprint 2 T-014]`
   - `:feature:cloud` (`CloudDriveBrowserRoute`) `[Active — Sprint 3 T-020]`
   - `:feature:transfer` (`WifiTransferRoute`) `[Active — Sprint 3 T-019]`
-  - `:feature:monetization` (`PaywallRoute`, `RewardGateSheet` shell wired to `ProEntitlementPort`) `[Active — T-006 shell / Sprint 4 T-023]`
+  - `:feature:monetization` (`PaywallRoute`, `RewardGateSheet` wired to `PlayBillingEntitlementRepository` via `ProEntitlementPort`) `[Active — Sprint 4 T-023]`
   - `:feature:settings` (`SettingsRoute`) `[Active — Sprint 3 T-022]`
 - **Performance:** `:baselineprofile` `[Planned — Sprint 4 T-025]`
 
@@ -141,7 +141,7 @@ Locked by CEO (`CD-11`, `2026-11-25`): **Hilt with KSP (`com.google.dagger:hilt-
 - Android modules using Hilt apply convention plugin `evora.android.hilt` (never `kapt`).
 - `:core:domain` uses pure `javax.inject:javax.inject:1` (`@Inject` constructors) or constructor parameters wired in `:core:data` `@Module` bindings, keeping `:core:domain` 100% Android-free.
 - Glance widgets (`W-01`/`W-02`) resolve domain ports via `@EntryPoint @InstallIn(SingletonComponent::class)` and `EntryPointAccessors.fromApplication(...)`.
-- `CD-07` Enforcement: Sprints 1–3 bind `ProEntitlementPort` and `AdPlacementHook` to `:core:data`'s local stub/no-op implementations; Sprint 4 swaps in `:engine:monetization` implementations.
+- `CD-07` Enforcement: Sprints 1–3 bound `ProEntitlementPort` and `AdPlacementHook` to `:core:data` stub/no-op implementations; Sprint 4 `T-023` now binds `ProEntitlementPort` to `PlayBillingEntitlementRepository` inside `:engine:monetization` (`MonetizationBindingsModule`), while `AdPlacementHook` stays `NoOpAdPlacementHook` until `T-024`.
 
 ---
 
@@ -190,7 +190,7 @@ Locked by CEO (`CD-11`, `2026-11-25`): **Hilt with KSP (`com.google.dagger:hilt-
 | Scanner Engine (`CameraX`, `ML Kit` Doc/OCR/QR, `MlKitScannerEngine`, Dual ID Card) | `engine/scanner/src/main/kotlin/com/evora/technologies/office/engine/scanner/...` |
 | Wi-Fi Transfer Engine (`Ktor CIO` HTTP, `EmbeddedFtpServer`, `TransferPathSandbox`, `WifiTransferService`, `TileService`) | `engine/transfer/src/main/kotlin/com/evora/technologies/office/engine/transfer/...` & `engine/transfer/src/main/assets/wifi_web/` |
 | Cloud Engine (`GoogleDriveCloudClient`, `OneDriveCloudClient`, `AndroidKeystoreTokenVault`) | `engine/cloud/src/main/kotlin/com/evora/technologies/office/engine/cloud/...` & `app/src/main/res/raw/msal_config.json` |
-| Monetization Engine (`BillingClient 8`, `UMP`, `AdMob Mediation`, `RemoteConfig`) | `engine/monetization/src/main/kotlin/com/evora/technologies/office/engine/monetization/...` *(Sprint 4 T-023/T-024 per CD-07)* |
+| Monetization Engine (`PlayBillingClientGateway`, `PlayBillingEntitlementRepository`, `SignedEntitlementCache`, `ActiveActivityTracker`) | `engine/monetization/src/main/kotlin/com/evora/technologies/office/engine/monetization/...` *(T-023 active; UMP/AdMob in T-024)* |
 | Glance Widgets & App Shortcuts (`QuickBarGlanceWidget`, `RecentDocsGlanceWidget`) | `feature/library/src/main/kotlin/.../widget/` & `app/src/main/res/xml/shortcuts.xml` |
 | Feature UI Screens (`XContract`, `XViewModel`, `XRoute`, `XScreen`) | `feature/<domain>/src/main/kotlin/com/evora/technologies/office/feature/<domain>/<screen>/...` |
 | CI Workflows & Build/ELF Checks | `.github/workflows/*.yml`, `scripts/verify_16kb_elf.py`, `scripts/fetch_lok_prebuilt.sh` |
@@ -217,7 +217,8 @@ Locked by CEO (`CD-11`, `2026-11-25`): **Hilt with KSP (`com.google.dagger:hilt-
 - **Universal Readers & Archives (`T-008`–`T-009`):** `:engine:pdf` (`PdfiumAndroid`), `:engine:hwp` (`hwplib`/`hwpxlib` + XSS sanitizer + `EPUB`/`TXT`/`CSV`), and `:engine:archive` (`Commons Compress` + `XZ` with Zip-Slip checks & `.rar` guard) drive `DocumentReaderRoute` and `ArchiveInspectorRoute`.
 - **Sprint 2 PDF Power, Scanner & Office Editors (`T-010`–`T-017`):** `:engine:pdf` (`PdfBoxPowerEngine` annotations, signatures, PKCS#7, AES-128/256, merge, split, compress, watermark, offline `PDF->DOCX` w/ ML Kit OCR fallback), `:engine:scanner` (`CameraX`, ML Kit Doc Scanner, 5-script OCR, Dual-Side ID Card A4, QR), `:engine:office` (`OoxmlOfficeEngine` + `LibreOfficeNativeBridge`), and `:feature:tools`, `:feature:scanner`, `:feature:editor` (`PdfEditorRoute`, `SignaturePadRoute`, `OfficeEditorRoute`, `SlideShowRoute`) compile, pass unit tests + Lint, and enforce zero `SAVE_HEADER` locks.
 - **Sprint 3 Storage, Wi-Fi Transfer, Cloud, Widgets & Core Gate (`T-018`–`T-022`):** `StorageBrowserRepositoryImpl` + `StorageBrowserRoute` (`Internal`/`Downloads`/`SD Card`/`SAF` trees, batch Move/Copy/Trash/Share/Merge PDF, tablet split), `:engine:transfer` + `WifiTransferRoute` (`Ktor CIO` offline drag-and-drop HTTP UI + `EmbeddedFtpServer` + `TransferPathSandbox` + PIN/Read-Only + `10m` idle stop + `TileService`), `:engine:cloud` + `CloudDriveBrowserRoute` (Google Drive REST v3 + Microsoft OneDrive MSAL/Graph v6 + `AndroidKeystoreTokenVault`), `QuickBarGlanceWidget` / `RecentDocsGlanceWidget` + `shortcuts.xml` + `deferredDeepLink` cold-start routing, `SettingsRoute` + `10`-locale `AppLanguage`/`RTL` polish, and **Core Feature Code Review Gate (`F-01`–`F-09 = Done`, zero Blocker, zero AdMob/UMP/Billing calls per `CD-07`)**.
-- **16 KB Native Gate (`T-002`/`T-003`/`T-014`):** `scripts/verify_16kb_elf.py` verifies `16/16` bundled `.so` binaries (`arm64-v8a` + `x86_64`) pass `0x4000` alignment across `PdfiumAndroid`, `CameraX`, `ML Kit` OCR/Barcode, `DataStore`, and `androidx.graphics.path`.
+- **Sprint 4 Play Billing `8.0.0` (`T-023`):** `:engine:monetization` wires `BillingClient 8.0.0` (`PendingPurchasesParams`, `enableAutoServiceReconnection()`, `queryProductDetails`, `queryPurchasesAsync`, `acknowledgePurchase`) via `PlayBillingClientGateway` + `ActiveActivityTracker`, persists entitlements offline in `SignedEntitlementCache` (Android Keystore `HmacSHA256`), enforces debug-only `qaProOverride`, and drives `PaywallRoute`, `RewardGateSheet`, and `SettingsRoute -> Restore Purchases`.
+- **16 KB Native Gate (`T-002`/`T-003`/`T-014`/`T-023`):** `scripts/verify_16kb_elf.py` verifies `30/30` bundled `.so` binaries (`arm64-v8a` + `x86_64`) pass `0x4000` alignment across `LibreOfficeKit` (`14` `.so`), `PdfiumAndroid`, `CameraX`, `ML Kit` OCR/Barcode, `DataStore`, and `androidx.graphics.path`.
 
 ---
 
