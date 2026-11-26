@@ -101,10 +101,16 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun restorePurchases() {
+        if (currentState.isRestoringPurchases) return
         launchSafely(
-            onError = { err -> sendEffect(SettingsEffect.ShowMessage(err.message ?: "Restore failed")) },
+            onError = { err ->
+                setState { copy(isRestoringPurchases = false) }
+                sendEffect(SettingsEffect.ShowMessage(err.message ?: "Restore failed"))
+            },
         ) {
+            setState { copy(isRestoringPurchases = true) }
             val restored = proEntitlementPort.restorePurchases()
+            setState { copy(isRestoringPurchases = false) }
             if (restored) {
                 sendEffect(SettingsEffect.ShowMessage("Evora Pro purchases restored"))
             } else {

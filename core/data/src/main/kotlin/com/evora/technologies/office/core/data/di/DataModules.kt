@@ -1,6 +1,5 @@
 package com.evora.technologies.office.core.data.di
 
-import com.evora.technologies.office.core.data.monetization.LocalProEntitlementRepository
 import com.evora.technologies.office.core.data.monetization.NoOpAdPlacementHook
 import com.evora.technologies.office.core.data.repository.DocumentRepositoryImpl
 import com.evora.technologies.office.core.data.repository.DraftRecoveryRepositoryImpl
@@ -14,7 +13,6 @@ import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.DraftRecoveryRepository
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
-import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.domain.port.SignatureRepository
 import com.evora.technologies.office.core.domain.port.StorageBrowserRepository
 import com.evora.technologies.office.core.domain.port.TemplateRepository
@@ -59,10 +57,6 @@ object DispatchersModule {
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DataModule {
-    @Binds
-    @Singleton
-    abstract fun bindProEntitlementPort(impl: LocalProEntitlementRepository): ProEntitlementPort
-
     @Binds
     @Singleton
     abstract fun bindAdPlacementHook(impl: NoOpAdPlacementHook): AdPlacementHook

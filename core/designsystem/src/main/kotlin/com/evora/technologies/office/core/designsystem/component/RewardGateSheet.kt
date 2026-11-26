@@ -59,7 +59,7 @@ fun EvoraRewardGateSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             EvoraPrimaryButton(
-                text = "Unlock 24h Pass (Preview)",
+                text = "Unlock 24h Pro Pass",
                 onClick = onWatchRewardedPass,
             )
             EvoraOutlinedButton(

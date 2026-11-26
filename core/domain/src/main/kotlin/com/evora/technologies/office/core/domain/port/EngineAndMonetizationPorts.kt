@@ -2,6 +2,7 @@ package com.evora.technologies.office.core.domain.port
 
 import com.evora.technologies.office.core.model.AppThemeMode
 import com.evora.technologies.office.core.model.ArchiveEntryItem
+import com.evora.technologies.office.core.model.BillingOffer
 import com.evora.technologies.office.core.model.DocFormat
 import com.evora.technologies.office.core.model.DocumentItem
 import com.evora.technologies.office.core.model.ExternalIntentPayload
@@ -9,12 +10,15 @@ import com.evora.technologies.office.core.model.OutlineNode
 import com.evora.technologies.office.core.model.PdfSearchMatch
 import com.evora.technologies.office.core.model.ProFeature
 import com.evora.technologies.office.core.model.ProStatus
+import com.evora.technologies.office.core.model.PurchaseResult
 import com.evora.technologies.office.core.model.ReaderBookmarkState
 import com.evora.technologies.office.core.model.ReaderTheme
 import com.evora.technologies.office.core.model.SortOrder
+import com.evora.technologies.office.core.model.SubscriptionPlan
 import com.evora.technologies.office.core.model.TrashItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * Abstracts subscription, lifetime unlock, and 24h rewarded pass entitlements.
@@ -25,6 +29,10 @@ interface ProEntitlementPort {
     suspend fun hasAccess(feature: ProFeature): Boolean
     suspend fun grantRewardedPass(hours: Int)
     suspend fun restorePurchases(): Boolean
+    fun observeBillingOffers(): Flow<List<BillingOffer>> = flowOf(BillingOffer.defaults())
+    suspend fun refreshCatalog() = Unit
+    suspend fun purchasePlan(plan: SubscriptionPlan): PurchaseResult =
+        PurchaseResult.BillingUnavailable("Play Billing unavailable")
     suspend fun setQaProOverride(enabled: Boolean) = Unit
     suspend fun hasFreeDailyPdfToDocxAvailable(): Boolean = false
     suspend fun consumeFreeDailyPdfToDocx(): Unit = Unit

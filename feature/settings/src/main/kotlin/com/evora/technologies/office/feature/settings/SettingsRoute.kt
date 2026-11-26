@@ -218,14 +218,22 @@ internal fun SettingsScreen(
                         SettingsRow(
                             icon = Icons.Outlined.WorkspacePremium,
                             title = stringResource(R.string.evora_settings_manage_pro),
-                            subtitle = if (state.proStatus.isPro) "Pro Active" else if (state.proStatus.hasRewardedPass) "24h Pass Active" else "Free Plan",
+                            subtitle = when {
+                                state.proStatus.isPro -> "Pro Active (${state.proStatus.activeSku ?: "Active"}) · Ad-Free"
+                                state.proStatus.hasRewardedPass -> "24h Pro Pass Active"
+                                else -> "Free Plan"
+                            },
                             onClick = { onIntent(SettingsIntent.ManageProClicked) },
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         SettingsRow(
                             icon = Icons.Outlined.Restore,
                             title = stringResource(R.string.evora_settings_restore_purchases),
-                            subtitle = "Sync Play Store subscriptions & lifetime unlock",
+                            subtitle = if (state.isRestoringPurchases) {
+                                "Checking Google Play purchases..."
+                            } else {
+                                "Sync Play Store subscriptions & lifetime unlock"
+                            },
                             onClick = { onIntent(SettingsIntent.RestorePurchasesClicked) },
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)

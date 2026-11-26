@@ -55,9 +55,17 @@ private class FakeSettingsPrefs : PreferencesRepository {
 
 private class FakeSettingsPro : ProEntitlementPort {
     override val proStatus = MutableStateFlow(ProStatus())
-    override suspend fun hasAccess(feature: ProFeature) = false
+    var restoreResult: Boolean = false
+    var restoreException: Throwable? = null
+    override suspend fun hasAccess(feature: ProFeature) = proStatus.value.isUnlocked
     override suspend fun grantRewardedPass(hours: Int) = Unit
-    override suspend fun restorePurchases() = false
+    override suspend fun restorePurchases(): Boolean {
+        restoreException?.let { throw it }
+        if (restoreResult) {
+            proStatus.value = ProStatus(isPro = true, activeSku = "e05_yearly_pro_3999")
+        }
+        return restoreResult
+    }
 }
 
 private class FakeSettingsCloud : CloudDrivePort {
@@ -117,5 +125,26 @@ class SettingsViewModelTest {
         }
         assertEquals(AppLanguage.ID, AppLanguage.fromTag("in"))
         assertEquals(AppLanguage.ID, AppLanguage.fromTag("id"))
+    }
+
+    @Test
+    fun `restore purchases updates pro status or resets busy flag on failure`() = runTest {
+        val pro = FakeSettingsPro().apply { restoreResult = true }
+        val vm = SettingsViewModel(FakeSettingsPrefs(), pro, FakeSettingsCloud())
+        advanceUntilIdle()
+
+        vm.effects.test {
+            vm.onIntent(SettingsIntent.RestorePurchasesClicked)
+            advanceUntilIdle()
+            assertTrue(vm.state.value.proStatus.isPro)
+            assertTrue(!vm.state.value.isRestoringPurchases)
+            assertEquals(SettingsEffect.ShowMessage("Evora Pro purchases restored"), awaitItem())
+
+            pro.restoreException = IllegalStateException("Google Play unavailable")
+            vm.onIntent(SettingsIntent.RestorePurchasesClicked)
+            advanceUntilIdle()
+            assertTrue(!vm.state.value.isRestoringPurchases)
+            assertEquals(SettingsEffect.ShowMessage("Google Play unavailable"), awaitItem())
+        }
     }
 }

@@ -13,6 +13,7 @@ data class SettingsState(
     val autosaveIntervalSec: Int = 15,
     val proStatus: ProStatus = ProStatus(),
     val connectedCloudCount: Int = 0,
+    val isRestoringPurchases: Boolean = false,
     val showThemeDialog: Boolean = false,
     val showLanguageDialog: Boolean = false,
     val showAutosaveDialog: Boolean = false,

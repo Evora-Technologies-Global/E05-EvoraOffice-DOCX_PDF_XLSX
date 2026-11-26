@@ -185,6 +185,9 @@ data class ProStatus(
     val activeSku: String? = null,
 ) {
     val isUnlocked: Boolean get() = isPro || hasRewardedPass
+
+    /** True only when paid Pro subscription/lifetime is active, hiding all ad slots globally. */
+    val shouldHideAds: Boolean get() = isPro
 }
 
 enum class ProFeature {
@@ -207,4 +210,32 @@ enum class SubscriptionPlan(
     WEEKLY("e05_weekly_trial", "Weekly Pro", "$4.99 / week", "Includes 3-day free trial", null),
     YEARLY("e05_yearly_pro_3999", "Annual Pro", "$39.99 / year", "7-day free trial · $3.33/mo", "BEST VALUE"),
     LIFETIME("e05_lifetime_pro", "Lifetime Pro", "$59.99 once", "One-time unlock · Forever ad-free", null),
+}
+
+data class BillingOffer(
+    val plan: SubscriptionPlan,
+    val formattedPrice: String = plan.priceDisplay,
+    val billingSubtitle: String = plan.subtitle,
+    val hasFreeTrial: Boolean = plan != SubscriptionPlan.LIFETIME,
+    val isFromPlayStore: Boolean = false,
+) {
+    companion object {
+        fun defaults(): List<BillingOffer> = SubscriptionPlan.entries.map { plan ->
+            BillingOffer(
+                plan = plan,
+                formattedPrice = plan.priceDisplay,
+                billingSubtitle = plan.subtitle,
+                hasFreeTrial = plan != SubscriptionPlan.LIFETIME,
+                isFromPlayStore = false,
+            )
+        }
+    }
+}
+
+sealed interface PurchaseResult {
+    data class Success(val skuId: String) : PurchaseResult
+    data object Pending : PurchaseResult
+    data object Cancelled : PurchaseResult
+    data class BillingUnavailable(val message: String) : PurchaseResult
+    data class Error(val message: String) : PurchaseResult
 }

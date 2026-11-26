@@ -75,6 +75,7 @@ dependencies {
     implementation(project(":engine:scanner"))
     implementation(project(":engine:transfer"))
     implementation(project(":engine:cloud"))
+    implementation(project(":engine:monetization"))
     implementation(project(":feature:onboarding"))
     implementation(project(":feature:monetization"))
     implementation(project(":feature:library"))

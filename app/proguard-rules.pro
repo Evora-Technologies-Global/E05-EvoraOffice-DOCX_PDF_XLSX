@@ -29,3 +29,7 @@
 -keep class org.libreoffice.kit.** { *; }
 -keepclassmembers class org.libreoffice.kit.** { *; }
 -keep class org.libreoffice.android.** { *; }
+
+# Google Play Billing 8.0.0 & Monetization
+-keep class com.android.billingclient.api.** { *; }
+-keep class com.evora.technologies.office.engine.monetization.** { *; }

@@ -1,5 +1,6 @@
 package com.evora.technologies.office.feature.monetization.paywall
 
+import com.evora.technologies.office.core.model.BillingOffer
 import com.evora.technologies.office.core.model.ProStatus
 import com.evora.technologies.office.core.model.SubscriptionPlan
 import com.evora.technologies.office.core.mvi.UiEffect
@@ -7,6 +8,7 @@ import com.evora.technologies.office.core.mvi.UiIntent
 import com.evora.technologies.office.core.mvi.UiState
 
 data class PaywallState(
+    val offers: List<BillingOffer> = BillingOffer.defaults(),
     val selectedPlan: SubscriptionPlan = SubscriptionPlan.YEARLY,
     val proStatus: ProStatus = ProStatus(),
     val isProcessing: Boolean = false,
@@ -14,10 +16,11 @@ data class PaywallState(
 ) : UiState
 
 sealed interface PaywallIntent : UiIntent {
+    data object RefreshOffers : PaywallIntent
     data class SelectPlan(val plan: SubscriptionPlan) : PaywallIntent
     data object StartTrialClicked : PaywallIntent
     data object RestorePurchasesClicked : PaywallIntent
-    data object GrantPreviewRewardPassClicked : PaywallIntent
+    data object GrantRewardPassClicked : PaywallIntent
     data object SkipClicked : PaywallIntent
 }
 

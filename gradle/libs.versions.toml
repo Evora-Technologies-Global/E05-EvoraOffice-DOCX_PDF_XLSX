@@ -35,6 +35,7 @@ googleDriveApi = "v3-rev20261106-2.9.2"
 msal = "7.1.0"
 microsoftGraph = "6.71.0"
 okhttp = "4.12.0"
+billingKtx = "8.0.0"
 javaxInject = "1"
 junit = "4.13.2"
 turbine = "1.2.1"
@@ -115,6 +116,9 @@ google-api-services-drive = { group = "com.google.apis", name = "google-api-serv
 microsoft-msal = { group = "com.microsoft.identity.client", name = "msal", version.ref = "msal" }
 microsoft-graph = { group = "com.microsoft.graph", name = "microsoft-graph", version.ref = "microsoftGraph" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+
+# Sprint 4: Monetization (CD-07)
+billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billingKtx" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }

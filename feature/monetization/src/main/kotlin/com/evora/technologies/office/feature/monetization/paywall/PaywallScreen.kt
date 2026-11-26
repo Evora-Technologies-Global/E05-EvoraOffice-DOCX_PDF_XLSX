@@ -18,10 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.WorkspacePremium
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,6 +39,7 @@ import com.evora.technologies.office.core.designsystem.theme.EvoraRadii
 import com.evora.technologies.office.core.designsystem.theme.EvoraSpacing
 import com.evora.technologies.office.core.designsystem.theme.EvoraTheme
 import com.evora.technologies.office.core.designsystem.theme.EvoraThemeTokens
+import com.evora.technologies.office.core.model.BillingOffer
 import com.evora.technologies.office.core.model.SubscriptionPlan
 
 @Composable
@@ -51,11 +50,21 @@ internal fun PaywallScreen(
 ) {
     val extra = EvoraThemeTokens.colors
     val benefits = listOf(
-        "Remove all future ad slots globally",
+        "Remove all ad slots globally across every tab",
         "Batch Merge > 3 PDFs & High-DPI Compress",
         "Dual-Side ID Card Scan, Batch OCR & Watermark",
         "Unlimited Offline PDF -> DOCX & PKCS#7 Signing",
     )
+    val offerByPlan = state.offers.associateBy { it.plan }
+    val selectedOffer = offerByPlan[state.selectedPlan] ?: BillingOffer(state.selectedPlan)
+
+    val ctaText = when {
+        state.proStatus.isPro -> "Evora Pro Active"
+        state.selectedPlan == SubscriptionPlan.LIFETIME -> "Unlock Lifetime Pro"
+        state.selectedPlan == SubscriptionPlan.WEEKLY && selectedOffer.hasFreeTrial -> "Start 3-Day Free Trial"
+        state.selectedPlan == SubscriptionPlan.YEARLY && selectedOffer.hasFreeTrial -> "Start 7-Day Free Trial"
+        else -> "Subscribe to ${state.selectedPlan.title}"
+    }
 
     Column(
         modifier = modifier
@@ -95,13 +104,16 @@ internal fun PaywallScreen(
                             tint = extra.onProGoldContainer,
                         )
                         Text(
-                            text = "EVORA PRO",
+                            text = if (state.proStatus.isPro) "PRO ACTIVE" else "EVORA PRO",
                             style = MaterialTheme.typography.labelSmall,
                             color = extra.onProGoldContainer,
                         )
                     }
                 }
-                TextButton(onClick = { onIntent(PaywallIntent.RestorePurchasesClicked) }) {
+                TextButton(
+                    onClick = { onIntent(PaywallIntent.RestorePurchasesClicked) },
+                    enabled = !state.isProcessing,
+                ) {
                     Text("Restore")
                 }
             }
@@ -125,6 +137,22 @@ internal fun PaywallScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )
+            }
+
+            if (!state.statusMessage.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(EvoraSpacing.sm))
+                Surface(
+                    shape = EvoraRadii.md,
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = state.statusMessage,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(EvoraSpacing.md),
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(EvoraSpacing.lg))
@@ -160,6 +188,7 @@ internal fun PaywallScreen(
             Spacer(modifier = Modifier.height(EvoraSpacing.md))
             Column(verticalArrangement = Arrangement.spacedBy(EvoraSpacing.sm)) {
                 SubscriptionPlan.entries.forEach { plan ->
+                    val offer = offerByPlan[plan] ?: BillingOffer(plan)
                     val isSelected = state.selectedPlan == plan
                     Surface(
                         shape = EvoraRadii.lg,
@@ -171,7 +200,9 @@ internal fun PaywallScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(EvoraRadii.lg)
-                            .clickable { onIntent(PaywallIntent.SelectPlan(plan)) },
+                            .clickable(enabled = !state.isProcessing) {
+                                onIntent(PaywallIntent.SelectPlan(plan))
+                            },
                     ) {
                         Row(
                             modifier = Modifier
@@ -204,14 +235,14 @@ internal fun PaywallScreen(
                                     }
                                 }
                                 Text(
-                                    text = plan.subtitle,
+                                    text = offer.billingSubtitle,
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             Spacer(modifier = Modifier.width(EvoraSpacing.sm))
                             Text(
-                                text = plan.priceDisplay,
+                                text = offer.formattedPrice,
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.primary,
                             )
@@ -228,7 +259,7 @@ internal fun PaywallScreen(
             verticalArrangement = Arrangement.spacedBy(EvoraSpacing.xs),
         ) {
             EvoraPrimaryButton(
-                text = "Start Free Trial",
+                text = ctaText,
                 onClick = { onIntent(PaywallIntent.StartTrialClicked) },
                 isLoading = state.isProcessing,
             )
@@ -236,10 +267,16 @@ internal fun PaywallScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                TextButton(onClick = { onIntent(PaywallIntent.GrantPreviewRewardPassClicked) }) {
-                    Text("24h Pass Preview")
+                TextButton(
+                    onClick = { onIntent(PaywallIntent.GrantRewardPassClicked) },
+                    enabled = !state.isProcessing,
+                ) {
+                    Text("24h Pro Pass")
                 }
-                TextButton(onClick = { onIntent(PaywallIntent.SkipClicked) }) {
+                TextButton(
+                    onClick = { onIntent(PaywallIntent.SkipClicked) },
+                    enabled = !state.isProcessing,
+                ) {
                     Text("Continue Free")
                 }
             }

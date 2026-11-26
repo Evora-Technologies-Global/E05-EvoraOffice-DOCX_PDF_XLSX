@@ -2,6 +2,7 @@ package com.evora.technologies.office.feature.monetization.paywall
 
 import androidx.lifecycle.viewModelScope
 import com.evora.technologies.office.core.domain.port.ProEntitlementPort
+import com.evora.technologies.office.core.model.PurchaseResult
 import com.evora.technologies.office.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.catch
@@ -19,31 +20,74 @@ class PaywallViewModel @Inject constructor(
             .onEach { status -> setState { copy(proStatus = status) } }
             .catch { /* retain default ProStatus */ }
             .launchIn(viewModelScope)
+
+        proEntitlementPort.observeBillingOffers()
+            .onEach { offers ->
+                if (offers.isNotEmpty()) {
+                    setState { copy(offers = offers) }
+                }
+            }
+            .catch { /* keep default fallback offers */ }
+            .launchIn(viewModelScope)
     }
 
     override fun onIntent(intent: PaywallIntent) {
         when (intent) {
-            is PaywallIntent.SelectPlan -> setState { copy(selectedPlan = intent.plan) }
-            PaywallIntent.StartTrialClicked -> activateLocalOrBillingPreview()
+            PaywallIntent.RefreshOffers -> refreshOffers()
+            is PaywallIntent.SelectPlan -> setState { copy(selectedPlan = intent.plan, statusMessage = null) }
+            PaywallIntent.StartTrialClicked -> startPlayBillingPurchase()
             PaywallIntent.RestorePurchasesClicked -> restorePurchases()
-            PaywallIntent.GrantPreviewRewardPassClicked -> grantRewardPass()
+            PaywallIntent.GrantRewardPassClicked -> grantRewardPass()
             PaywallIntent.SkipClicked -> sendEffect(PaywallEffect.ClosePaywall)
         }
     }
 
-    private fun activateLocalOrBillingPreview() {
+    private fun refreshOffers() {
+        launchSafely {
+            proEntitlementPort.refreshCatalog()
+        }
+    }
+
+    private fun startPlayBillingPurchase() {
         if (currentState.isProcessing) return
+        if (currentState.proStatus.isPro) {
+            sendEffect(PaywallEffect.ShowMessage("Evora Pro is already active"))
+            sendEffect(PaywallEffect.ClosePaywall)
+            return
+        }
+
+        val chosenPlan = currentState.selectedPlan
         launchSafely(
             onError = { err ->
-                setState { copy(isProcessing = false, statusMessage = err.message) }
+                val msg = err.message ?: "Unable to start Google Play purchase"
+                setState { copy(isProcessing = false, statusMessage = msg) }
+                sendEffect(PaywallEffect.ShowMessage(msg))
             },
         ) {
             setState { copy(isProcessing = true, statusMessage = null) }
-            // CD-07: Live Play Billing 8.0.0 activates in Sprint 4 after F-01..F-09 Done.
-            proEntitlementPort.setQaProOverride(true)
-            setState { copy(isProcessing = false) }
-            sendEffect(PaywallEffect.ShowMessage("Local Pro preview enabled (${currentState.selectedPlan.title})"))
-            sendEffect(PaywallEffect.ClosePaywall)
+            when (val result = proEntitlementPort.purchasePlan(chosenPlan)) {
+                is PurchaseResult.Success -> {
+                    setState { copy(isProcessing = false, statusMessage = null) }
+                    sendEffect(PaywallEffect.ShowMessage("Evora Pro activated (${chosenPlan.title})"))
+                    sendEffect(PaywallEffect.ClosePaywall)
+                }
+                PurchaseResult.Pending -> {
+                    val msg = "Purchase pending Google Play confirmation"
+                    setState { copy(isProcessing = false, statusMessage = msg) }
+                    sendEffect(PaywallEffect.ShowMessage(msg))
+                }
+                PurchaseResult.Cancelled -> {
+                    setState { copy(isProcessing = false) }
+                }
+                is PurchaseResult.BillingUnavailable -> {
+                    setState { copy(isProcessing = false, statusMessage = result.message) }
+                    sendEffect(PaywallEffect.ShowMessage(result.message))
+                }
+                is PurchaseResult.Error -> {
+                    setState { copy(isProcessing = false, statusMessage = result.message) }
+                    sendEffect(PaywallEffect.ShowMessage(result.message))
+                }
+            }
         }
     }
 
@@ -51,21 +95,28 @@ class PaywallViewModel @Inject constructor(
         if (currentState.isProcessing) return
         launchSafely(
             onError = { err ->
-                setState { copy(isProcessing = false, statusMessage = err.message) }
+                val msg = err.message ?: "Unable to restore purchases"
+                setState { copy(isProcessing = false, statusMessage = msg) }
+                sendEffect(PaywallEffect.ShowMessage(msg))
             },
         ) {
-            setState { copy(isProcessing = true) }
+            setState { copy(isProcessing = true, statusMessage = null) }
             val restored = proEntitlementPort.restorePurchases()
-            setState { copy(isProcessing = false) }
-            sendEffect(
-                PaywallEffect.ShowMessage(
-                    if (restored) "Pro purchases restored" else "No active Play purchases found yet",
-                ),
-            )
+            val msg = if (restored) {
+                "Evora Pro purchases restored"
+            } else {
+                "No active Google Play purchases found for this account"
+            }
+            setState { copy(isProcessing = false, statusMessage = if (restored) null else msg) }
+            sendEffect(PaywallEffect.ShowMessage(msg))
+            if (restored) {
+                sendEffect(PaywallEffect.ClosePaywall)
+            }
         }
     }
 
     private fun grantRewardPass() {
+        if (currentState.isProcessing) return
         launchSafely(
             onError = { err ->
                 setState { copy(isProcessing = false, statusMessage = err.message) }
