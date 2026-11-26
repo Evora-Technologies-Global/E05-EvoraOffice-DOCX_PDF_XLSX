@@ -29,22 +29,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
-      - name: Checkout E05 scripts
-        uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            scripts/verify_16kb_elf.py
-
-      - name: Maximize build disk space for LibreOffice C++ build
-        uses: easimon/maximize-build-space@v10
-        with:
-          root-reserve-mb: 4096
-          temp-reserve-mb: 2048
-          remove-dotnet: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-          remove-android: 'false'
-
       - name: Install LibreOffice Linux build prerequisites
         run: |
           sudo apt-get update
@@ -54,16 +38,36 @@ jobs:
             libglib2.0-dev libice-dev libsm-dev libx11-dev libxext-dev libxrender-dev \
             libxslt1-dev libxt-dev make nasm pkg-config python3 python3-dev python3-lxml \
             python3-setuptools unzip xsltproc zip openjdk-17-jdk llvm
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
 
       - name: Set up Android SDK & NDK ${{ inputs.ndk_version }}
         uses: android-actions/setup-android@v3
         with:
           packages: 'platforms;android-35 platforms;android-36 build-tools;36.0.0 ndk;${{ inputs.ndk_version }}'
 
+      - name: Maximize build disk space for LibreOffice C++ build
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 8192
+          temp-reserve-mb: 2048
+          remove-dotnet: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-android: 'false'
+
+      - name: Checkout E05 scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scripts/verify_16kb_elf.py
+
       - name: Verify Android NDK installation
         env:
           ANDROID_NDK_PATH: ${{ env.ANDROID_SDK_ROOT }}/ndk/${{ inputs.ndk_version }}
         run: |
+          df -h
+          test -f "${{ github.workspace }}/scripts/verify_16kb_elf.py"
           ls -la "${{ env.ANDROID_SDK_ROOT }}/ndk"
           test -f "${ANDROID_NDK_PATH}/source.properties" || test -f "${ANDROID_NDK_PATH}/RELEASE.TXT"
           cat "${ANDROID_NDK_PATH}/source.properties"
@@ -71,7 +75,7 @@ jobs:
       - name: Restore ccache
         uses: actions/cache@v4
         with:
-          path: ~/.ccache
+          path: ${{ github.workspace }}/.ccache
           key: lok-ccache-${{ inputs.distro }}-${{ inputs.ndk_version }}-${{ github.sha }}
           restore-keys: |
             lok-ccache-${{ inputs.distro }}-${{ inputs.ndk_version }}-
@@ -88,6 +92,8 @@ jobs:
           ANDROID_NDK_PATH: ${{ env.ANDROID_SDK_ROOT }}/ndk/${{ inputs.ndk_version }}
           JAVA_HOME_PATH: /usr/lib/jvm/java-17-openjdk-amd64
         run: |
+          mkdir -p "${{ github.workspace }}/.tmp"
+          export TMPDIR="${{ github.workspace }}/.tmp"
           # Ensure final liblo-native-code.so explicitly receives 16 KB ELF page alignment flags
           python3 -I -c '
           from pathlib import Path
@@ -121,8 +127,9 @@ jobs:
         env:
           LDFLAGS: "-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"
         run: |
-          mkdir -p "$HOME/.ccache"
-          export CCACHE_DIR="$HOME/.ccache"
+          mkdir -p "${{ github.workspace }}/.ccache" "${{ github.workspace }}/.tmp"
+          export CCACHE_DIR="${{ github.workspace }}/.ccache"
+          export TMPDIR="${{ github.workspace }}/.tmp"
           ccache -M 4G || true
           make -j"$(nproc)" || make -j2
 
