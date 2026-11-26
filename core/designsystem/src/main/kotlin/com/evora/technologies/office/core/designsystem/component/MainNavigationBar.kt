@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
@@ -115,6 +116,7 @@ private fun RowScope.BottomTabItem(
         modifier = Modifier
             .weight(1f)
             .sizeIn(minWidth = 48.dp, minHeight = 56.dp)
+            .testTag("nav_tab_${tab.name.lowercase()}")
             .clip(EvoraRadii.md)
             .semantics { selected = isSelected }
             .clickable(role = Role.Tab, onClick = onClick)
@@ -174,6 +176,7 @@ fun MainNavigationRail(
             NavigationRailItem(
                 selected = selectedTab == tab,
                 onClick = { onTabSelected(tab) },
+                modifier = Modifier.testTag("nav_tab_${tab.name.lowercase()}"),
                 icon = {
                     Icon(
                         imageVector = tab.icon,

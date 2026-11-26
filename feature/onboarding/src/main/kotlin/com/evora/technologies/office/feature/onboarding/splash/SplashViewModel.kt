@@ -63,16 +63,23 @@ class SplashViewModel @Inject constructor(
             }
 
             adPlacementHook.markExternalIntentLaunch(false)
-            val remote = remoteConfigPort.fetchAndActivate(timeoutMs = 1_500L)
-            consentPort.gatherConsentIfNeeded()
-            analyticsPort.logOnboardingStep("splash", "complete")
-
+            // Check persisted onboarding state immediately so returning users launch straight to Home (< 1.2s)
             val onboardingDone = preferencesRepository.onboardingCompleted.first()
+            if (onboardingDone) {
+                setState { copy(isRouting = false) }
+                analyticsPort.logOnboardingStep("splash", "complete")
+                sendEffect(SplashEffect.NavigateToHome)
+                return@launchSafely
+            }
+
+            // First launch: bounded fast Remote Config read; UMP consent runs concurrently via MainActivity
+            val remote = remoteConfigPort.fetchAndActivate(timeoutMs = 350L)
+            analyticsPort.logOnboardingStep("splash", "complete")
             setState { copy(isRouting = false) }
-            when {
-                onboardingDone -> sendEffect(SplashEffect.NavigateToHome)
-                remote.onboardingShowLanguage -> sendEffect(SplashEffect.NavigateToLanguageSelect)
-                else -> sendEffect(SplashEffect.NavigateToIntro)
+            if (remote.onboardingShowLanguage) {
+                sendEffect(SplashEffect.NavigateToLanguageSelect)
+            } else {
+                sendEffect(SplashEffect.NavigateToIntro)
             }
         }
     }

@@ -242,6 +242,42 @@ class OnboardingViewModelsTest {
     }
 
     @Test
+    fun `splash routes returning user directly to Home without waiting on onboarding`() = runTest {
+        val consent = FakeOnboardingConsent()
+        val vm = SplashViewModel(
+            FakePrefsRepo(initialOnboarding = true),
+            FakeOnboardingDocRepo(),
+            FakeOnboardingRemoteConfig(),
+            consent,
+            FakeOnboardingAdHook(),
+            FakeOnboardingAnalytics(),
+        )
+        vm.effects.test {
+            vm.onIntent(SplashIntent.StartRouting())
+            advanceUntilIdle()
+            assertEquals(SplashEffect.NavigateToHome, awaitItem())
+            assertTrue(!consent.gathered)
+        }
+    }
+
+    @Test
+    fun `splash routes first-time user to LanguageSelect when remote config enables language`() = runTest {
+        val vm = SplashViewModel(
+            FakePrefsRepo(initialOnboarding = false),
+            FakeOnboardingDocRepo(),
+            FakeOnboardingRemoteConfig(RemoteConfigSnapshot(onboardingShowLanguage = true)),
+            FakeOnboardingConsent(),
+            FakeOnboardingAdHook(),
+            FakeOnboardingAnalytics(),
+        )
+        vm.effects.test {
+            vm.onIntent(SplashIntent.StartRouting())
+            advanceUntilIdle()
+            assertEquals(SplashEffect.NavigateToLanguageSelect, awaitItem())
+        }
+    }
+
+    @Test
     fun `denying all-files permission still completes onboarding via SAF fallback`() = runTest {
         val prefs = FakePrefsRepo()
         val docs = FakeOnboardingDocRepo()

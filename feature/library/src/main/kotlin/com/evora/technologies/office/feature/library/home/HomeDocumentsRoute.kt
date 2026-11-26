@@ -3,6 +3,7 @@ package com.evora.technologies.office.feature.library.home
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.activity.compose.ReportDrawnWhen
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -64,6 +65,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -179,6 +181,8 @@ fun HomeDocumentsRoute(
         }
     }
 
+    ReportDrawnWhen { !state.isLoading }
+
     HomeDocumentsScreen(
         state = state,
         isMediumGrid = isMediumOrExpanded && !isExpandedTwoPane,
@@ -281,12 +285,15 @@ internal fun HomeDocumentsScreen(
                             icon = Icons.Outlined.FolderOpen,
                             primaryActionLabel = "Open Folder Picker (SAF)",
                             onPrimaryAction = { onIntent(HomeDocumentsIntent.ImportViaSafClicked) },
-                            modifier = Modifier.align(Alignment.Center),
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .testTag("home_documents_empty"),
                         )
                     }
                     isMediumGrid -> {
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(2),
+                            modifier = Modifier.testTag("home_documents_grid"),
                             contentPadding = PaddingValues(EvoraSpacing.lg),
                             horizontalArrangement = Arrangement.spacedBy(EvoraSpacing.md),
                             verticalArrangement = Arrangement.spacedBy(EvoraSpacing.md),
@@ -304,6 +311,7 @@ internal fun HomeDocumentsScreen(
                     else -> {
                         val nativeRenderer = LocalInlineNativeAdRenderer.current
                         LazyColumn(
+                            modifier = Modifier.testTag("home_documents_list"),
                             contentPadding = PaddingValues(EvoraSpacing.lg),
                             verticalArrangement = Arrangement.spacedBy(EvoraSpacing.sm),
                         ) {

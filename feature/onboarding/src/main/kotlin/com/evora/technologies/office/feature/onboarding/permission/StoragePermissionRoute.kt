@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -184,11 +185,13 @@ internal fun StoragePermissionScreen(
                 text = "Allow All-Files Access",
                 onClick = { onIntent(StoragePermissionIntent.AllowAllFilesClicked) },
                 isLoading = state.isFinalizing,
+                modifier = Modifier.testTag("storage_all_files_btn"),
             )
             EvoraOutlinedButton(
                 text = "Use Folder Picker (SAF) Instead",
                 onClick = { onIntent(StoragePermissionIntent.UseSafPickerClicked) },
                 enabled = !state.isFinalizing,
+                modifier = Modifier.testTag("storage_saf_btn"),
             )
         }
     }

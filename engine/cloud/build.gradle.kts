@@ -11,7 +11,8 @@ android {
 }
 
 configurations.configureEach {
-    exclude(group = "org.apache.httpcomponents", module = "httpclient")
+    exclude(group = "org.apache.httpcomponents")
+    exclude(group = "com.google.http-client", module = "google-http-client-apache-v2")
     exclude(group = "commons-logging", module = "commons-logging")
 }
 

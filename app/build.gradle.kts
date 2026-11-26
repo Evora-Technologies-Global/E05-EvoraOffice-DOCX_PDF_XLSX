@@ -1,7 +1,10 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.evora.android.application)
     alias(libs.plugins.evora.android.compose)
     alias(libs.plugins.evora.android.hilt)
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 if (file("google-services.json").exists()) {
@@ -11,8 +14,42 @@ if (file("google-services.json").exists()) {
 fun Project.propOrDefault(name: String, default: String): String =
     (findProperty(name) as? String)?.takeIf { it.isNotBlank() } ?: default
 
+val keystoreProps = Properties().apply {
+    val propsFile = rootProject.file("keystore.properties")
+    if (propsFile.exists()) {
+        propsFile.inputStream().use(::load)
+    }
+}
+
+fun Project.signingProp(propKey: String, envKey: String): String? =
+    keystoreProps.getProperty(propKey)?.takeIf { it.isNotBlank() }
+        ?: (findProperty(envKey) as? String)?.takeIf { it.isNotBlank() }
+        ?: System.getenv(envKey)?.takeIf { it.isNotBlank() }
+
 android {
     namespace = "com.evora.technologies.office"
+
+    signingConfigs {
+        val storePath = project.signingProp("storeFile", "EVORA_RELEASE_STORE_FILE")
+        val storePass = project.signingProp("storePassword", "EVORA_RELEASE_STORE_PASSWORD")
+        val alias = project.signingProp("keyAlias", "EVORA_RELEASE_KEY_ALIAS")
+        val keyPass = project.signingProp("keyPassword", "EVORA_RELEASE_KEY_PASSWORD")
+        if (storePath != null && storePass != null && alias != null && keyPass != null) {
+            val resolvedFile = rootProject.file(storePath)
+            if (resolvedFile.exists()) {
+                create("release") {
+                    storeFile = resolvedFile
+                    storePassword = storePass
+                    keyAlias = alias
+                    keyPassword = keyPass
+                    enableV1Signing = true
+                    enableV2Signing = true
+                    enableV3Signing = true
+                    enableV4Signing = true
+                }
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "com.evora.technologies.office"
@@ -42,6 +79,7 @@ android {
             }
         }
         release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             ndk {
                 abiFilters += "arm64-v8a"
             }
@@ -51,6 +89,18 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+        }
+    }
+
+    bundle {
+        abi {
+            enableSplit = true
+        }
+        density {
+            enableSplit = true
+        }
+        language {
+            enableSplit = true
         }
     }
 
@@ -80,6 +130,8 @@ configurations.configureEach {
     exclude(group = "org.bouncycastle", module = "bcprov-jdk15to18")
     exclude(group = "org.bouncycastle", module = "bcpkix-jdk15to18")
     exclude(group = "org.bouncycastle", module = "bcutil-jdk15to18")
+    exclude(group = "org.apache.httpcomponents")
+    exclude(group = "com.google.http-client", module = "google-http-client-apache-v2")
     // Strictly zero Pangle or lockscreen ad SDKs (06_SPRINT_BACKLOG.md T-024)
     exclude(group = "com.bytedance.sdk")
     exclude(group = "com.pangle.global")
@@ -122,10 +174,17 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.microsoft.msal)
+    baselineProfile(project(":baselineprofile"))
     ksp(libs.androidx.hilt.compiler)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+}
+
+baselineProfile {
+    automaticGenerationDuringBuild = false
+    saveInSrc = true
 }

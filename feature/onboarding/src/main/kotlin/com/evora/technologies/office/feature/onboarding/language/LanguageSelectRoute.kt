@@ -1,5 +1,6 @@
 package com.evora.technologies.office.feature.onboarding.language
 
+import androidx.activity.compose.ReportDrawn
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -30,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -63,6 +65,8 @@ fun LanguageSelectRoute(
         }
     }
 
+    ReportDrawn()
+
     LanguageSelectScreen(
         state = state,
         onIntent = viewModel::onIntent,
@@ -91,6 +95,7 @@ internal fun LanguageSelectScreen(
                         text = "Continue",
                         onClick = { onIntent(LanguageSelectIntent.ContinueClicked) },
                         isLoading = state.isSaving,
+                        modifier = Modifier.testTag("language_continue_btn"),
                     )
                 }
             }
@@ -99,6 +104,7 @@ internal fun LanguageSelectScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .testTag("language_list")
                 .padding(innerPadding)
                 .padding(horizontal = EvoraSpacing.lg),
             verticalArrangement = Arrangement.spacedBy(EvoraSpacing.sm),

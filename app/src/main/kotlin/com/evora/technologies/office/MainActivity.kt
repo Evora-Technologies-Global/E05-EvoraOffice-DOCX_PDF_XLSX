@@ -15,16 +15,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.evora.technologies.office.core.designsystem.component.InlineNativeAdSlotRenderer
 import com.evora.technologies.office.core.designsystem.component.LocalInlineNativeAdRenderer
 import com.evora.technologies.office.core.designsystem.component.ProvideReducedMotion
 import com.evora.technologies.office.core.designsystem.theme.EvoraTheme
 import com.evora.technologies.office.core.domain.port.AdPlacementHook
+import com.evora.technologies.office.core.domain.port.ConsentPort
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
+import com.evora.technologies.office.core.domain.port.RemoteConfigPort
 import com.evora.technologies.office.core.model.AppThemeMode
 import com.evora.technologies.office.navigation.AppNavHost
 import com.evora.technologies.office.navigation.IncomingLaunchAction
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -39,7 +43,14 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var inlineNativeAdRenderer: InlineNativeAdSlotRenderer
 
+    @Inject
+    lateinit var remoteConfigPort: RemoteConfigPort
+
+    @Inject
+    lateinit var consentPort: ConsentPort
+
     private var incomingActionState by mutableStateOf<IncomingLaunchAction?>(null)
+    private var startupConsentTriggered = false
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,6 +60,15 @@ class MainActivity : AppCompatActivity() {
             incomingActionState = extractIncomingAction(intent)
             if (incomingActionState is IncomingLaunchAction.ViewDocument) {
                 adPlacementHook.markExternalIntentLaunch(true)
+            }
+        }
+        if (incomingActionState !is IncomingLaunchAction.ViewDocument && !startupConsentTriggered) {
+            startupConsentTriggered = true
+            // Run Remote Config + UMP consent asynchronously so cold start stays < 1.2s (T-025)
+            // while still gating MobileAds initialization strictly behind ConsentPort.consentState (US-002).
+            lifecycleScope.launch {
+                remoteConfigPort.fetchAndActivate(timeoutMs = 1_500L)
+                consentPort.gatherConsentIfNeeded()
             }
         }
 
