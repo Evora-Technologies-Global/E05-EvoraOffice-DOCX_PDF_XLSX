@@ -49,16 +49,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            autoconf automake bison ccache flex g++ gettext git gperf \
-            intltool libarchive-zip-perl libfontconfig1-dev libfreetype6-dev \
-            libglib2.0-dev libxslt1-dev make nasm pkg-config python3 \
-            python3-dev unzip xsltproc zip openjdk-17-jdk llvm
+            autoconf automake bison bzip2 ccache doxygen flex g++ gettext git gperf \
+            intltool libarchive-zip-perl libcairo2-dev libfontconfig1-dev libfreetype6-dev \
+            libglib2.0-dev libice-dev libsm-dev libx11-dev libxext-dev libxrender-dev \
+            libxslt1-dev libxt-dev make nasm pkg-config python3 python3-dev python3-lxml \
+            python3-setuptools unzip xsltproc zip openjdk-17-jdk llvm
 
       - name: Set up Android SDK & NDK ${{ inputs.ndk_version }}
         uses: android-actions/setup-android@v3
         with:
-          ndk-version: ${{ inputs.ndk_version }}
-          packages: 'platforms;android-36 build-tools;36.0.0'
+          packages: 'platforms;android-35 platforms;android-36 build-tools;36.0.0 ndk;${{ inputs.ndk_version }}'
+
+      - name: Verify Android NDK installation
+        env:
+          ANDROID_NDK_PATH: ${{ env.ANDROID_SDK_ROOT }}/ndk/${{ inputs.ndk_version }}
+        run: |
+          ls -la "${{ env.ANDROID_SDK_ROOT }}/ndk"
+          test -f "${ANDROID_NDK_PATH}/source.properties" || test -f "${ANDROID_NDK_PATH}/RELEASE.TXT"
+          cat "${ANDROID_NDK_PATH}/source.properties"
 
       - name: Restore ccache
         uses: actions/cache@v4
@@ -80,12 +88,25 @@ jobs:
           ANDROID_NDK_PATH: ${{ env.ANDROID_SDK_ROOT }}/ndk/${{ inputs.ndk_version }}
           JAVA_HOME_PATH: /usr/lib/jvm/java-17-openjdk-amd64
         run: |
+          # Ensure final liblo-native-code.so explicitly receives 16 KB ELF page alignment flags
+          python3 -I -c '
+          from pathlib import Path
+          p = Path("android/Bootstrap/Makefile.shared")
+          txt = p.read_text()
+          flag = "-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"
+          if flag not in txt:
+              txt = txt.replace("$(CXX) -Wl,--build-id=sha1", f"$(CXX) {flag} -Wl,--build-id=sha1")
+              p.write_text(txt)
+          '
           cat > autogen.input <<EOF
           --build=x86_64-unknown-linux-gnu
           --with-jdk-home=${JAVA_HOME_PATH}
           --with-android-sdk=${{ env.ANDROID_SDK_ROOT }}
           --with-android-ndk=${ANDROID_NDK_PATH}
+          --with-android-api-level=26
           --with-distro=${{ inputs.distro }}
+          --enable-android-lok
+          --enable-android-editing
           --enable-ccache
           --disable-odk
           --without-junit
@@ -93,9 +114,6 @@ jobs:
           --without-myspell-dicts
           EOF
           export LDFLAGS="-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"
-          export AR=llvm-ar
-          export RANLIB=llvm-ranlib
-          export STRIP=llvm-strip
           ./autogen.sh
 
       - name: Cross-compile LibreOfficeKit Android ARM64
@@ -105,15 +123,19 @@ jobs:
         run: |
           mkdir -p "$HOME/.ccache"
           export CCACHE_DIR="$HOME/.ccache"
-          ccache -M 8G || true
+          ccache -M 4G || true
           make -j"$(nproc)" || make -j2
 
       - name: Collect .so binaries and verify 16 KB alignment
         run: |
           mkdir -p out/jniLibs/arm64-v8a out/mplv2-disclosure
-          find lo-core -type f \( -name "liblo-native-code.so" -o -name "libsofficeapp.so" -o -path "*arm64*/*.so" \) | while read -r so; do
-            cp -v "$so" out/jniLibs/arm64-v8a/
-          done
+          if [ -d lo-core/android/jniLibs/arm64-v8a ]; then
+            cp -v lo-core/android/jniLibs/arm64-v8a/*.so out/jniLibs/arm64-v8a/
+          fi
+          if [ -z "$(ls -A out/jniLibs/arm64-v8a 2>/dev/null)" ]; then
+            find lo-core -type f \( -name "liblo-native-code.so" -o -name "libsofficeapp.so" \) -exec cp -v {} out/jniLibs/arm64-v8a/ \;
+          fi
+          ls -lh out/jniLibs/arm64-v8a
           python3 -I scripts/verify_16kb_elf.py out/jniLibs/arm64-v8a
           cp lo-core/autogen.input lo-core-commit.txt out/mplv2-disclosure/
           git -C lo-core diff > out/mplv2-disclosure/lok_patches.diff || true
