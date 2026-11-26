@@ -1,6 +1,8 @@
 package com.evora.technologies.office.feature.tools
 
 import app.cash.turbine.test
+import com.evora.technologies.office.core.domain.port.AdPlacementHook
+import com.evora.technologies.office.core.domain.port.AnalyticsPort
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.PdfDocumentInfo
 import com.evora.technologies.office.core.domain.port.PdfEnginePort
@@ -25,6 +27,7 @@ import com.evora.technologies.office.core.model.ProFeature
 import com.evora.technologies.office.core.model.ProStatus
 import com.evora.technologies.office.core.model.ReaderBookmarkState
 import com.evora.technologies.office.core.model.ReaderTheme
+import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.model.SortOrder
 import com.evora.technologies.office.core.model.SplitMode
 import com.evora.technologies.office.core.model.TrashItem
@@ -33,6 +36,7 @@ import com.evora.technologies.office.feature.tools.hub.ToolsHubEffect
 import com.evora.technologies.office.feature.tools.hub.ToolsHubIntent
 import com.evora.technologies.office.feature.tools.hub.ToolsHubViewModel
 import com.evora.technologies.office.feature.tools.hub.UtilityToolId
+import com.evora.technologies.office.feature.tools.pdf.PdfToolConfigEffect
 import com.evora.technologies.office.feature.tools.pdf.PdfToolConfigIntent
 import com.evora.technologies.office.feature.tools.pdf.PdfToolConfigViewModel
 import com.evora.technologies.office.feature.tools.pdf.ToolInputFile
@@ -47,6 +51,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -143,6 +148,43 @@ private class FakeToolsPdfEngine : PdfEnginePort {
     override suspend fun searchText(uriString: String, query: String, password: String?) = emptyList<PdfSearchMatch>()
 }
 
+private class FakeToolsAdHook : AdPlacementHook {
+    var nextRewardedOutcome: RewardedAdOutcome = RewardedAdOutcome.Earned(24)
+    val milestones = mutableListOf<String>()
+
+    override fun onMilestoneCompleted(screenId: String) {
+        milestones += screenId
+    }
+
+    override fun onHomeHubEntered() = Unit
+    override suspend fun showRewardedPassAd(): RewardedAdOutcome = nextRewardedOutcome
+}
+
+private class FakeToolsAnalytics : AnalyticsPort {
+    val pdfToolsCompleted = mutableListOf<String>()
+
+    override fun logAdImpression(
+        adPlatform: String,
+        adFormat: String,
+        adUnitName: String,
+        currency: String,
+        value: Double,
+        valueMicros: Long,
+    ) = Unit
+
+    override fun logOnboardingStep(stepName: String, action: String) = Unit
+    override fun logStoragePermissionResult(grantType: String) = Unit
+    override fun logDocumentOpen(format: String, source: String) = Unit
+    override fun logEditorSessionEnd(format: String, editDurationSec: Long, saveStatus: String) = Unit
+    override fun logPdfToolComplete(toolType: String, durationMs: Long, success: Boolean) {
+        if (success) pdfToolsCompleted += toolType
+    }
+
+    override fun logScanOcrComplete(mode: String, pageCount: Int, script: String) = Unit
+    override fun logPaywallImpression(triggerSource: String) = Unit
+    override fun logPurchaseSuccess(skuId: String, priceUsdMicros: Long) = Unit
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class ToolsFeatureViewModelsTest {
     private val dispatcher = StandardTestDispatcher()
@@ -160,7 +202,10 @@ class ToolsFeatureViewModelsTest {
     @Test
     fun `tools hub gates watermark upfront before processing and unlocks via rewarded pass`() = runTest {
         val proPort = FakeToolsProPort(initialUnlocked = false)
-        val vm = ToolsHubViewModel(proPort, FakeToolsTemplateRepo(), FakeToolsDocRepo())
+        val adHook = FakeToolsAdHook().apply {
+            nextRewardedOutcome = RewardedAdOutcome.Dismissed
+        }
+        val vm = ToolsHubViewModel(proPort, FakeToolsTemplateRepo(), FakeToolsDocRepo(), adHook)
         advanceUntilIdle()
 
         vm.onIntent(ToolsHubIntent.ToolClicked(UtilityToolId.WATERMARK_PDF))
@@ -170,6 +215,23 @@ class ToolsFeatureViewModelsTest {
         vm.effects.test {
             vm.onIntent(ToolsHubIntent.GrantRewardedPassClicked)
             advanceUntilIdle()
+            assertFalse(proPort.proStatus.value.hasRewardedPass)
+            assertNull(vm.state.value.pendingGateToolId)
+            assertEquals(
+                ToolsHubEffect.ShowMessage("Watch the full rewarded video to unlock a 24h pass."),
+                awaitItem(),
+            )
+            expectNoEvents()
+        }
+
+        vm.onIntent(ToolsHubIntent.ToolClicked(UtilityToolId.WATERMARK_PDF))
+        advanceUntilIdle()
+        adHook.nextRewardedOutcome = RewardedAdOutcome.Earned(24)
+
+        vm.effects.test {
+            vm.onIntent(ToolsHubIntent.GrantRewardedPassClicked)
+            advanceUntilIdle()
+            assertTrue(proPort.proStatus.value.hasRewardedPass)
             assertNull(vm.state.value.pendingGateToolId)
             assertEquals(ToolsHubEffect.NavigateToPdfTool(PdfToolKind.WATERMARK), awaitItem())
             expectNoEvents()
@@ -180,7 +242,18 @@ class ToolsFeatureViewModelsTest {
     fun `merge over 3 files shows reward gate upfront and executes after 24h pass`() = runTest {
         val power = FakePdfPowerPort()
         val proPort = FakeToolsProPort(initialUnlocked = false)
-        val vm = PdfToolConfigViewModel(power, FakeToolsPdfEngine(), FakeToolsDocRepo(), proPort)
+        val adHook = FakeToolsAdHook().apply {
+            nextRewardedOutcome = RewardedAdOutcome.Dismissed
+        }
+        val analytics = FakeToolsAnalytics()
+        val vm = PdfToolConfigViewModel(
+            pdfPowerPort = power,
+            pdfEnginePort = FakeToolsPdfEngine(),
+            documentRepository = FakeToolsDocRepo(),
+            proEntitlementPort = proPort,
+            adPlacementHook = adHook,
+            analyticsPort = analytics,
+        )
         vm.onIntent(PdfToolConfigIntent.Initialize(PdfToolKind.MERGE, null))
         vm.onIntent(
             PdfToolConfigIntent.AddExternalFiles(
@@ -197,12 +270,31 @@ class ToolsFeatureViewModelsTest {
         vm.onIntent(PdfToolConfigIntent.ExecuteClicked)
         advanceUntilIdle()
         assertNotNull(vm.state.value.showRewardGateTitle)
-        assertTrue(!power.mergeCalled)
+        assertFalse(power.mergeCalled)
+
+        vm.effects.test {
+            vm.onIntent(PdfToolConfigIntent.GrantRewardedPassAndRun)
+            advanceUntilIdle()
+            assertNull(vm.state.value.showRewardGateTitle)
+            assertFalse(power.mergeCalled)
+            assertEquals(
+                PdfToolConfigEffect.ShowMessage("Complete the rewarded video to unlock a 24h pass."),
+                awaitItem(),
+            )
+            expectNoEvents()
+        }
+
+        vm.onIntent(PdfToolConfigIntent.ExecuteClicked)
+        advanceUntilIdle()
+        assertNotNull(vm.state.value.showRewardGateTitle)
+        adHook.nextRewardedOutcome = RewardedAdOutcome.Earned(24)
 
         vm.onIntent(PdfToolConfigIntent.GrantRewardedPassAndRun)
         advanceUntilIdle()
         assertNull(vm.state.value.showRewardGateTitle)
         assertTrue(power.mergeCalled)
+        assertEquals(listOf("merge"), analytics.pdfToolsCompleted)
+        assertEquals(listOf("pdf_tool_MERGE"), adHook.milestones)
         assertEquals(12, vm.state.value.result?.savedPercent)
     }
 }

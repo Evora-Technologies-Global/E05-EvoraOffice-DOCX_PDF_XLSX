@@ -1,8 +1,13 @@
 package com.evora.technologies.office.feature.monetization.paywall
 
 import androidx.lifecycle.viewModelScope
+import com.evora.technologies.office.core.domain.port.AdPlacementHook
+import com.evora.technologies.office.core.domain.port.AnalyticsPort
 import com.evora.technologies.office.core.domain.port.ProEntitlementPort
+import com.evora.technologies.office.core.domain.port.RemoteConfigPort
 import com.evora.technologies.office.core.model.PurchaseResult
+import com.evora.technologies.office.core.model.RewardedAdOutcome
+import com.evora.technologies.office.core.model.SubscriptionPlan
 import com.evora.technologies.office.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.catch
@@ -13,7 +18,16 @@ import javax.inject.Inject
 @HiltViewModel
 class PaywallViewModel @Inject constructor(
     private val proEntitlementPort: ProEntitlementPort,
-) : MviViewModel<PaywallState, PaywallIntent, PaywallEffect>(PaywallState()) {
+    private val remoteConfigPort: RemoteConfigPort,
+    private val adPlacementHook: AdPlacementHook,
+    private val analyticsPort: AnalyticsPort,
+) : MviViewModel<PaywallState, PaywallIntent, PaywallEffect>(
+    PaywallState(
+        selectedPlan = SubscriptionPlan.entries.firstOrNull {
+            it.skuId == remoteConfigPort.config.value.paywallDefaultSku
+        } ?: SubscriptionPlan.YEARLY,
+    ),
+) {
 
     init {
         proEntitlementPort.proStatus
@@ -43,6 +57,7 @@ class PaywallViewModel @Inject constructor(
     }
 
     private fun refreshOffers() {
+        analyticsPort.logPaywallImpression("paywall")
         launchSafely {
             proEntitlementPort.refreshCatalog()
         }
@@ -67,6 +82,7 @@ class PaywallViewModel @Inject constructor(
             setState { copy(isProcessing = true, statusMessage = null) }
             when (val result = proEntitlementPort.purchasePlan(chosenPlan)) {
                 is PurchaseResult.Success -> {
+                    analyticsPort.logPurchaseSuccess(result.skuId, 0L)
                     setState { copy(isProcessing = false, statusMessage = null) }
                     sendEffect(PaywallEffect.ShowMessage("Evora Pro activated (${chosenPlan.title})"))
                     sendEffect(PaywallEffect.ClosePaywall)
@@ -122,9 +138,24 @@ class PaywallViewModel @Inject constructor(
                 setState { copy(isProcessing = false, statusMessage = err.message) }
             },
         ) {
-            proEntitlementPort.grantRewardedPass(hours = 24)
-            sendEffect(PaywallEffect.ShowMessage("24-hour Pro tool pass activated"))
-            sendEffect(PaywallEffect.ClosePaywall)
+            setState { copy(isProcessing = true, statusMessage = null) }
+            when (val outcome = adPlacementHook.showRewardedPassAd()) {
+                is RewardedAdOutcome.Earned -> {
+                    proEntitlementPort.grantRewardedPass(hours = outcome.hours)
+                    setState { copy(isProcessing = false) }
+                    sendEffect(PaywallEffect.ShowMessage("${outcome.hours}-hour Pro tool pass activated"))
+                    sendEffect(PaywallEffect.ClosePaywall)
+                }
+                RewardedAdOutcome.Dismissed -> {
+                    val msg = "Complete the rewarded video to unlock a 24h Pro pass"
+                    setState { copy(isProcessing = false, statusMessage = msg) }
+                    sendEffect(PaywallEffect.ShowMessage(msg))
+                }
+                is RewardedAdOutcome.Unavailable -> {
+                    setState { copy(isProcessing = false, statusMessage = outcome.reason) }
+                    sendEffect(PaywallEffect.ShowMessage(outcome.reason))
+                }
+            }
         }
     }
 }

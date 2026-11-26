@@ -1,6 +1,8 @@
 package com.evora.technologies.office.feature.tools.pdf
 
 import androidx.lifecycle.viewModelScope
+import com.evora.technologies.office.core.domain.port.AdPlacementHook
+import com.evora.technologies.office.core.domain.port.AnalyticsPort
 import com.evora.technologies.office.core.domain.port.DocumentInvalidPasswordException
 import com.evora.technologies.office.core.domain.port.DocumentPasswordRequiredException
 import com.evora.technologies.office.core.domain.port.DocumentRepository
@@ -11,6 +13,7 @@ import com.evora.technologies.office.core.model.CompressQuality
 import com.evora.technologies.office.core.model.DocFormat
 import com.evora.technologies.office.core.model.DocumentItem
 import com.evora.technologies.office.core.model.PdfToolKind
+import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.model.SplitMode
 import com.evora.technologies.office.core.model.WatermarkConfig
 import com.evora.technologies.office.core.mvi.MviViewModel
@@ -26,6 +29,8 @@ class PdfToolConfigViewModel @Inject constructor(
     private val pdfEnginePort: PdfEnginePort,
     private val documentRepository: DocumentRepository,
     private val proEntitlementPort: ProEntitlementPort,
+    private val adPlacementHook: AdPlacementHook,
+    private val analyticsPort: AnalyticsPort,
 ) : MviViewModel<PdfToolConfigState, PdfToolConfigIntent, PdfToolConfigEffect>(
     PdfToolConfigState(),
 ) {
@@ -249,9 +254,21 @@ class PdfToolConfigViewModel @Inject constructor(
         launchSafely(
             onError = { setState { copy(showRewardGateTitle = null, errorMessage = it.message) } },
         ) {
-            proEntitlementPort.grantRewardedPass(hours = 24)
-            setState { copy(showRewardGateTitle = null) }
-            executeTool(passwordOverride = currentState.currentPdfPassword.ifBlank { null })
+            when (val outcome = adPlacementHook.showRewardedPassAd()) {
+                is RewardedAdOutcome.Earned -> {
+                    proEntitlementPort.grantRewardedPass(hours = outcome.hours)
+                    setState { copy(showRewardGateTitle = null) }
+                    executeTool(passwordOverride = currentState.currentPdfPassword.ifBlank { null })
+                }
+                RewardedAdOutcome.Dismissed -> {
+                    setState { copy(showRewardGateTitle = null) }
+                    sendEffect(PdfToolConfigEffect.ShowMessage("Complete the rewarded video to unlock a 24h pass."))
+                }
+                is RewardedAdOutcome.Unavailable -> {
+                    setState { copy(showRewardGateTitle = null) }
+                    sendEffect(PdfToolConfigEffect.ShowMessage(outcome.reason))
+                }
+            }
         }
     }
 
@@ -274,6 +291,7 @@ class PdfToolConfigViewModel @Inject constructor(
             },
         ) {
             setState { copy(isProcessing = true, progress = 0.05f, errorMessage = null, result = null) }
+            val startedMs = System.currentTimeMillis()
             val stateSnap = currentState
             val primaryUri = stateSnap.selectedInputs.firstOrNull()?.uriString
 
@@ -389,7 +407,10 @@ class PdfToolConfigViewModel @Inject constructor(
                 }
             }.getOrThrow()
 
+            val elapsedMs = (System.currentTimeMillis() - startedMs).coerceAtLeast(0L)
+            analyticsPort.logPdfToolComplete(stateSnap.toolKind.name.lowercase(), elapsedMs, success = true)
             setState { copy(isProcessing = false, progress = 1f, result = res) }
+            adPlacementHook.onMilestoneCompleted("pdf_tool_${stateSnap.toolKind.name}")
         }
     }
 

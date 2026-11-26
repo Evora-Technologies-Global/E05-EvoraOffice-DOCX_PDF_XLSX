@@ -1,6 +1,7 @@
 package com.evora.technologies.office.feature.editor.pdf
 
 import androidx.lifecycle.viewModelScope
+import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.DocumentInvalidPasswordException
 import com.evora.technologies.office.core.domain.port.DocumentPasswordRequiredException
 import com.evora.technologies.office.core.domain.port.PdfEnginePort
@@ -11,6 +12,7 @@ import com.evora.technologies.office.core.model.NormalizedPoint
 import com.evora.technologies.office.core.model.PdfAnnotationDraft
 import com.evora.technologies.office.core.model.PdfAnnotationType
 import com.evora.technologies.office.core.model.PdfSignaturePlacement
+import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.model.SignatureItem
 import com.evora.technologies.office.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +28,7 @@ class PdfEditorViewModel @Inject constructor(
     private val pdfPowerPort: PdfPowerPort,
     private val signatureRepository: SignatureRepository,
     private val proEntitlementPort: ProEntitlementPort,
+    private val adPlacementHook: AdPlacementHook,
 ) : MviViewModel<PdfEditorState, PdfEditorIntent, PdfEditorEffect>(
     PdfEditorState(),
 ) {
@@ -399,12 +402,28 @@ class PdfEditorViewModel @Inject constructor(
     }
 
     private fun grantRewardPassAndOpenCerts() {
-        launchSafely {
-            proEntitlementPort.grantRewardedPass(hours = 24)
-            setState { copy(showRewardGateTitle = null) }
-            if (pendingPkcs7Gate) {
-                pendingPkcs7Gate = false
-                inspectPkcs7()
+        launchSafely(
+            onError = { setState { copy(showRewardGateTitle = null) }; sendEffect(PdfEditorEffect.ShowMessage(it.message ?: "Unable to unlock pass")) },
+        ) {
+            when (val outcome = adPlacementHook.showRewardedPassAd()) {
+                is RewardedAdOutcome.Earned -> {
+                    proEntitlementPort.grantRewardedPass(hours = outcome.hours)
+                    setState { copy(showRewardGateTitle = null) }
+                    if (pendingPkcs7Gate) {
+                        pendingPkcs7Gate = false
+                        inspectPkcs7()
+                    }
+                }
+                RewardedAdOutcome.Dismissed -> {
+                    pendingPkcs7Gate = false
+                    setState { copy(showRewardGateTitle = null) }
+                    sendEffect(PdfEditorEffect.ShowMessage("Complete the rewarded video to unlock PKCS#7 inspection."))
+                }
+                is RewardedAdOutcome.Unavailable -> {
+                    pendingPkcs7Gate = false
+                    setState { copy(showRewardGateTitle = null) }
+                    sendEffect(PdfEditorEffect.ShowMessage(outcome.reason))
+                }
             }
         }
     }

@@ -3,6 +3,7 @@ package com.evora.technologies.office.core.domain.port
 import com.evora.technologies.office.core.model.AppThemeMode
 import com.evora.technologies.office.core.model.ArchiveEntryItem
 import com.evora.technologies.office.core.model.BillingOffer
+import com.evora.technologies.office.core.model.ConsentState
 import com.evora.technologies.office.core.model.DocFormat
 import com.evora.technologies.office.core.model.DocumentItem
 import com.evora.technologies.office.core.model.ExternalIntentPayload
@@ -13,11 +14,15 @@ import com.evora.technologies.office.core.model.ProStatus
 import com.evora.technologies.office.core.model.PurchaseResult
 import com.evora.technologies.office.core.model.ReaderBookmarkState
 import com.evora.technologies.office.core.model.ReaderTheme
+import com.evora.technologies.office.core.model.RemoteConfigSnapshot
+import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.model.SortOrder
 import com.evora.technologies.office.core.model.SubscriptionPlan
 import com.evora.technologies.office.core.model.TrashItem
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
 
 /**
@@ -39,12 +44,54 @@ interface ProEntitlementPort {
 }
 
 /**
- * Hook for post-milestone and home-tab ad placements.
- * Bound to a strict no-op until core features F-01..F-09 reach Done (CD-07).
+ * Hook for post-milestone, home-tab, and rewarded ad placements (CD-07 / T-024).
  */
 interface AdPlacementHook {
     fun onMilestoneCompleted(screenId: String)
     fun onHomeHubEntered()
+    fun setProtectedSurfaceActive(active: Boolean) = Unit
+    fun markExternalIntentLaunch(external: Boolean) = Unit
+    suspend fun showRewardedPassAd(): RewardedAdOutcome = RewardedAdOutcome.Earned(24)
+}
+
+/**
+ * Abstracts Google UMP SDK consent gathering and EEA/UK/CH privacy revocation (US-002).
+ */
+interface ConsentPort {
+    val consentState: StateFlow<ConsentState>
+    suspend fun gatherConsentIfNeeded(): ConsentState
+    suspend fun showPrivacyOptionsForm(): Result<ConsentState>
+}
+
+/**
+ * Abstracts plaintext Firebase Remote Config parameters (03_PRD.md §6).
+ */
+interface RemoteConfigPort {
+    val config: StateFlow<RemoteConfigSnapshot>
+    suspend fun fetchAndActivate(timeoutMs: Long = 1_500L): RemoteConfigSnapshot
+}
+
+/**
+ * Abstracts Firebase Analytics + Adjust impression-level ad revenue and PRD §10 events.
+ */
+interface AnalyticsPort {
+    fun logAdImpression(
+        adPlatform: String,
+        adFormat: String,
+        adUnitName: String,
+        currency: String,
+        value: Double,
+        valueMicros: Long,
+    )
+
+    fun logOnboardingStep(stepName: String, action: String)
+    fun logStoragePermissionResult(grantType: String)
+    fun logDocumentOpen(format: String, source: String)
+    fun logEditorSessionEnd(format: String, editDurationSec: Long, saveStatus: String)
+    fun logPdfToolComplete(toolType: String, durationMs: Long, success: Boolean)
+    fun logScanOcrComplete(mode: String, pageCount: Int, script: String)
+    fun logPaywallImpression(triggerSource: String)
+    fun logPurchaseSuccess(skuId: String, priceUsdMicros: Long)
 }
 
 interface PreferencesRepository {

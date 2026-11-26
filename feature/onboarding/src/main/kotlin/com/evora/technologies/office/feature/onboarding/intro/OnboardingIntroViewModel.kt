@@ -1,14 +1,18 @@
 package com.evora.technologies.office.feature.onboarding.intro
 
+import com.evora.technologies.office.core.domain.port.AnalyticsPort
+import com.evora.technologies.office.core.domain.port.RemoteConfigPort
 import com.evora.technologies.office.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
-class OnboardingIntroViewModel @Inject constructor() :
-    MviViewModel<OnboardingIntroState, OnboardingIntroIntent, OnboardingIntroEffect>(
-        OnboardingIntroState(),
-    ) {
+class OnboardingIntroViewModel @Inject constructor(
+    private val remoteConfigPort: RemoteConfigPort,
+    private val analyticsPort: AnalyticsPort,
+) : MviViewModel<OnboardingIntroState, OnboardingIntroIntent, OnboardingIntroEffect>(
+    OnboardingIntroState(),
+) {
 
     override fun onIntent(intent: OnboardingIntroIntent) {
         when (intent) {
@@ -18,14 +22,27 @@ class OnboardingIntroViewModel @Inject constructor() :
             }
             OnboardingIntroIntent.NextClicked -> {
                 if (currentState.isLastSlide) {
-                    sendEffect(OnboardingIntroEffect.NavigateNext)
+                    analyticsPort.logOnboardingStep("intro", "complete")
+                    routeAfterIntro()
                 } else {
                     val next = currentState.currentPage + 1
                     setState { copy(currentPage = next) }
                     sendEffect(OnboardingIntroEffect.ScrollToPage(next))
                 }
             }
-            OnboardingIntroIntent.SkipClicked -> sendEffect(OnboardingIntroEffect.NavigateNext)
+            OnboardingIntroIntent.SkipClicked -> {
+                analyticsPort.logOnboardingStep("intro", "skip")
+                routeAfterIntro()
+            }
+        }
+    }
+
+    private fun routeAfterIntro() {
+        val showPaywall = remoteConfigPort.config.value.onboardingShowPaywall
+        if (showPaywall) {
+            sendEffect(OnboardingIntroEffect.NavigateNext)
+        } else {
+            sendEffect(OnboardingIntroEffect.NavigateSkipPaywall)
         }
     }
 }

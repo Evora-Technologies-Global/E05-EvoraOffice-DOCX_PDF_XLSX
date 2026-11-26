@@ -1,15 +1,21 @@
 package com.evora.technologies.office.feature.onboarding
 
 import app.cash.turbine.test
+import com.evora.technologies.office.core.domain.port.AdPlacementHook
+import com.evora.technologies.office.core.domain.port.AnalyticsPort
+import com.evora.technologies.office.core.domain.port.ConsentPort
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
+import com.evora.technologies.office.core.domain.port.RemoteConfigPort
 import com.evora.technologies.office.core.model.AppLanguage
 import com.evora.technologies.office.core.model.AppThemeMode
+import com.evora.technologies.office.core.model.ConsentState
 import com.evora.technologies.office.core.model.DocFormat
 import com.evora.technologies.office.core.model.DocumentItem
 import com.evora.technologies.office.core.model.ExternalIntentPayload
 import com.evora.technologies.office.core.model.ReaderBookmarkState
 import com.evora.technologies.office.core.model.ReaderTheme
+import com.evora.technologies.office.core.model.RemoteConfigSnapshot
 import com.evora.technologies.office.core.model.SortOrder
 import com.evora.technologies.office.core.model.TrashItem
 import com.evora.technologies.office.feature.onboarding.intro.OnboardingIntroEffect
@@ -120,6 +126,44 @@ private class FakeOnboardingDocRepo : DocumentRepository {
     }
 }
 
+private class FakeOnboardingRemoteConfig(
+    snapshot: RemoteConfigSnapshot = RemoteConfigSnapshot(),
+) : RemoteConfigPort {
+    override val config = MutableStateFlow(snapshot)
+    override suspend fun fetchAndActivate(timeoutMs: Long): RemoteConfigSnapshot = config.value
+}
+
+private class FakeOnboardingConsent : ConsentPort {
+    var gathered = false
+    override val consentState = MutableStateFlow(ConsentState(canRequestAds = true, isInitialized = true))
+    override suspend fun gatherConsentIfNeeded(): ConsentState {
+        gathered = true
+        return consentState.value
+    }
+    override suspend fun showPrivacyOptionsForm(): Result<ConsentState> = Result.success(consentState.value)
+}
+
+private class FakeOnboardingAdHook : AdPlacementHook {
+    var externalMarked = false
+    override fun onMilestoneCompleted(screenId: String) = Unit
+    override fun onHomeHubEntered() = Unit
+    override fun markExternalIntentLaunch(external: Boolean) {
+        externalMarked = external
+    }
+}
+
+private class FakeOnboardingAnalytics : AnalyticsPort {
+    override fun logAdImpression(adPlatform: String, adFormat: String, adUnitName: String, currency: String, value: Double, valueMicros: Long) = Unit
+    override fun logOnboardingStep(stepName: String, action: String) = Unit
+    override fun logStoragePermissionResult(grantType: String) = Unit
+    override fun logDocumentOpen(format: String, source: String) = Unit
+    override fun logEditorSessionEnd(format: String, editDurationSec: Long, saveStatus: String) = Unit
+    override fun logPdfToolComplete(toolType: String, durationMs: Long, success: Boolean) = Unit
+    override fun logScanOcrComplete(mode: String, pageCount: Int, script: String) = Unit
+    override fun logPaywallImpression(triggerSource: String) = Unit
+    override fun logPurchaseSuccess(skuId: String, priceUsdMicros: Long) = Unit
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingViewModelsTest {
     private val dispatcher = StandardTestDispatcher()
@@ -135,8 +179,17 @@ class OnboardingViewModelsTest {
     }
 
     @Test
-    fun `splash routes external ACTION_VIEW directly to reader skipping onboarding`() = runTest {
-        val vm = SplashViewModel(FakePrefsRepo(initialOnboarding = false), FakeOnboardingDocRepo())
+    fun `splash routes external ACTION_VIEW directly to reader skipping onboarding and UMP`() = runTest {
+        val consent = FakeOnboardingConsent()
+        val adHook = FakeOnboardingAdHook()
+        val vm = SplashViewModel(
+            FakePrefsRepo(initialOnboarding = false),
+            FakeOnboardingDocRepo(),
+            FakeOnboardingRemoteConfig(),
+            consent,
+            adHook,
+            FakeOnboardingAnalytics(),
+        )
         vm.effects.test {
             vm.onIntent(
                 SplashIntent.StartRouting(
@@ -145,6 +198,8 @@ class OnboardingViewModelsTest {
                 ),
             )
             advanceUntilIdle()
+            assertTrue(adHook.externalMarked)
+            assertTrue(!consent.gathered)
             val effect = awaitItem()
             assertTrue(effect is SplashEffect.NavigateToExternalDocument)
             assertEquals(DocFormat.WORD, (effect as SplashEffect.NavigateToExternalDocument).payload.format)
@@ -166,11 +221,23 @@ class OnboardingViewModelsTest {
     }
 
     @Test
-    fun `intro skips cleanly to next onboarding step`() = runTest {
-        val vm = OnboardingIntroViewModel()
-        vm.effects.test {
-            vm.onIntent(OnboardingIntroIntent.SkipClicked)
+    fun `intro skips cleanly to paywall or directly to storage when remote config disables paywall`() = runTest {
+        val vmWithPaywall = OnboardingIntroViewModel(
+            FakeOnboardingRemoteConfig(RemoteConfigSnapshot(onboardingShowPaywall = true)),
+            FakeOnboardingAnalytics(),
+        )
+        vmWithPaywall.effects.test {
+            vmWithPaywall.onIntent(OnboardingIntroIntent.SkipClicked)
             assertEquals(OnboardingIntroEffect.NavigateNext, awaitItem())
+        }
+
+        val vmSkipPaywall = OnboardingIntroViewModel(
+            FakeOnboardingRemoteConfig(RemoteConfigSnapshot(onboardingShowPaywall = false)),
+            FakeOnboardingAnalytics(),
+        )
+        vmSkipPaywall.effects.test {
+            vmSkipPaywall.onIntent(OnboardingIntroIntent.SkipClicked)
+            assertEquals(OnboardingIntroEffect.NavigateSkipPaywall, awaitItem())
         }
     }
 

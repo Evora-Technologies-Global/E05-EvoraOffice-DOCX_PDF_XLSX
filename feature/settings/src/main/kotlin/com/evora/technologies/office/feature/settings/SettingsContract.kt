@@ -14,6 +14,8 @@ data class SettingsState(
     val proStatus: ProStatus = ProStatus(),
     val connectedCloudCount: Int = 0,
     val isRestoringPurchases: Boolean = false,
+    val umpPrivacyOptionsRequired: Boolean = false,
+    val umpConsentGranted: Boolean = false,
     val showThemeDialog: Boolean = false,
     val showLanguageDialog: Boolean = false,
     val showAutosaveDialog: Boolean = false,

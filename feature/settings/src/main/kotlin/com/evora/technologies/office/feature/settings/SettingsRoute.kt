@@ -251,7 +251,11 @@ internal fun SettingsScreen(
                         SettingsRow(
                             icon = Icons.Outlined.PrivacyTip,
                             title = stringResource(R.string.evora_settings_ump_privacy),
-                            subtitle = "100% offline processing · Consent & GDPR/EEA controls",
+                            subtitle = if (state.umpPrivacyOptionsRequired) {
+                                "EEA/UK/CH Consent Management (Tap to review or revoke)"
+                            } else {
+                                "100% offline processing · Consent & GDPR/EEA controls"
+                            },
                             onClick = { onIntent(SettingsIntent.OpenUmpPrivacy) },
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)

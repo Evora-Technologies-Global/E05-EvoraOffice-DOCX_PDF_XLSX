@@ -35,6 +35,7 @@ fun SplashRoute(
     displayNameHint: String?,
     mimeTypeHint: String?,
     onNavigateLanguageSelect: () -> Unit,
+    onNavigateIntro: () -> Unit = onNavigateLanguageSelect,
     onNavigateHome: () -> Unit,
     onNavigateExternalDocument: (ExternalIntentPayload) -> Unit,
     onShowError: (String) -> Unit,
@@ -56,6 +57,7 @@ fun SplashRoute(
     CollectEffects(viewModel.effects) { effect ->
         when (effect) {
             SplashEffect.NavigateToLanguageSelect -> onNavigateLanguageSelect()
+            SplashEffect.NavigateToIntro -> onNavigateIntro()
             SplashEffect.NavigateToHome -> onNavigateHome()
             is SplashEffect.NavigateToExternalDocument -> onNavigateExternalDocument(effect.payload)
             is SplashEffect.ShowError -> onShowError(effect.message)

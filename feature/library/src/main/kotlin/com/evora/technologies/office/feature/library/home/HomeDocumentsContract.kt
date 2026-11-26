@@ -25,6 +25,7 @@ data class HomeDocumentsState(
     val templates: List<DocTemplatePreset> = emptyList(),
     val selectedTemplateFilter: OfficeKind? = null,
     val isCreatingTemplate: Boolean = false,
+    val inlineNativeAdIndex: Int? = null,
     val errorMessage: String? = null,
 ) : UiState {
     val selectedPreviewDoc: DocumentItem?

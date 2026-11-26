@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 @Composable
 fun OnboardingIntroRoute(
     onNavigateNext: () -> Unit,
+    onNavigateSkipPaywall: () -> Unit = onNavigateNext,
     modifier: Modifier = Modifier,
     viewModel: OnboardingIntroViewModel = hiltViewModel(),
 ) {
@@ -67,6 +68,7 @@ fun OnboardingIntroRoute(
         when (effect) {
             is OnboardingIntroEffect.ScrollToPage -> pagerState.animateScrollToPage(effect.pageIndex)
             OnboardingIntroEffect.NavigateNext -> onNavigateNext()
+            OnboardingIntroEffect.NavigateSkipPaywall -> onNavigateSkipPaywall()
         }
     }
 

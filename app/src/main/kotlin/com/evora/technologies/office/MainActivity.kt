@@ -10,12 +10,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.evora.technologies.office.core.designsystem.component.InlineNativeAdSlotRenderer
+import com.evora.technologies.office.core.designsystem.component.LocalInlineNativeAdRenderer
 import com.evora.technologies.office.core.designsystem.component.ProvideReducedMotion
 import com.evora.technologies.office.core.designsystem.theme.EvoraTheme
+import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
 import com.evora.technologies.office.core.model.AppThemeMode
 import com.evora.technologies.office.navigation.AppNavHost
@@ -29,6 +33,12 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var preferencesRepository: PreferencesRepository
 
+    @Inject
+    lateinit var adPlacementHook: AdPlacementHook
+
+    @Inject
+    lateinit var inlineNativeAdRenderer: InlineNativeAdSlotRenderer
+
     private var incomingActionState by mutableStateOf<IncomingLaunchAction?>(null)
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -37,6 +47,9 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         if (savedInstanceState == null) {
             incomingActionState = extractIncomingAction(intent)
+            if (incomingActionState is IncomingLaunchAction.ViewDocument) {
+                adPlacementHook.markExternalIntentLaunch(true)
+            }
         }
 
         setContent {
@@ -50,12 +63,22 @@ class MainActivity : AppCompatActivity() {
             val windowSizeClass = calculateWindowSizeClass(this)
 
             EvoraTheme(darkTheme = isDark) {
-                ProvideReducedMotion {
-                    AppNavHost(
-                        windowWidthSizeClass = windowSizeClass.widthSizeClass,
-                        incomingAction = incomingActionState,
-                        onIncomingActionConsumed = { incomingActionState = null },
-                    )
+                CompositionLocalProvider(
+                    LocalInlineNativeAdRenderer provides inlineNativeAdRenderer,
+                ) {
+                    ProvideReducedMotion {
+                        AppNavHost(
+                            windowWidthSizeClass = windowSizeClass.widthSizeClass,
+                            incomingAction = incomingActionState,
+                            onIncomingActionConsumed = { incomingActionState = null },
+                            onRouteChanged = { route, isProtected ->
+                                adPlacementHook.setProtectedSurfaceActive(isProtected)
+                                if (route == "main") {
+                                    adPlacementHook.onHomeHubEntered()
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -65,6 +88,9 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         extractIncomingAction(intent)?.let {
+            if (it is IncomingLaunchAction.ViewDocument) {
+                adPlacementHook.markExternalIntentLaunch(true)
+            }
             incomingActionState = it
         }
     }

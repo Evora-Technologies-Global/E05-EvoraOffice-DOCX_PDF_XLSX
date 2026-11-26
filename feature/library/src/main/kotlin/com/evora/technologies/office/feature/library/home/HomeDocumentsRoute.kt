@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.Add
@@ -81,6 +82,7 @@ import com.evora.technologies.office.core.designsystem.component.EvoraPrimaryBut
 import com.evora.technologies.office.core.designsystem.component.EvoraTemplatesSheet
 import com.evora.technologies.office.core.designsystem.component.FormatBadge
 import com.evora.technologies.office.core.designsystem.component.FormatFilterChip
+import com.evora.technologies.office.core.designsystem.component.LocalInlineNativeAdRenderer
 import com.evora.technologies.office.core.designsystem.component.ShimmerDocListSkeleton
 import com.evora.technologies.office.core.designsystem.component.formatByteSize
 import com.evora.technologies.office.core.designsystem.component.formatEpochShort
@@ -300,6 +302,7 @@ internal fun HomeDocumentsScreen(
                         }
                     }
                     else -> {
+                        val nativeRenderer = LocalInlineNativeAdRenderer.current
                         LazyColumn(
                             contentPadding = PaddingValues(EvoraSpacing.lg),
                             verticalArrangement = Arrangement.spacedBy(EvoraSpacing.sm),
@@ -371,7 +374,7 @@ internal fun HomeDocumentsScreen(
                                 }
                             }
 
-                            items(state.documents, key = { it.id }) { doc ->
+                            itemsIndexed(state.documents, key = { _, doc -> doc.id }) { index, doc ->
                                 DocCard(
                                     document = doc,
                                     isSelected = isExpandedTwoPane && state.selectedPreviewDoc?.id == doc.id,
@@ -386,6 +389,13 @@ internal fun HomeDocumentsScreen(
                                     onToggleFavorite = { onIntent(HomeDocumentsIntent.ToggleFavorite(doc.uriString)) },
                                     onMoreClick = { onIntent(HomeDocumentsIntent.OpenContextMenu(doc.uriString)) },
                                 )
+                                if (nativeRenderer != null &&
+                                    state.inlineNativeAdIndex != null &&
+                                    index + 1 == state.inlineNativeAdIndex
+                                ) {
+                                    Spacer(modifier = Modifier.height(EvoraSpacing.sm))
+                                    nativeRenderer.Render(modifier = Modifier.fillMaxWidth())
+                                }
                             }
                         }
                     }

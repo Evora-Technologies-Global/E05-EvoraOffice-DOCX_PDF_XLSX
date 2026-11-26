@@ -30,6 +30,15 @@
 -keepclassmembers class org.libreoffice.kit.** { *; }
 -keep class org.libreoffice.android.** { *; }
 
-# Google Play Billing 8.0.0 & Monetization
+# Google Play Billing 8.0.0 & Monetization (UMP, AdMob Mediation, Firebase, Adjust)
 -keep class com.android.billingclient.api.** { *; }
 -keep class com.evora.technologies.office.engine.monetization.** { *; }
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.android.ump.** { *; }
+-keep class com.google.ads.mediation.** { *; }
+-keep class com.applovin.** { *; }
+-keep class com.unity3d.ads.** { *; }
+-keep class com.mbridge.** { *; }
+-keep class com.adjust.sdk.** { *; }
+-dontwarn com.bytedance.sdk.**
+-dontwarn com.pangle.**

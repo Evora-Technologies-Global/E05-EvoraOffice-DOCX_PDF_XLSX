@@ -241,7 +241,11 @@ class EditorViewModelsTest {
             override suspend fun grantRewardedPass(hours: Int) = Unit
             override suspend fun restorePurchases() = false
         }
-        val vm = PdfEditorViewModel(pdfEngine, power, sigRepo, proPort)
+        val adHook = object : com.evora.technologies.office.core.domain.port.AdPlacementHook {
+            override fun onMilestoneCompleted(screenId: String) = Unit
+            override fun onHomeHubEntered() = Unit
+        }
+        val vm = PdfEditorViewModel(pdfEngine, power, sigRepo, proPort, adHook)
         vm.onIntent(PdfEditorIntent.OpenPdf("file:///doc.pdf", "doc.pdf"))
         advanceUntilIdle()
 

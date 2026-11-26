@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.evora.technologies.office.core.designsystem.component.MainBottomBar
@@ -129,6 +130,7 @@ fun AppNavHost(
     incomingAction: IncomingLaunchAction?,
     onIncomingActionConsumed: () -> Unit,
     modifier: Modifier = Modifier,
+    onRouteChanged: (route: String?, isProtectedSurface: Boolean) -> Unit = { _, _ -> },
 ) {
     val navController = rememberNavController()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -137,6 +139,19 @@ fun AppNavHost(
     var pendingSignaturePath by rememberSaveable { mutableStateOf<String?>(null) }
     var openTemplatesTrigger by rememberSaveable { mutableIntStateOf(0) }
     var deferredDeepLink by remember { mutableStateOf<IncomingLaunchAction?>(null) }
+
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+    LaunchedEffect(currentRoute) {
+        val protected = currentRoute in setOf(
+            AppRoutes.OFFICE_EDITOR,
+            AppRoutes.PDF_EDITOR,
+            AppRoutes.SIGNATURE_PAD,
+            AppRoutes.SLIDE_SHOW,
+            AppRoutes.SCANNER,
+        )
+        onRouteChanged(currentRoute, protected)
+    }
 
     val showMessage: (String) -> Unit = remember(snackbarHostState) {
         { msg ->
@@ -265,6 +280,11 @@ fun AppNavHost(
                             popUpTo(AppRoutes.SPLASH) { inclusive = true }
                         }
                     },
+                    onNavigateIntro = {
+                        navController.navigate(AppRoutes.ONBOARDING_INTRO) {
+                            popUpTo(AppRoutes.SPLASH) { inclusive = true }
+                        }
+                    },
                     onNavigateHome = {
                         onIncomingActionConsumed()
                         navController.navigate(AppRoutes.MAIN) {
@@ -289,6 +309,7 @@ fun AppNavHost(
             composable(AppRoutes.ONBOARDING_INTRO) {
                 OnboardingIntroRoute(
                     onNavigateNext = { navController.navigate(AppRoutes.paywall(fromOnboarding = true)) },
+                    onNavigateSkipPaywall = { navController.navigate(AppRoutes.STORAGE_PERMISSION) },
                 )
             }
 

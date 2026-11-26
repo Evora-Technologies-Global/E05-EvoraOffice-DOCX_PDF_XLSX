@@ -1,6 +1,5 @@
 package com.evora.technologies.office.core.data.di
 
-import com.evora.technologies.office.core.data.monetization.NoOpAdPlacementHook
 import com.evora.technologies.office.core.data.repository.DocumentRepositoryImpl
 import com.evora.technologies.office.core.data.repository.DraftRecoveryRepositoryImpl
 import com.evora.technologies.office.core.data.repository.LocalDocumentScanner
@@ -9,7 +8,6 @@ import com.evora.technologies.office.core.data.repository.PreferencesRepositoryI
 import com.evora.technologies.office.core.data.repository.SignatureRepositoryImpl
 import com.evora.technologies.office.core.data.repository.StorageBrowserRepositoryImpl
 import com.evora.technologies.office.core.data.repository.TemplateRepositoryImpl
-import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.DraftRecoveryRepository
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
@@ -57,10 +55,6 @@ object DispatchersModule {
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DataModule {
-    @Binds
-    @Singleton
-    abstract fun bindAdPlacementHook(impl: NoOpAdPlacementHook): AdPlacementHook
-
     @Binds
     @Singleton
     abstract fun bindPreferencesRepository(impl: PreferencesRepositoryImpl): PreferencesRepository

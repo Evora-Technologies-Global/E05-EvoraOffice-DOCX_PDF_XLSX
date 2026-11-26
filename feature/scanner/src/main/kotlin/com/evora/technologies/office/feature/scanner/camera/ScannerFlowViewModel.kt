@@ -1,9 +1,12 @@
 package com.evora.technologies.office.feature.scanner.camera
 
 import androidx.lifecycle.viewModelScope
+import com.evora.technologies.office.core.domain.port.AdPlacementHook
+import com.evora.technologies.office.core.domain.port.AnalyticsPort
 import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.domain.port.ScannerPort
 import com.evora.technologies.office.core.model.OcrScript
+import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.model.ScanFilter
 import com.evora.technologies.office.core.model.ScanMode
 import com.evora.technologies.office.core.mvi.MviViewModel
@@ -18,6 +21,8 @@ import javax.inject.Inject
 class ScannerFlowViewModel @Inject constructor(
     private val scannerPort: ScannerPort,
     private val proEntitlementPort: ProEntitlementPort,
+    private val adPlacementHook: AdPlacementHook,
+    private val analyticsPort: AnalyticsPort,
 ) : MviViewModel<ScannerFlowState, ScannerFlowIntent, ScannerFlowEffect>(
     ScannerFlowState(),
 ) {
@@ -165,7 +170,9 @@ class ScannerFlowViewModel @Inject constructor(
                 imagePaths = currentState.pages.map { it.processedPath },
                 outputBaseName = baseName.ifBlank { "Scan_${System.currentTimeMillis()}" },
             ).getOrThrow()
+            analyticsPort.logScanOcrComplete("doc", currentState.pages.size, "none")
             setState { copy(isBusy = false, exportResult = res) }
+            adPlacementHook.onMilestoneCompleted("scanner_doc_export")
         }
     }
 
@@ -192,7 +199,9 @@ class ScannerFlowViewModel @Inject constructor(
                 exportAsPdf = asPdf,
                 outputBaseName = "ID_Card_${System.currentTimeMillis()}",
             ).getOrThrow()
+            analyticsPort.logScanOcrComplete("id_card", 2, "none")
             setState { copy(isBusy = false, exportResult = res) }
+            adPlacementHook.onMilestoneCompleted("scanner_id_card_export")
         }
     }
 
@@ -261,13 +270,27 @@ class ScannerFlowViewModel @Inject constructor(
         launchSafely(
             onError = { setState { copy(showRewardGateTitle = null, errorMessage = it.message) } },
         ) {
-            proEntitlementPort.grantRewardedPass(hours = 24)
-            pendingGateKind = null
-            setState { copy(showRewardGateTitle = null) }
-            val front = currentState.idFrontPath
-            val back = currentState.idBackPath
-            if (front != null && back != null && (gate == "ID_PDF" || gate == "ID_PNG")) {
-                runIdCardExport(front, back, asPdf = gate == "ID_PDF")
+            when (val outcome = adPlacementHook.showRewardedPassAd()) {
+                is RewardedAdOutcome.Earned -> {
+                    proEntitlementPort.grantRewardedPass(hours = outcome.hours)
+                    pendingGateKind = null
+                    setState { copy(showRewardGateTitle = null) }
+                    val front = currentState.idFrontPath
+                    val back = currentState.idBackPath
+                    if (front != null && back != null && (gate == "ID_PDF" || gate == "ID_PNG")) {
+                        runIdCardExport(front, back, asPdf = gate == "ID_PDF")
+                    }
+                }
+                RewardedAdOutcome.Dismissed -> {
+                    pendingGateKind = null
+                    setState { copy(showRewardGateTitle = null) }
+                    sendEffect(ScannerFlowEffect.ShowMessage("Complete the rewarded video to unlock Dual ID Card export."))
+                }
+                is RewardedAdOutcome.Unavailable -> {
+                    pendingGateKind = null
+                    setState { copy(showRewardGateTitle = null) }
+                    sendEffect(ScannerFlowEffect.ShowMessage(outcome.reason))
+                }
             }
         }
     }

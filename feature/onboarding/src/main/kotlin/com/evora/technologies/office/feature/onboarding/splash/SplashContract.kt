@@ -20,6 +20,7 @@ sealed interface SplashIntent : UiIntent {
 
 sealed interface SplashEffect : UiEffect {
     data object NavigateToLanguageSelect : SplashEffect
+    data object NavigateToIntro : SplashEffect
     data object NavigateToHome : SplashEffect
     data class NavigateToExternalDocument(val payload: ExternalIntentPayload) : SplashEffect
     data class ShowError(val message: String) : SplashEffect

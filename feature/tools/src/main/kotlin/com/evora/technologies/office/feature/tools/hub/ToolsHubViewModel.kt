@@ -1,11 +1,13 @@
 package com.evora.technologies.office.feature.tools.hub
 
 import androidx.lifecycle.viewModelScope
+import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.domain.port.TemplateRepository
 import com.evora.technologies.office.core.model.DocTemplatePreset
 import com.evora.technologies.office.core.model.PdfToolKind
+import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
@@ -17,6 +19,7 @@ class ToolsHubViewModel @Inject constructor(
     private val proEntitlementPort: ProEntitlementPort,
     private val templateRepository: TemplateRepository,
     private val documentRepository: DocumentRepository,
+    private val adPlacementHook: AdPlacementHook,
 ) : MviViewModel<ToolsHubState, ToolsHubIntent, ToolsHubEffect>(
     ToolsHubState(templates = templateRepository.getAvailableTemplates()),
 ) {
@@ -93,9 +96,21 @@ class ToolsHubViewModel @Inject constructor(
                 sendEffect(ToolsHubEffect.ShowMessage(err.message ?: "Unable to unlock pass"))
             },
         ) {
-            proEntitlementPort.grantRewardedPass(hours = 24)
-            setState { copy(pendingGateToolId = null, pendingGateTitle = "") }
-            dispatchTool(pending)
+            when (val outcome = adPlacementHook.showRewardedPassAd()) {
+                is RewardedAdOutcome.Earned -> {
+                    proEntitlementPort.grantRewardedPass(hours = outcome.hours)
+                    setState { copy(pendingGateToolId = null, pendingGateTitle = "") }
+                    dispatchTool(pending)
+                }
+                RewardedAdOutcome.Dismissed -> {
+                    setState { copy(pendingGateToolId = null, pendingGateTitle = "") }
+                    sendEffect(ToolsHubEffect.ShowMessage("Watch the full rewarded video to unlock a 24h pass."))
+                }
+                is RewardedAdOutcome.Unavailable -> {
+                    setState { copy(pendingGateToolId = null, pendingGateTitle = "") }
+                    sendEffect(ToolsHubEffect.ShowMessage(outcome.reason))
+                }
+            }
         }
     }
 

@@ -46,4 +46,5 @@ sealed interface OnboardingIntroIntent : UiIntent {
 sealed interface OnboardingIntroEffect : UiEffect {
     data class ScrollToPage(val pageIndex: Int) : OnboardingIntroEffect
     data object NavigateNext : OnboardingIntroEffect
+    data object NavigateSkipPaywall : OnboardingIntroEffect
 }
