@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="evora_nav_home">Accueil</string>
+    <string name="evora_nav_recent">Récents</string>
+    <string name="evora_nav_storage">Stockage</string>
+    <string name="evora_nav_tools">Outils</string>
+    <string name="evora_nav_scan_cd">Scanner un document</string>
+    <string name="evora_action_scan">Scanner</string>
+    <string name="evora_action_search">Rechercher</string>
+
+    <string name="evora_storage_title">Explorateur de fichiers</string>
+    <string name="evora_storage_internal">Interne</string>
+    <string name="evora_storage_downloads">Téléchargements</string>
+    <string name="evora_storage_sd_card">Carte SD</string>
+    <string name="evora_storage_pick_saf">Ajouter un dossier (SAF)</string>
+    <string name="evora_storage_new_folder">Nouveau dossier</string>
+    <string name="evora_storage_move">Déplacer</string>
+    <string name="evora_storage_copy">Copier</string>
+    <string name="evora_storage_delete">Corbeille</string>
+    <string name="evora_storage_share">Partager</string>
+    <string name="evora_storage_merge_pdf">Fusionner PDF</string>
+    <string name="evora_storage_empty_title">Dossier vide</string>
+    <string name="evora_storage_empty_desc">Créez un dossier ou utilisez le sélecteur de dossiers (SAF).</string>
+
+    <string name="evora_wifi_title">Transfert Wi-Fi Web et FTP</string>
+    <string name="evora_wifi_start">Démarrer le serveur</string>
+    <string name="evora_wifi_stop">Arrêter le serveur</string>
+    <string name="evora_wifi_running">En cours</string>
+    <string name="evora_wifi_stopped">Arrêté</string>
+    <string name="evora_wifi_copy_url">Copier l\'URL</string>
+    <string name="evora_wifi_ftp_toggle">Serveur FTP</string>
+    <string name="evora_wifi_readonly">Lecture seule</string>
+    <string name="evora_wifi_pin_lock">Verrouillage PIN</string>
+    <string name="evora_wifi_idle_prefix">Arrêt auto inactif</string>
+    <string name="evora_wifi_tip">Ouvrez l\'URL HTTP sur votre PC pour glisser-déposer des fichiers en Wi-Fi.</string>
+
+    <string name="evora_cloud_title">Stockage Cloud</string>
+    <string name="evora_cloud_google_drive">Google Drive</string>
+    <string name="evora_cloud_onedrive">OneDrive</string>
+    <string name="evora_cloud_connect">Connecter</string>
+    <string name="evora_cloud_disconnect">Déconnecter</string>
+    <string name="evora_cloud_upload">Envoyer un fichier</string>
+    <string name="evora_cloud_search_hint">Rechercher dans le cloud</string>
+    <string name="evora_cloud_empty">Aucun fichier dans ce dossier</string>
+
+    <string name="evora_settings_title">Paramètres</string>
+    <string name="evora_settings_appearance">Apparence</string>
+    <string name="evora_settings_theme">Thème de l\'application</string>
+    <string name="evora_settings_theme_system">Système</string>
+    <string name="evora_settings_theme_light">Clair</string>
+    <string name="evora_settings_theme_dark">Sombre</string>
+    <string name="evora_settings_language">Langue</string>
+    <string name="evora_settings_files_defaults">Fichiers et défauts</string>
+    <string name="evora_settings_default_handler">Application par défaut</string>
+    <string name="evora_settings_autosave">Intervalle d\'enregistrement</string>
+    <string name="evora_settings_account_pro">Compte et Pro</string>
+    <string name="evora_settings_manage_pro">Gérer Evora Pro</string>
+    <string name="evora_settings_restore_purchases">Restaurer les achats</string>
+    <string name="evora_settings_connected_clouds">Clouds connectés</string>
+    <string name="evora_settings_privacy_legal">Confidentialité et légal</string>
+    <string name="evora_settings_ump_privacy">Choix de confidentialité</string>
+    <string name="evora_settings_oss_licenses">Licences open-source</string>
+
+    <string name="evora_widget_quick_name">Barre rapide Evora</string>
+    <string name="evora_widget_quick_desc">Recherche rapide, numérisation et modèles.</string>
+    <string name="evora_widget_recent_name">Documents récents Evora</string>
+    <string name="evora_widget_recent_desc">Accédez à vos 3 derniers fichiers ouverts.</string>
+    <string name="evora_widget_search_hint">Rechercher…</string>
+    <string name="evora_widget_new_doc">Nouveau</string>
+    <string name="evora_widget_recent_empty">Ouvrez un document dans Evora Office pour le voir ici.</string>
+</resources>

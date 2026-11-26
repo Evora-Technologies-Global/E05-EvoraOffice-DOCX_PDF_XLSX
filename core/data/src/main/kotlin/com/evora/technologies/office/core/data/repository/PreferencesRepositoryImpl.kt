@@ -32,6 +32,9 @@ class PreferencesRepositoryImpl @Inject constructor(
     override suspend fun setDefaultSortOrder(sortOrder: SortOrder) =
         dataSource.setDefaultSortOrder(sortOrder)
 
+    override suspend fun setAutosaveIntervalSec(seconds: Int) =
+        dataSource.setAutosaveIntervalSec(seconds)
+
     override suspend fun setDefaultAppPromptDismissed(dismissed: Boolean) =
         dataSource.setDefaultAppPromptDismissed(dismissed)
 

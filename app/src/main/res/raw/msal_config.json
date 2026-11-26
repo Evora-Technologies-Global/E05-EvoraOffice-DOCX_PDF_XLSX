@@ -1,0 +1,16 @@
+{
+  "client_id": "",
+  "authorization_user_agent": "DEFAULT",
+  "redirect_uri": "msauth://com.evora.technologies.office/msal_auth",
+  "account_mode": "MULTIPLE",
+  "broker_redirect_uri_registered": false,
+  "authorities": [
+    {
+      "type": "AAD",
+      "audience": {
+        "type": "AzureADandPersonalMicrosoftAccount",
+        "tenant_id": "common"
+      }
+    }
+  ]
+}

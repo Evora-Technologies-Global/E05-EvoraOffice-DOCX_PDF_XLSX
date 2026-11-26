@@ -18,6 +18,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url = uri("https://pkgs.dev.azure.com/MicrosoftDeviceSDK/DuoSDK-Public/_packaging/Duo-SDK-Feed/maven/v1")
+            name = "Duo-SDK-Feed"
+        }
     }
 }
 
@@ -36,6 +40,8 @@ include(":engine:office")
 include(":engine:hwp")
 include(":engine:archive")
 include(":engine:scanner")
+include(":engine:transfer")
+include(":engine:cloud")
 include(":feature:onboarding")
 include(":feature:monetization")
 include(":feature:library")
@@ -43,3 +49,6 @@ include(":feature:reader")
 include(":feature:editor")
 include(":feature:tools")
 include(":feature:scanner")
+include(":feature:transfer")
+include(":feature:cloud")
+include(":feature:settings")

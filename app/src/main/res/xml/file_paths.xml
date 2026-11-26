@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <files-path name="app_documents" path="documents/" />
+    <files-path name="internal_files" path="." />
     <cache-path name="external_imports" path="external_imports/" />
+    <cache-path name="shared_temp" path="shared_temp/" />
     <external-files-path name="external_files" path="." />
     <external-path name="external_storage" path="." />
 </paths>

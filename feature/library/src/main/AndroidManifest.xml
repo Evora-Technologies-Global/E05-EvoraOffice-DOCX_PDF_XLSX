@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <receiver
+            android:name="com.evora.technologies.office.feature.library.widget.QuickBarWidgetReceiver"
+            android:exported="true"
+            android:label="@string/evora_widget_quick_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_quick_bar_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.evora.technologies.office.feature.library.widget.RecentDocsWidgetReceiver"
+            android:exported="true"
+            android:label="@string/evora_widget_recent_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_recent_docs_info" />
+        </receiver>
+    </application>
+</manifest>

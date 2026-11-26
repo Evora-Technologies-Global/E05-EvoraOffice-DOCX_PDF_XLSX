@@ -29,6 +29,7 @@ class DocumentReaderViewModel @Inject constructor(
     DocumentReaderState(),
 ) {
     private var activePassword: String? = null
+    private var loadedDocumentKey: String? = null
     private var loadJob: Job? = null
     private var persistJob: Job? = null
     private var autoScrollJob: Job? = null
@@ -127,6 +128,16 @@ class DocumentReaderViewModel @Inject constructor(
         format: DocFormat,
         password: String?,
     ) {
+        val docKey = "$uriString|$format"
+        if (password == null &&
+            loadedDocumentKey == docKey &&
+            !currentState.isLoading &&
+            currentState.errorMessage == null &&
+            !currentState.passwordRequired
+        ) {
+            return
+        }
+        loadedDocumentKey = docKey
         loadJob?.cancel()
         persistJob?.cancel()
         autoScrollJob?.cancel()

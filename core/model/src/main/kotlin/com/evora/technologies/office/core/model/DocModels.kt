@@ -62,8 +62,13 @@ enum class AppLanguage(
     ;
 
     companion object {
-        fun fromTag(tag: String): AppLanguage =
-            entries.firstOrNull { it.tag.equals(tag, ignoreCase = true) } ?: EN
+        fun fromTag(tag: String): AppLanguage {
+            val normalized = when {
+                tag.equals("in", ignoreCase = true) || tag.startsWith("in-", ignoreCase = true) -> "id"
+                else -> tag
+            }
+            return entries.firstOrNull { it.tag.equals(normalized, ignoreCase = true) } ?: EN
+        }
     }
 }
 

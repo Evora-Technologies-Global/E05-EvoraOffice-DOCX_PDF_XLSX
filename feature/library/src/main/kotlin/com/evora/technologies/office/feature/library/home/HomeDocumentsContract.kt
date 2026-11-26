@@ -67,9 +67,13 @@ sealed interface HomeDocumentsIntent : UiIntent {
     data class CreateFromTemplate(val preset: DocTemplatePreset) : HomeDocumentsIntent
     data class EditDocument(val document: DocumentItem) : HomeDocumentsIntent
     data class ConvertDocumentToPdf(val document: DocumentItem) : HomeDocumentsIntent
+    data object SearchClicked : HomeDocumentsIntent
+    data object PaywallClicked : HomeDocumentsIntent
 }
 
 sealed interface HomeDocumentsEffect : UiEffect {
+    data object NavigateToSearch : HomeDocumentsEffect
+    data object NavigateToPaywall : HomeDocumentsEffect
     data class OpenDocument(val document: DocumentItem) : HomeDocumentsEffect
     data class OpenEditor(val document: DocumentItem) : HomeDocumentsEffect
     data class OpenConvertToPdf(val document: DocumentItem) : HomeDocumentsEffect

@@ -30,6 +30,7 @@ class PdfEditorViewModel @Inject constructor(
     PdfEditorState(),
 ) {
     private var openJob: Job? = null
+    private var loadedPdfUri: String? = null
     private var renderJob: Job? = null
     private var activePassword: String? = null
     private var lastRenderWidthPx: Int = 1080
@@ -118,6 +119,14 @@ class PdfEditorViewModel @Inject constructor(
     }
 
     private fun loadPdf(uriString: String, displayName: String, password: String?) {
+        if (password == null &&
+            loadedPdfUri == uriString &&
+            currentState.errorMessage == null &&
+            !currentState.passwordRequired &&
+            currentState.totalPages > 0
+        ) {
+            return
+        }
         openJob?.cancel()
         openJob = launchSafely(
             onError = { err ->
@@ -149,6 +158,7 @@ class PdfEditorViewModel @Inject constructor(
             } else {
                 null
             }
+            loadedPdfUri = uriString
             setState {
                 copy(
                     isLoading = false,
@@ -354,7 +364,10 @@ class PdfEditorViewModel @Inject constructor(
 
     private fun applySetPassword(userPass: String, aes256: Boolean) {
         launchSafely(
-            onError = { sendEffect(PdfEditorEffect.ShowMessage(it.message ?: "Unable to set password")) },
+            onError = {
+                setState { copy(isSaving = false) }
+                sendEffect(PdfEditorEffect.ShowMessage(it.message ?: "Unable to set password"))
+            },
         ) {
             setState { copy(showSetPasswordDialog = false, isSaving = true) }
             val res = pdfPowerPort.setPassword(
@@ -372,7 +385,10 @@ class PdfEditorViewModel @Inject constructor(
 
     private fun applyRemovePassword(currentPass: String) {
         launchSafely(
-            onError = { sendEffect(PdfEditorEffect.ShowMessage(it.message ?: "Wrong password")) },
+            onError = {
+                setState { copy(isSaving = false) }
+                sendEffect(PdfEditorEffect.ShowMessage(it.message ?: "Wrong password"))
+            },
         ) {
             setState { copy(showRemovePasswordDialog = false, isSaving = true) }
             val res = pdfPowerPort.removePassword(currentState.uriString, currentPass).getOrThrow()

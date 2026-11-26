@@ -30,6 +30,7 @@ class PdfToolConfigViewModel @Inject constructor(
     PdfToolConfigState(),
 ) {
     private var runJob: Job? = null
+    private var initializedKey: String? = null
 
     init {
         proEntitlementPort.proStatus
@@ -116,6 +117,9 @@ class PdfToolConfigViewModel @Inject constructor(
     }
 
     private fun initializeTool(kind: PdfToolKind, preselectedUri: String?) {
+        val key = "$kind|${preselectedUri.orEmpty()}"
+        if (initializedKey == key) return
+        initializedKey = key
         val defaultOut = when (kind) {
             PdfToolKind.MERGE -> "Merged_PDF"
             PdfToolKind.IMAGE_TO_PDF -> "Scanned_Images"
@@ -133,11 +137,21 @@ class PdfToolConfigViewModel @Inject constructor(
         }
         if (!preselectedUri.isNullOrBlank()) {
             launchSafely {
-                val meta = documentRepository.getDocumentMeta(preselectedUri)
-                if (meta != null) {
-                    addDocumentInput(meta)
+                val uris = preselectedUri.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
+                if (uris.size > 1) {
+                    val items = uris.map { uri ->
+                        val meta = documentRepository.getDocumentMeta(uri)
+                        ToolInputFile(uri, meta?.displayName ?: uri.substringAfterLast('/'))
+                    }
+                    addExternalFiles(items)
                 } else {
-                    addExternalFiles(listOf(ToolInputFile(preselectedUri, preselectedUri.substringAfterLast('/'))))
+                    val single = uris.first()
+                    val meta = documentRepository.getDocumentMeta(single)
+                    if (meta != null) {
+                        addDocumentInput(meta)
+                    } else {
+                        addExternalFiles(listOf(ToolInputFile(single, single.substringAfterLast('/'))))
+                    }
                 }
             }
         }

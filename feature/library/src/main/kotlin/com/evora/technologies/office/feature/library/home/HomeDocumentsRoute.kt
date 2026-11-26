@@ -54,6 +54,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -122,12 +123,19 @@ fun HomeDocumentsRoute(
     onOpenEditor: (DocumentItem) -> Unit = onOpenDocument,
     onConvertDocumentToPdf: (DocumentItem) -> Unit = {},
     onOpenArchiveInspector: (DocumentItem) -> Unit,
+    openTemplatesTrigger: Int = 0,
     onShowMessage: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeDocumentsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    LaunchedEffect(openTemplatesTrigger) {
+        if (openTemplatesTrigger > 0) {
+            viewModel.onIntent(HomeDocumentsIntent.OpenTemplatesSheet)
+        }
+    }
 
     val safLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -145,6 +153,8 @@ fun HomeDocumentsRoute(
 
     CollectEffects(viewModel.effects) { effect ->
         when (effect) {
+            HomeDocumentsEffect.NavigateToSearch -> onOpenSearch()
+            HomeDocumentsEffect.NavigateToPaywall -> onOpenPaywall()
             is HomeDocumentsEffect.OpenDocument -> onOpenDocument(effect.document)
             is HomeDocumentsEffect.OpenEditor -> onOpenEditor(effect.document)
             is HomeDocumentsEffect.OpenConvertToPdf -> onConvertDocumentToPdf(effect.document)
@@ -171,8 +181,6 @@ fun HomeDocumentsRoute(
         state = state,
         isMediumGrid = isMediumOrExpanded && !isExpandedTwoPane,
         isExpandedTwoPane = isExpandedTwoPane,
-        onOpenSearch = onOpenSearch,
-        onOpenPaywall = onOpenPaywall,
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
@@ -184,8 +192,6 @@ internal fun HomeDocumentsScreen(
     state: HomeDocumentsState,
     isMediumGrid: Boolean,
     isExpandedTwoPane: Boolean,
-    onOpenSearch: () -> Unit,
-    onOpenPaywall: () -> Unit,
     onIntent: (HomeDocumentsIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -216,7 +222,7 @@ internal fun HomeDocumentsScreen(
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        EvoraIconButton(onClick = onOpenSearch) {
+                        EvoraIconButton(onClick = { onIntent(HomeDocumentsIntent.SearchClicked) }) {
                             Icon(Icons.Outlined.Search, contentDescription = "Search documents")
                         }
                         EvoraIconButton(onClick = { onIntent(HomeDocumentsIntent.OpenTemplatesSheet) }) {
@@ -225,7 +231,7 @@ internal fun HomeDocumentsScreen(
                         EvoraIconButton(onClick = { onIntent(HomeDocumentsIntent.ImportViaSafClicked) }) {
                             Icon(Icons.Outlined.Add, contentDescription = "Open file with Folder Picker")
                         }
-                        EvoraIconButton(onClick = onOpenPaywall) {
+                        EvoraIconButton(onClick = { onIntent(HomeDocumentsIntent.PaywallClicked) }) {
                             Icon(
                                 Icons.Outlined.WorkspacePremium,
                                 contentDescription = "Evora Pro",
@@ -652,8 +658,6 @@ private fun HomeDocumentsPreview() {
             state = HomeDocumentsState(isLoading = false),
             isMediumGrid = false,
             isExpandedTwoPane = false,
-            onOpenSearch = {},
-            onOpenPaywall = {},
             onIntent = {},
         )
     }

@@ -58,6 +58,7 @@ private class FakeLibraryPrefsRepo : PreferencesRepository {
     override suspend fun setDefaultSortOrder(sortOrder: SortOrder) {
         defaultSortOrder.value = sortOrder
     }
+    override suspend fun setAutosaveIntervalSec(seconds: Int) = Unit
     override suspend fun setDefaultAppPromptDismissed(dismissed: Boolean) = Unit
     override suspend fun incrementExternalOpenCount() = Unit
 }

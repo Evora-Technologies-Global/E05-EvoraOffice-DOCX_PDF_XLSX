@@ -85,6 +85,8 @@ fun ToolsHubRoute(
     onNavigateToScannerMode: (String) -> Unit,
     onNavigateToPaywall: () -> Unit,
     onOpenCreatedOfficeDoc: (DocumentItem) -> Unit,
+    onNavigateToSettings: () -> Unit = {},
+    onNavigateToWifiTransfer: () -> Unit = {},
     onShowMessage: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ToolsHubViewModel = hiltViewModel(),
@@ -97,8 +99,8 @@ fun ToolsHubRoute(
             is ToolsHubEffect.NavigateToPdfTool -> onNavigateToPdfTool(effect.kind)
             is ToolsHubEffect.NavigateToScannerMode -> onNavigateToScannerMode(effect.modeName)
             ToolsHubEffect.NavigateToPaywall -> onNavigateToPaywall()
-            ToolsHubEffect.NavigateToSettings -> onShowMessage("Settings screen lands in Sprint 3 (T-022)")
-            ToolsHubEffect.NavigateToWifiTransfer -> onShowMessage("Wi-Fi Web & FTP Transfer activates in Sprint 3 (T-019)")
+            ToolsHubEffect.NavigateToSettings -> onNavigateToSettings()
+            ToolsHubEffect.NavigateToWifiTransfer -> onNavigateToWifiTransfer()
             is ToolsHubEffect.OpenCreatedOfficeDoc -> onOpenCreatedOfficeDoc(effect.document)
             is ToolsHubEffect.LaunchSystemPrint -> {
                 if (effect.document.format == DocFormat.PDF) {
@@ -114,7 +116,6 @@ fun ToolsHubRoute(
     ToolsHubScreen(
         state = state,
         columns = columns,
-        onOpenPaywall = onNavigateToPaywall,
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
@@ -125,7 +126,6 @@ fun ToolsHubRoute(
 internal fun ToolsHubScreen(
     state: ToolsHubState,
     columns: Int = 3,
-    onOpenPaywall: () -> Unit,
     onIntent: (ToolsHubIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -196,7 +196,7 @@ internal fun ToolsHubScreen(
             ) {
                 Text("PDF & Office Tools", style = MaterialTheme.typography.titleLarge)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    EvoraIconButton(onClick = onOpenPaywall) {
+                    EvoraIconButton(onClick = { onIntent(ToolsHubIntent.PaywallClicked) }) {
                         Icon(
                             imageVector = Icons.Outlined.WorkspacePremium,
                             contentDescription = "Evora Pro",
@@ -393,7 +393,6 @@ private fun ToolsHubPreview() {
     EvoraTheme {
         ToolsHubScreen(
             state = ToolsHubState(),
-            onOpenPaywall = {},
             onIntent = {},
         )
     }

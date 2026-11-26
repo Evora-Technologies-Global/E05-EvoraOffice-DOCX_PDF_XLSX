@@ -124,6 +124,8 @@ class HomeDocumentsViewModel @Inject constructor(
                 setState { copy(contextMenuDocId = null) }
                 sendEffect(HomeDocumentsEffect.OpenConvertToPdf(intent.document))
             }
+            HomeDocumentsIntent.SearchClicked -> sendEffect(HomeDocumentsEffect.NavigateToSearch)
+            HomeDocumentsIntent.PaywallClicked -> sendEffect(HomeDocumentsEffect.NavigateToPaywall)
         }
     }
 

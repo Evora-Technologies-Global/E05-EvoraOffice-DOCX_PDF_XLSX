@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="evora_nav_home">Trang chủ</string>
+    <string name="evora_nav_recent">Gần đây</string>
+    <string name="evora_nav_storage">Lưu trữ</string>
+    <string name="evora_nav_tools">Công cụ</string>
+    <string name="evora_nav_scan_cd">Quét tài liệu</string>
+    <string name="evora_action_scan">Quét</string>
+    <string name="evora_action_search">Tìm kiếm</string>
+
+    <string name="evora_storage_title">Quản lý lưu trữ</string>
+    <string name="evora_storage_internal">Bộ nhớ trong</string>
+    <string name="evora_storage_downloads">Tải xuống</string>
+    <string name="evora_storage_sd_card">Thẻ SD</string>
+    <string name="evora_storage_pick_saf">Chọn thư mục (SAF)</string>
+    <string name="evora_storage_new_folder">Thư mục mới</string>
+    <string name="evora_storage_move">Di chuyển</string>
+    <string name="evora_storage_copy">Sao chép</string>
+    <string name="evora_storage_delete">Thùng rác</string>
+    <string name="evora_storage_share">Chia sẻ</string>
+    <string name="evora_storage_merge_pdf">Gộp PDF</string>
+    <string name="evora_storage_empty_title">Thư mục trống</string>
+    <string name="evora_storage_empty_desc">Tạo thư mục mới hoặc dùng Bộ chọn thư mục (SAF) để mở các thư mục khác.</string>
+
+    <string name="evora_wifi_title">Truyền Wi-Fi Web &amp; FTP</string>
+    <string name="evora_wifi_start">Bật máy chủ</string>
+    <string name="evora_wifi_stop">Dừng máy chủ</string>
+    <string name="evora_wifi_running">Đang chạy</string>
+    <string name="evora_wifi_stopped">Đã dừng</string>
+    <string name="evora_wifi_copy_url">Sao chép URL</string>
+    <string name="evora_wifi_ftp_toggle">Máy chủ FTP</string>
+    <string name="evora_wifi_readonly">Chế độ chỉ đọc</string>
+    <string name="evora_wifi_pin_lock">Khóa mã PIN</string>
+    <string name="evora_wifi_idle_prefix">Tự dừng khi rảnh</string>
+    <string name="evora_wifi_tip">Mở địa chỉ HTTP trên trình duyệt máy tính để kéo thả tài liệu qua Wi-Fi nội bộ.</string>
+
+    <string name="evora_cloud_title">Lưu trữ đám mây</string>
+    <string name="evora_cloud_google_drive">Google Drive</string>
+    <string name="evora_cloud_onedrive">OneDrive</string>
+    <string name="evora_cloud_connect">Kết nối</string>
+    <string name="evora_cloud_disconnect">Ngắt kết nối</string>
+    <string name="evora_cloud_upload">Tải tệp lên</string>
+    <string name="evora_cloud_search_hint">Tìm tệp trên đám mây</string>
+    <string name="evora_cloud_empty">Không có tệp trong thư mục này</string>
+
+    <string name="evora_settings_title">Cài đặt</string>
+    <string name="evora_settings_appearance">Giao diện</string>
+    <string name="evora_settings_theme">Chủ đề ứng dụng</string>
+    <string name="evora_settings_theme_system">Theo hệ thống</string>
+    <string name="evora_settings_theme_light">Sáng</string>
+    <string name="evora_settings_theme_dark">Tối</string>
+    <string name="evora_settings_language">Ngôn ngữ</string>
+    <string name="evora_settings_files_defaults">Tệp &amp; Mặc định</string>
+    <string name="evora_settings_default_handler">Ứng dụng mở tệp mặc định</string>
+    <string name="evora_settings_autosave">Chu kỳ tự lưu bản nháp</string>
+    <string name="evora_settings_account_pro">Tài khoản &amp; Pro</string>
+    <string name="evora_settings_manage_pro">Quản lý Evora Pro</string>
+    <string name="evora_settings_restore_purchases">Khôi phục giao dịch</string>
+    <string name="evora_settings_connected_clouds">Tài khoản đám mây đã nối</string>
+    <string name="evora_settings_privacy_legal">Quyền riêng tư &amp; Pháp lý</string>
+    <string name="evora_settings_ump_privacy">Tùy chọn đồng ý &amp; riêng tư</string>
+    <string name="evora_settings_oss_licenses">Giấy phép mã nguồn mở</string>
+
+    <string name="evora_widget_quick_name">Thanh nhanh Evora</string>
+    <string name="evora_widget_quick_desc">Tìm nhanh, quét tài liệu và tạo tệp từ mẫu.</string>
+    <string name="evora_widget_recent_name">Tài liệu gần đây Evora</string>
+    <string name="evora_widget_recent_desc">Mở nhanh 3 tài liệu gần đây nhất.</string>
+    <string name="evora_widget_search_hint">Tìm tài liệu…</string>
+    <string name="evora_widget_new_doc">Mới</string>
+    <string name="evora_widget_recent_empty">Mở tài liệu trong Evora Office để hiển thị lối tắt tại đây.</string>
+</resources>

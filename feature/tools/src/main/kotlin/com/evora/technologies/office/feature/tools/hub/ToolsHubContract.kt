@@ -53,6 +53,7 @@ sealed interface ToolsHubIntent : UiIntent {
     data class PrintSelectedDocument(val doc: DocumentItem) : ToolsHubIntent
     data object DismissPrintPicker : ToolsHubIntent
     data object SettingsClicked : ToolsHubIntent
+    data object PaywallClicked : ToolsHubIntent
 }
 
 sealed interface ToolsHubEffect : UiEffect {

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="evora_nav_home">होम</string>
+    <string name="evora_nav_recent">हाल का</string>
+    <string name="evora_nav_storage">स्टोरेज</string>
+    <string name="evora_nav_tools">टूल्स</string>
+    <string name="evora_nav_scan_cd">दस्तावेज़ स्कैन करें</string>
+    <string name="evora_action_scan">स्कैन</string>
+    <string name="evora_action_search">खोजें</string>
+
+    <string name="evora_storage_title">स्टोरेज एक्सप्लोरर</string>
+    <string name="evora_storage_internal">आंतरिक</string>
+    <string name="evora_storage_downloads">डाउनलोड</string>
+    <string name="evora_storage_sd_card">SD कार्ड</string>
+    <string name="evora_storage_pick_saf">फ़ोल्डर जोड़ें (SAF)</string>
+    <string name="evora_storage_new_folder">नया फ़ोल्डर</string>
+    <string name="evora_storage_move">स्थानांतरित करें</string>
+    <string name="evora_storage_copy">कॉपी करें</string>
+    <string name="evora_storage_delete">ट्रैश</string>
+    <string name="evora_storage_share">साझा करें</string>
+    <string name="evora_storage_merge_pdf">PDF मर्ज करें</string>
+    <string name="evora_storage_empty_title">फ़ोल्डर खाली है</string>
+    <string name="evora_storage_empty_desc">नया फ़ोल्डर बनाएं या फ़ोल्डर पिकर (SAF) का उपयोग करें।</string>
+
+    <string name="evora_wifi_title">Wi-Fi वेब और FTP ट्रांसफ़र</string>
+    <string name="evora_wifi_start">सर्वर शुरू करें</string>
+    <string name="evora_wifi_stop">सर्वर रोकें</string>
+    <string name="evora_wifi_running">चालू</string>
+    <string name="evora_wifi_stopped">बंद</string>
+    <string name="evora_wifi_copy_url">URL कॉपी करें</string>
+    <string name="evora_wifi_ftp_toggle">FTP सर्वर</string>
+    <string name="evora_wifi_readonly">केवल पढ़ने का मोड</string>
+    <string name="evora_wifi_pin_lock">PIN लॉक</string>
+    <string name="evora_wifi_idle_prefix">निष्क्रिय ऑटो-स्टॉप</string>
+    <string name="evora_wifi_tip">Wi-Fi पर फ़ाइलें ड्रैग और ड्रॉप करने के लिए अपने PC ब्राउज़र में HTTP URL खोलें।</string>
+
+    <string name="evora_cloud_title">क्लाउड ड्राइव</string>
+    <string name="evora_cloud_google_drive">Google Drive</string>
+    <string name="evora_cloud_onedrive">OneDrive</string>
+    <string name="evora_cloud_connect">कनेक्ट करें</string>
+    <string name="evora_cloud_disconnect">डिस्कनेक्ट करें</string>
+    <string name="evora_cloud_upload">फ़ाइल अपलोड करें</string>
+    <string name="evora_cloud_search_hint">क्लाउड फ़ाइलें खोजें</string>
+    <string name="evora_cloud_empty">इस फ़ोल्डर में कोई फ़ाइल नहीं</string>
+
+    <string name="evora_settings_title">सेटिंग्स</string>
+    <string name="evora_settings_appearance">दिखावट</string>
+    <string name="evora_settings_theme">ऐप थीम</string>
+    <string name="evora_settings_theme_system">सिस्टम</string>
+    <string name="evora_settings_theme_light">लाइट</string>
+    <string name="evora_settings_theme_dark">डार्क</string>
+    <string name="evora_settings_language">भाषा</string>
+    <string name="evora_settings_files_defaults">फ़ाइलें और डिफ़ॉल्ट</string>
+    <string name="evora_settings_default_handler">डिफ़ॉल्ट फ़ाइल ऐप</string>
+    <string name="evora_settings_autosave">ऑटो-सेव अंतराल</string>
+    <string name="evora_settings_account_pro">खाता और Pro</string>
+    <string name="evora_settings_manage_pro">Evora Pro प्रबंधित करें</string>
+    <string name="evora_settings_restore_purchases">खरीदारी पुनर्स्थापित करें</string>
+    <string name="evora_settings_connected_clouds">कनेक्टेड क्लाउड</string>
+    <string name="evora_settings_privacy_legal">गोपनीयता और कानूनी</string>
+    <string name="evora_settings_ump_privacy">गोपनीयता विकल्प</string>
+    <string name="evora_settings_oss_licenses">ओपन-सोर्स लाइसेंस</string>
+
+    <string name="evora_widget_quick_name">Evora क्विक बार</string>
+    <string name="evora_widget_quick_desc">त्वरित खोज, स्कैन और टेम्पलेट लॉन्चर।</string>
+    <string name="evora_widget_recent_name">Evora हाल के दस्तावेज़</string>
+    <string name="evora_widget_recent_desc">अपने 3 हाल ही में खोले गए फ़ाइलों पर वापस जाएं।</string>
+    <string name="evora_widget_search_hint">दस्तावेज़ खोजें…</string>
+    <string name="evora_widget_new_doc">नया</string>
+    <string name="evora_widget_recent_empty">यहां देखने के लिए Evora Office में दस्तावेज़ खोलें।</string>
+</resources>
