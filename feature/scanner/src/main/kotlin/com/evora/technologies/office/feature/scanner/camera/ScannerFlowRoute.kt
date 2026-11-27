@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.ContactsContract
 import android.util.Size
+import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -74,10 +75,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -362,25 +365,45 @@ internal fun ScannerFlowScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(310.dp)
+                    .clipToBounds()
                     .background(Color.Black),
             ) {
                 if (state.cameraPermissionGranted) {
                     val executor = remember { Executors.newSingleThreadExecutor() }
                     val barcodeClient = remember { BarcodeScanning.getClient() }
+                    val currentMode by rememberUpdatedState(state.mode)
+                    var cameraProviderRef by remember { mutableStateOf<ProcessCameraProvider?>(null) }
+                    var isDisposed by remember { mutableStateOf(false) }
                     DisposableEffect(Unit) {
                         onDispose {
+                            isDisposed = true
+                            runCatching { cameraProviderRef?.unbindAll() }
+                            cameraProviderRef = null
+                            cameraRef = null
+                            imageCapture = null
                             barcodeClient.close()
                             executor.shutdown()
                         }
                     }
                     AndroidView(
                         factory = { ctx ->
-                            val previewView = PreviewView(ctx)
+                            val previewView = PreviewView(ctx).apply {
+                                layoutParams = ViewGroup.LayoutParams(
+                                    ViewGroup.LayoutParams.MATCH_PARENT,
+                                    ViewGroup.LayoutParams.MATCH_PARENT,
+                                )
+                                // Render via TextureView so Compose clipToBounds() and verticalScroll()
+                                // strictly contain the viewfinder without SurfaceView layer overflow.
+                                implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                                scaleType = PreviewView.ScaleType.FILL_CENTER
+                            }
                             val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
                             cameraProviderFuture.addListener(
                                 {
+                                    if (isDisposed) return@addListener
                                     runCatching {
                                         val provider = cameraProviderFuture.get()
+                                        cameraProviderRef = provider
                                         val preview = CameraXPreview.Builder().build().also {
                                             it.surfaceProvider = previewView.surfaceProvider
                                         }
@@ -392,7 +415,7 @@ internal fun ScannerFlowScreen(
                                             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                                             .build()
                                         analysis.setAnalyzer(executor) { proxy ->
-                                            analyzeQrFrame(proxy, state.mode == ScanMode.QR_BARCODE, barcodeClient) { raw ->
+                                            analyzeQrFrame(proxy, currentMode == ScanMode.QR_BARCODE, barcodeClient) { raw ->
                                                 onIntent(ScannerFlowIntent.LiveQrDetected(raw))
                                             }
                                         }
@@ -412,7 +435,9 @@ internal fun ScannerFlowScreen(
                             )
                             previewView
                         },
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clipToBounds(),
                     )
                 } else {
                     Column(
