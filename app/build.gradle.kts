@@ -11,15 +11,17 @@ if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
 }
 
-val keystoreProps = Properties().apply {
-    val propsFile = rootProject.file("keystore.properties")
-    if (propsFile.exists()) {
-        propsFile.inputStream().use(::load)
+val signingProps = Properties().apply {
+    listOf("keystore.properties", "local.properties").forEach { fileName ->
+        val propsFile = rootProject.file(fileName)
+        if (propsFile.exists()) {
+            propsFile.inputStream().use(::load)
+        }
     }
 }
 
 fun Project.signingProp(propKey: String, envKey: String): String? =
-    keystoreProps.getProperty(propKey)?.takeIf { it.isNotBlank() }
+    signingProps.getProperty(propKey)?.takeIf { it.isNotBlank() }
         ?: (findProperty(envKey) as? String)?.takeIf { it.isNotBlank() }
         ?: System.getenv(envKey)?.takeIf { it.isNotBlank() }
 
