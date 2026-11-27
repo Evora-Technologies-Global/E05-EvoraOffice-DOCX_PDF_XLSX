@@ -1,0 +1,6 @@
+Ra mắt Evora Office v1.0.0:
+• Đọc & sửa DOCX, XLSX, PPTX, ODT, ODS, ODP ngoại tuyến 100%
+• Công cụ PDF: Ghi chú, Ký tên, Tách, Nén, Đóng dấu, Bảo mật AES & PDF sang DOCX
+• Mở HWP/HWPX, EPUB, TXT, CSV, ZIP và 7z không cần mạng
+• Quét tài liệu, Ghép CCCD 2 mặt ra A4, OCR ngoại tuyến 5 nhóm chữ
+• Chuyển file qua Wi-Fi Web/FTP, Google Drive, OneDrive & Widget

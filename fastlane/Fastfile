@@ -1,0 +1,140 @@
+# Fastlane release automation for Evora Office (Android Native Only — PD-01)
+# Package: com.evora.technologies.office | Target: v1.0.0 (versionCode 100)
+
+default_platform(:android)
+
+platform :android do
+  AAB_PATH = "app/build/outputs/bundle/release/app-release.aab"
+  MAPPING_PATH = "app/build/outputs/mapping/release/mapping.txt"
+  METADATA_PATH = "fastlane/metadata/android"
+
+  desc "Run pre-release unit tests, lint, signed release AAB build, 16 KB ELF gate, and signature check"
+  lane :verify_release do
+    sh("cd .. && ./gradlew testDebugUnitTest :core:domain:test :core:model:test lintDebug :app:bundleRelease --quiet")
+    sh("cd .. && python3 -I scripts/verify_16kb_elf.py #{AAB_PATH}")
+    sh("cd .. && bash scripts/package_mplv2_disclosure.sh")
+    verify_signing!(aab_path: "../#{AAB_PATH}")
+  end
+
+  desc "Dry-run Play Console submission validation without uploading live changes"
+  lane :validate_play do
+    verify_signing!(aab_path: "../#{AAB_PATH}")
+    upload_to_play_store(
+      track: ENV.fetch("PLAY_TRACK", "internal"),
+      aab: AAB_PATH,
+      mapping: MAPPING_PATH,
+      metadata_path: METADATA_PATH,
+      validate_only: true
+    )
+  end
+
+  desc "Build, verify 16 KB ELF alignment, and upload signed AAB + R8 symbols to Play Internal Testing"
+  lane :internal do
+    require_production_credentials!
+    verify_release
+    upload_to_play_store(
+      track: "internal",
+      aab: AAB_PATH,
+      mapping: MAPPING_PATH,
+      metadata_path: METADATA_PATH,
+      release_status: ENV.fetch("RELEASE_STATUS", "draft"),
+      skip_upload_images: ENV.fetch("SKIP_IMAGES", "true") == "true",
+      skip_upload_screenshots: ENV.fetch("SKIP_SCREENSHOTS", "true") == "true"
+    )
+  end
+
+  desc "Upload or promote tested release candidate to Play Closed Testing track"
+  lane :closed do
+    require_production_credentials!
+    target_track = ENV.fetch("CLOSED_TRACK", "alpha")
+    if ENV["PROMOTE_FROM_INTERNAL"] == "true"
+      upload_to_play_store(
+        track: "internal",
+        track_promote_to: target_track,
+        version_code: ENV.fetch("VERSION_CODE", "100").to_i,
+        release_status: ENV.fetch("RELEASE_STATUS", "completed"),
+        skip_upload_aab: true,
+        skip_upload_metadata: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true
+      )
+    else
+      verify_release
+      upload_to_play_store(
+        track: target_track,
+        aab: AAB_PATH,
+        mapping: MAPPING_PATH,
+        metadata_path: METADATA_PATH,
+        release_status: ENV.fetch("RELEASE_STATUS", "completed")
+      )
+    end
+  end
+
+  desc "Promote validated build to Production with staged rollout (default 1% = 0.01)"
+  lane :promote_staged do
+    require_production_credentials!
+    from_track = ENV.fetch("FROM_TRACK", "internal")
+    rollout_fraction = ENV.fetch("ROLLOUT", "0.01").to_f
+    if rollout_fraction >= 1.0 && ENV["ALLOW_FULL_ROLLOUT"] != "true"
+      UI.user_error!("Direct 100% production launch blocked. Use staged steps (0.01 -> 0.05 -> 0.20 -> 0.50 -> 1.0) or set ALLOW_FULL_ROLLOUT=true after 50% SLO pass.")
+    end
+
+    upload_to_play_store(
+      track: from_track,
+      track_promote_to: "production",
+      version_code: ENV.fetch("VERSION_CODE", "100").to_i,
+      rollout: rollout_fraction.to_s,
+      release_status: rollout_fraction < 1.0 ? "inProgress" : "completed",
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Halt an active staged production rollout immediately on crash/ANR SLO breach"
+  lane :halt_production do
+    upload_to_play_store(
+      track: "production",
+      version_code: ENV.fetch("VERSION_CODE", "100").to_i,
+      release_status: "halted",
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Sync localized Play Store metadata and screenshots without re-uploading binary"
+  lane :sync_metadata do
+    upload_to_play_store(
+      metadata_path: METADATA_PATH,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_images: ENV.fetch("SKIP_IMAGES", "false") == "true",
+      skip_upload_screenshots: ENV.fetch("SKIP_SCREENSHOTS", "false") == "true"
+    )
+  end
+
+  private_lane :verify_signing! do |options|
+    aab = options[:aab_path]
+    UI.user_error!("Release AAB missing at #{aab}") unless File.exist?(aab)
+    verify_out = sh("jarsigner -verify -certs #{aab}")
+    unless verify_out.include?("jar verified.")
+      UI.user_error!("AAB signature verification failed for #{aab}")
+    end
+    if verify_out.include?("evora_upload") && ENV["ALLOW_TEST_KEYSTORE"] != "true"
+      UI.message("Verified AAB is signed; ensure keystore matches registered Play App Signing upload key.")
+    end
+  end
+
+  private_lane :require_production_credentials! do
+    if ENV["ALLOW_DEV_PLACEHOLDERS"] == "true"
+      UI.important("ALLOW_DEV_PLACEHOLDERS=true set; skipping production placeholder guard.")
+      next
+    end
+    unless File.exist?("../app/google-services.json")
+      UI.user_error!("Missing app/google-services.json for production Firebase Analytics/Remote Config.")
+    end
+  end
+end

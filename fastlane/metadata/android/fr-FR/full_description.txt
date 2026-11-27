@@ -1,0 +1,14 @@
+Evora Office est une suite bureautique, un éditeur PDF, un scanner OCR et un gestionnaire de fichiers local 100 % hors ligne pour Android. Ouvrez, modifiez, enregistrez, signez et organisez vos documents sur votre appareil sans envoi vers un serveur ni blocage à l'enregistrement.
+
+FONCTIONNALITÉS PRINCIPALES
+• Lecteur & gestionnaire universel : Indexation locale des fichiers PDF, Word, Excel, PowerPoint, OpenDocument, Hangul (HWP/HWPX), EPUB, TXT, CSV et archives ZIP/7z (RAR non pris en charge), corbeille 30 jours, widgets et modes de lecture (Clair, Nuit, Sépia, Défilement continu, Lecture vocale TTS).
+• Éditeur Office hors ligne : DOCX avec Suivi des modifications et commentaires, XLSX avec formules (SUM, AVERAGE, COUNT, MIN, MAX, IF), PPTX avec mode diaporama et pointeur laser, plus sauvegarde de brouillon toutes les 15 secondes.
+• Boîte à outils PDF complète : Annotations, signature manuscrite, certificats PKCS#7, chiffrement AES, fusion, division, compression, filigrane, impression et conversion locale PDF vers DOCX.
+• Scanner, Carte d'identité & OCR : Numérisation multipage, mode Carte d'identité recto-verso sur A4, OCR hors ligne (5 systèmes d'écriture) et lecteur QR.
+• Transfert Wi-Fi & Cloud : Partage local par navigateur web glisser-déposer ou FTP avec code PIN, et connexion optionnelle à Google Drive et OneDrive.
+
+SANS PUBLICITÉ ET EVORA PRO
+Evora Office ne contient aucune publicité actuellement. Lecture, édition et enregistrement Office, fusion, division, compression, filigrane, mots de passe AES, signature PKCS#7, PDF vers DOCX, scan, carte d'identité recto-verso, OCR, impression et Wi-Fi fonctionnent localement sur votre appareil. Evora Pro est disponible en option via Google Play Billing.
+
+AUTORISATIONS & CONFIDENTIALITÉ
+L'accès à tous les fichiers (MANAGE_EXTERNAL_STORAGE) sert uniquement à indexer et gérer vos documents localement hors ligne (le sélecteur SAF reste disponible).

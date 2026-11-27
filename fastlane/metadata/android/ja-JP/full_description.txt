@@ -1,0 +1,14 @@
+Evora Officeは、サーバー送信なしの100%オフラインで動作するAndroid向け総合オフィス・PDF・ファイル管理アプリです。
+
+主な機能
+• 閲覧・編集 (DOC/DOCX, XLS/XLSX, PPT/PPTX, ODT/ODS/ODP): 書式設定、Excel数式、スライドショー、変更履歴レビュー、15秒ごとの自動下書き復元に対応。保存時のロック制限はありません。
+• 高機能PDFツール: 注釈、手書き署名、PKCS#7電子署名、AES暗号化、結合、分割、圧縮、透かし、印刷、画像→PDF、オフラインPDF→DOCX変換。
+• 多様な形式対応: HWP/HWPX、EPUB、TXT、CSV、ZIP/7zのローカル展開（RAR非対応）。
+• スキャン & オフラインOCR: 書類スキャン、両面IDカードA4合成、日本語を含む5文字体系の端末内OCR、QRコード読み取り。
+• Wi-Fi転送 & クラウド: PCブラウザ向けドラッグ＆ドロップHTTP/FTP転送、Google DriveおよびOneDrive連携。
+
+広告なし・主要機能を標準搭載
+Evora Officeには現在広告がありません。閲覧、Office編集・保存、PDF結合・分割・圧縮・透かし、AES暗号化、PKCS#7署名、PDF→DOCX変換、書類スキャン、両面IDカード、OCR、印刷、Wi-Fi転送まですべて端末内でオフライン動作します。Google Play BillingによるEvora Proも任意でご利用いただけます。
+
+権限について
+全ファイルアクセス権限(MANAGE_EXTERNAL_STORAGE)は端末内のローカル文書をオフラインで索引・編集・整理するためのみに使用し、SAFフォルダ選択も利用可能です。

@@ -1,0 +1,14 @@
+Evora Office ist ein zu 100 % offline arbeitender Android-Dokumentenbetrachter, Office-Editor, PDF-Werkzeugkasten, Dokumentenscanner und lokaler Dateimanager – ohne Server-Uploads und ohne Bezahlschranke beim Speichern.
+
+FUNKTIONEN IM ÜBERBLICK
+• Alle Dokumente verwalten & lesen: Lokale Indexierung von PDF, Word, Excel, PowerPoint, OpenDocument, Hangul (HWP/HWPX), EPUB, TXT, CSV sowie ZIP/7z-Archiven (kein RAR) mit 30-Tage-Papierkorb, Widgets und Komfort-Lesemodi (Hell, Nacht, Sepia, Fließtext, Vorlesen).
+• Vollwertiger Offline-Office-Editor: DOC/DOCX (inkl. Änderungen verfolgen & Kommentare), XLS/XLSX (Formeln SUM, AVERAGE, COUNT, MIN, MAX, IF), PPT/PPTX (Präsentationsmodus & Laserpointer) sowie automatische 15-Sekunden-Entwurfswiederherstellung.
+• PDF-Editor & Power-Tools: Markierungen, Freihand-Notizen, eigene Signatur, PKCS#7-Zertifikate, AES-Passwortschutz, PDF zusammenführen, teilen, komprimieren, Wasserzeichen einfügen, drucken und PDF lokal in DOCX umwandeln.
+• Scanner, Ausweis-Modus & OCR: Mehrseitiger Dokumentenscan, beidseitiger Ausweis-Scan auf A4, lokale OCR-Texterkennung und QR-/Barcode-Scanner.
+• WLAN-Transfer & Cloud: Lokaler Browser-Upload/-Download (HTTP & FTP mit PIN-Schutz) sowie optionale Synchronisation mit Google Drive und Microsoft OneDrive.
+
+KOSTENLOS & OHNE WERBUNG
+Evora Office enthält aktuell keine Werbung. Alle Funktionen für Lesen, Office-Bearbeitung & Speichern, PDF zusammenführen/teilen/komprimieren/Wasserzeichen, AES-Passwortschutz, PKCS#7-Signatur, PDF in DOCX, Scannen, Ausweis-Modus, OCR, Drucken und WLAN-Transfer funktionieren lokal auf dem Gerät. Optionales Evora Pro ist über Google Play Billing verfügbar.
+
+BERECHTIGUNG & DATENSCHUTZ
+Der Vollzugriff auf Dateien (MANAGE_EXTERNAL_STORAGE) dient ausschließlich der lokalen Offline-Verwaltung Ihrer Dokumente auf dem Gerät (alternativ steht die Android-Ordnerauswahl SAF bereit).

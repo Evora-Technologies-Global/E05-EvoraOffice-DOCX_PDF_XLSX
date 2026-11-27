@@ -1,0 +1,5 @@
+Evora Office v1.0.0 출시:
+• 서버 업로드 없는 100% 오프라인 HWP/HWPX 뷰어
+• DOCX, XLSX, PPTX, ODT 편집 및 15초 자동 초안 복구
+• PDF 분할, 압축, 워터마크, 전자서명, PDF→DOCX 오프라인 변환
+• 신분증 양면 A4 스캔, 한국어 오프라인 OCR, ZIP/7z 및 Wi-Fi 전송

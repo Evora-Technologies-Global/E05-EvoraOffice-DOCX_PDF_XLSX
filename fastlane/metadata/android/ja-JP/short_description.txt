@@ -1,0 +1,1 @@
+オフラインでDOCX・XLSX・PPTX・PDF閲覧編集、分割・圧縮・OCRスキャン。

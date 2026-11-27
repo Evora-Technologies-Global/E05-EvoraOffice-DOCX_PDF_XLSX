@@ -1,0 +1,5 @@
+Evora Office v1.0.0 リリース:
+• DOCX/XLSX/PPTX/ODFのオフライン閲覧・編集・自動下書き復元
+• PDF注釈・署名・分割・圧縮・透かし・オフラインPDF→DOCX
+• 日本語オフラインOCR、両面IDカードA4スキャン、ZIP/7z対応
+• Wi-Fiブラウザ/FTP転送、Google Drive、OneDrive連携

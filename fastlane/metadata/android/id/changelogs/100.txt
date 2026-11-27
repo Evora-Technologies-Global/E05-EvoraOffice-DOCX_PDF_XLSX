@@ -1,0 +1,5 @@
+Rilis Evora Office v1.0.0:
+• Baca & edit DOCX, XLSX, PPTX, ODF 100% offline dengan pemulihan draf
+• Toolkit PDF lengkap: anotasi, tanda tangan, pisah, kompres, watermark & PDF ke DOCX
+• Pembaca HWP/HWPX, EPUB, TXT, CSV, ZIP & 7z offline
+• Pemindai dokumen, Kartu ID A4, OCR offline & transfer Wi-Fi Web/FTP

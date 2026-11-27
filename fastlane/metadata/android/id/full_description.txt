@@ -1,0 +1,14 @@
+Evora Office adalah pembaca & editor dokumen Office, toolkit PDF lengkap, pemindai OCR, dan pengelola file lokal 100% offline untuk Android. Buka, edit, simpan, tanda tangani, dan kelola dokumen langsung di perangkat tanpa unggahan ke server.
+
+FITUR UTAMA
+• Pembaca & Editor Office (DOC/DOCX, XLS/XLSX, PPT/PPTX, ODT/ODS/ODP): Pemformatan teks, Lacak Perubahan, rumus Excel (SUM, AVERAGE, COUNT, MIN, MAX, IF), tampilan presentasi, serta pemulihan draf otomatis setiap 15 detik tanpa kunci penyimpanan berbayar.
+• Alat PDF Offline: Anotasi, tanda tangan tulisan tangan, sertifikat PKCS#7, kunci kata sandi AES, gabung PDF, pisah halaman, kompres PDF, watermark, cetak, dan konversi PDF ke DOCX offline.
+• Format Tambahan & Arsip: Baca file HWP/HWPX, EPUB, TXT, CSV, serta buka dan ekstrak arsip ZIP dan 7z secara lokal (RAR tidak didukung).
+• Pemindai Cerdas & OCR: Pindai dokumen multi-halaman, mode Kartu ID dua sisi ke A4, OCR offline 5 aksara, dan pemindai kode QR.
+• Transfer Wi-Fi & Cloud: Kirim file ke browser PC melalui HTTP drag-and-drop atau FTP lokal dengan PIN, serta hubungkan Google Drive dan OneDrive.
+
+TANPA IKLAN & EVORA PRO
+Evora Office saat ini bebas iklan sepenuhnya. Semua fitur baca, edit dan simpan Office, gabung/pisah/kompres/watermark PDF, sandi AES, tanda tangan PKCS#7, PDF ke DOCX, pindai dokumen, ID dua sisi, OCR, cetak, dan transfer Wi-Fi berjalan lokal di perangkat. Dukungan opsional Evora Pro tersedia melalui Google Play Billing.
+
+IZIN PENYIMPANAN
+Akses Semua File (MANAGE_EXTERNAL_STORAGE) hanya digunakan untuk mengindeks, mengedit, dan mengelola file dokumen secara offline di perangkat Anda, dengan Pemilih Folder SAF tetap tersedia.

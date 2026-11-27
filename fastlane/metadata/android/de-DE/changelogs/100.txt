@@ -1,0 +1,5 @@
+Evora Office v1.0.0 Start:
+• DOCX, XLSX, PPTX & ODT zu 100 % offline ansehen, bearbeiten & speichern
+• PDF-Werkzeuge: Teilen, Komprimieren, Wasserzeichen, Signieren & PDF zu DOCX
+• Offline-Unterstützung für HWP/HWPX, EPUB, TXT, CSV, ZIP & 7z
+• Dokumentenscanner, beidseitiger A4-Ausweisscan, OCR & WLAN-Transfer

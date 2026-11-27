@@ -1,0 +1,5 @@
+Lançamento Evora Office v1.0.0:
+• Leia e edite DOCX, XLSX, PPTX e ODF 100% offline
+• PDF completo: anotar, assinar, dividir, comprimir, marca d'água e PDF para DOCX
+• Suporte offline a HWP/HWPX, EPUB, TXT, CSV, ZIP e 7z
+• Scanner frente e verso A4, OCR offline, transferência Wi-Fi, Drive e OneDrive

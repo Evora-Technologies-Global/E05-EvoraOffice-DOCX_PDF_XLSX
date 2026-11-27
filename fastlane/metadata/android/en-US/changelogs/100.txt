@@ -1,0 +1,6 @@
+Evora Office v1.0.0 Launch:
+• View & edit DOCX, XLSX, PPTX, ODT, ODS, ODP offline
+• Full PDF reader, annotations, e-Sign, PKCS#7, Split, Compress, Watermark & PDF to DOCX
+• Offline Hangul (HWP/HWPX), EPUB, TXT, CSV, ZIP & 7z viewer
+• Smart Document Scanner, Dual-Side ID Card to A4 & 5-script offline OCR
+• Wi-Fi Web & FTP transfer, Google Drive, OneDrive & Home widgets

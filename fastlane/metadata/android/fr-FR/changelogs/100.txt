@@ -1,0 +1,5 @@
+Lancement d'Evora Office v1.0.0 :
+• Lecture et édition 100 % hors ligne DOCX, XLSX, PPTX, ODT
+• Outils PDF complets : diviser, compresser, filigrane, signer et PDF vers DOCX
+• Prise en charge hors ligne HWP/HWPX, EPUB, TXT, CSV, ZIP et 7z
+• Scanner multipage, Carte d'identité A4, OCR local et transfert Wi-Fi

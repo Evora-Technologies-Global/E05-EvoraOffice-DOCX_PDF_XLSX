@@ -1,0 +1,41 @@
+Evora Office is a 100% offline Android document reader, rich Office editor, PDF power toolkit, document scanner, and local file manager built for speed and privacy. Open, edit, save, sign, scan, and organize your documents directly on your device without server uploads or save-lock paywalls.
+
+KEY CAPABILITIES
+
+ALL-IN-ONE DOCUMENT READER & FILE MANAGER
+• Automatically index and organize local PDF, Word, Excel, PowerPoint, OpenDocument, Hangul, Ebook, Text, and ZIP/7z files across device storage, Downloads, and SD cards (or browse safely with Android Folder Picker SAF).
+• Filter by format, sort by date, name, size, or type, search filenames in milliseconds, pin home screen widgets, and recover deleted files within 30 days from Trash.
+• Comfort reading modes: Light, Night Dark, and Sepia themes, Vertical Continuous Scroll or Single-Page Snap, Reflow View, Auto-Scroll, Text-to-Speech read-aloud, outline navigation, and persistent page/zoom memory.
+
+RICH OFFLINE OFFICE EDITOR (WORD, EXCEL, POWERPOINT)
+• Word (DOC, DOCX, DOTX, DOCM, ODT): Font styling, colors, highlights, alignment, lists, image/shape insertion, freehand ink, Review Track Changes and Comments, plus 15-second atomic draft recovery.
+• Excel (XLS, XLSX, XLTX, XLSM, ODS): Multi-sheet tabs, formula bar (SUM, AVERAGE, COUNT, MIN, MAX, IF), cell merging, number formats, freeze panes, and row/column sizing.
+• PowerPoint (PPT, PPTX, PPS, PPSX, POT, ODP): Slide manager, text/shape formatting, Z-order arrangement, presenter notes, and fullscreen SlideShow mode with laser ink.
+• Built-in offline starter templates (Resume CV, Meeting Notes, Monthly Budget, Invoice Sheet, Pitch Deck).
+• Viewing, editing, and saving your documents is always free with zero save-lock interruptions.
+
+COMPLETE PDF EDITOR & POWER TOOLS
+• Annotate PDFs with highlights, underlines, strikethroughs, freehand ink, sticky notes, and reusable handwritten e-signatures.
+• Merge PDFs, split by page range or every N pages, compress PDFs (Low/Medium/High DPI), apply custom text watermarks, lock/unlock AES-128/256 passwords, and print via Android PrintManager.
+• Convert Image to PDF, Text to PDF, Office/ODF/HWP to PDF, PDF to PNG images, and offline PDF to DOCX.
+• Inspect and sign PDFs with PKCS#7 (.p12/.pfx) digital certificates.
+
+HANGUL (HWP/HWPX), EPUB & ZIP/7Z ARCHIVES
+• Read Hangul (.hwp, .hwpx, .hwt, .hwdt), EPUB, TXT, CSV, Log, and Markdown files completely offline.
+• Browse and extract password-protected or standard .zip and .7z archives locally (RAR archives are not supported).
+
+SMART SCANNER, DUAL ID CARD, OFFLINE OCR & QR
+• Scan multi-page documents with edge crop, rotation, and image filters.
+• Dual-Side ID Card mode captures front and back onto a single printable A4 PDF or PNG.
+• On-device OCR extracts editable text across 5 script families (Latin, Chinese, Devanagari, Japanese, Korean) to TXT or DOCX.
+• Scan QR codes and barcodes for URLs, Wi-Fi, contacts, and text.
+
+WI-FI TRANSFER & CLOUD DRIVES
+• Share files with PC or Mac browsers over local Wi-Fi via drag-and-drop HTTP Web UI or local FTP with optional PIN lock, read-only toggle, and Quick Settings tile.
+• Optional user-initiated sync with Google Drive and Microsoft OneDrive using encrypted local token storage.
+
+ALL FEATURES INCLUDED & EVORA PRO
+Evora Office includes zero ads. Core document reading, Office editing and saving, PDF Merge, Split, Compress, Watermark, AES password protection, PKCS#7 digital signing, PDF-to-DOCX, scanning, Dual ID Card layout, OCR, Print, and Wi-Fi Transfer work completely locally on your device. Optional Evora Pro subscriptions and Lifetime unlock are available via Google Play Billing to support ongoing offline development.
+
+PERMISSION & PRIVACY NOTE
+Evora Office requests All-Files Access (MANAGE_EXTERNAL_STORAGE) strictly to index, edit, convert, and organize local document folders offline on your device, with Folder Picker (SAF) always available as an alternative.

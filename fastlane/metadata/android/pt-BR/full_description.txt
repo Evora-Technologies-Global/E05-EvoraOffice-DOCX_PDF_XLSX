@@ -1,0 +1,14 @@
+Evora Office é um leitor e editor de documentos, pacote completo de PDF, scanner com OCR e gerenciador de arquivos 100% offline para Android. Abra, edite, salve e organize seus arquivos no celular sem envios a servidores externos e sem bloqueio ao salvar.
+
+RECURSOS PRINCIPAIS
+• Leitor e Editor Office (DOC/DOCX, XLS/XLSX, PPT/PPTX, ODT/ODS/ODP): Formatação completa, Controle de Alterações, fórmulas no Excel (SUM, AVERAGE, COUNT, MIN, MAX, IF), apresentações com ponteiro laser e recuperação automática a cada 15s.
+• Ferramentas de PDF Offline: Anotações, assinatura manuscrita, assinatura digital PKCS#7, senha AES, juntar, dividir páginas, comprimir tamanho, marca d'água, imprimir e converter PDF para DOCX offline.
+• Arquivos Extras: Leitor offline de HWP/HWPX, EPUB, TXT, CSV e extrator local de arquivos ZIP e 7z (não compatível com RAR).
+• Scanner e OCR Local: Digitalização multipágina, modo RG/CNH frente e verso em A4, OCR em 5 escritas e leitor de QR Code.
+• Wi-Fi Transfer e Nuvem: Envio para PC via navegador HTTP ou FTP local com PIN, além de integração opcional com Google Drive e OneDrive.
+
+SEM ANÚNCIOS E EVORA PRO
+O Evora Office não exibe anúncios no momento. Leitura, edição e salvamento no Office, juntar/dividir/comprimir/marca d'água em PDF, senha AES, assinatura PKCS#7, PDF para DOCX, scanner, RG/CNH frente e verso, OCR, impressão e transferência Wi-Fi funcionam localmente no aparelho. Evora Pro opcional está disponível via Google Play Billing.
+
+PERMISSÕES E PRIVACIDADE
+O acesso a todos os arquivos (MANAGE_EXTERNAL_STORAGE) é usado exclusivamente para indexar, editar e gerenciar documentos locais no dispositivo, com opção alternativa via seletor de pastas SAF.

@@ -1,0 +1,14 @@
+Evora Office는 서버 업로드 없이 기기 내에서 100% 오프라인으로 작동하는 Android 올인원 문서 뷰어, 오피스 편집기, PDF 도구, 문서 스캐너 및 파일 관리자입니다.
+
+주요 기능
+• 한글(HWP, HWPX, HWT, HWDT) 오프라인 뷰어: 문서를 외부 서버로 전송하지 않고 로컬에서 안전하게 열람 및 인쇄/PDF 저장.
+• 오피스 뷰어 및 편집 (DOC/DOCX, XLS/XLSX, PPT/PPTX, ODT/ODS/ODP): 글꼴·표·수식(SUM, AVERAGE, COUNT, MIN, MAX, IF)·슬라이드·변경 내용 추적(Track Changes) 편집 및 15초 자동 임시 저장 복구 지원. 편집 저장 시 유료 잠금 없음.
+• PDF 편집 및 변환 도구: 형광펜·밑줄·손글씨 서명·PKCS#7 전자서명·AES 암호 설정/해제·PDF 병합·분할·압축·워터마크·이미지→PDF·오프라인 PDF→DOCX 변환.
+• 문서 스캔 및 OCR: 다중 페이지 스캔, 신분증 양면 A4 합성, 한국어·영어·일본어·중국어 포함 5개 문자군 오프라인 OCR.
+• 로컬 파일 관리 & Wi-Fi 전송: ZIP/7z 압축 해제(RAR 미지원), 휴지통 30일 복구, Wi-Fi 웹/FTP 전송, Google Drive 및 OneDrive 연동.
+
+광고 없는 오프라인 기능 및 Evora Pro
+Evora Office에는 현재 광고가 없습니다. 문서 열람, 오피스 편집·저장, PDF 병합·분할·압축·워터마크, AES 암호, PKCS#7 전자서명, PDF→DOCX, 문서 스캔, 신분증 양면 A4, 오프라인 OCR, 인쇄 및 Wi-Fi 전송까지 기기 내에서 로컬로 동작합니다. Google Play 결제를 통한 선택형 Evora Pro도 지원됩니다.
+
+권한 안내
+모든 파일 접근 권한(MANAGE_EXTERNAL_STORAGE)은 기기 내 문서를 오프라인으로 색인·편집·관리하기 위해서만 사용되며 폴더 선택기(SAF)로 대체할 수 있습니다.

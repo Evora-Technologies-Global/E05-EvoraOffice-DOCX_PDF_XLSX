@@ -1,0 +1,5 @@
+Lanzamiento Evora Office v1.0.0:
+• Lee y edita DOCX, XLSX, PPTX y ODF 100% sin conexión
+• Editor PDF completo: dividir, comprimir, marca de agua, firma y PDF a DOCX
+• Lector HWP/HWPX, EPUB, TXT, CSV, ZIP y 7z
+• Escáner de documentos, ID doble cara A4, OCR local y transferencia Wi-Fi

@@ -1,0 +1,41 @@
+Evora Office là bộ ứng dụng văn phòng, đọc và chỉnh sửa tài liệu, công cụ PDF, máy quét OCR và quản lý tệp ngoại tuyến 100% trên Android. Mở, sửa, lưu, ký tên, nén và sắp xếp tài liệu ngay trên điện thoại mà không tải tệp lên máy chủ hay khóa nút Lưu.
+
+TÍNH NĂNG NỔI BẬT
+
+ĐỌC MỌI ĐỊNH DẠNG & QUẢN LÝ TÀI LIỆU
+• Tự động quét và sắp xếp tệp PDF, Word, Excel, PowerPoint, OpenDocument, Hangul (HWP), EPUB, TXT, CSV và kho lưu trữ ZIP/7z trong bộ nhớ máy, Tải xuống và thẻ SD (hoặc chọn thư mục an toàn qua SAF).
+• Lọc theo định dạng, tìm kiếm tức thì, ghim Widget màn hình chính và khôi phục tệp đã xóa trong Thùng rác 30 ngày.
+• Chế độ đọc thoải mái: Nền Sáng, Ban đêm, Sepia; cuộn dọc liên tục hoặc từng trang; Reflow co giãn chữ; tự động cuộn; đọc thành tiếng (TTS) và ghi nhớ vị trí trang đang đọc.
+
+SOẠN THẢO OFFICE NGOẠI TUYẾN (WORD, EXCEL, POWERPOINT)
+• Word (DOC, DOCX, DOTX, DOCM, ODT): Định dạng chữ, màu sắc, căn lề, danh sách, chèn ảnh/hình khối, vẽ tay, theo dõi thay đổi (Track Changes) & bình luận, tự động lưu bản nháp mỗi 15 giây.
+• Excel (XLS, XLSX, XLTX, XLSM, ODS): Quản lý nhiều trang tính, thanh công thức (SUM, AVERAGE, COUNT, MIN, MAX, IF), gộp ô, định dạng số/tiền tệ, cố định dòng/cột.
+• PowerPoint (PPT, PPTX, PPS, PPSX, POT, ODP): Chỉnh sửa trang chiếu, định dạng hình khối, sắp xếp lớp, ghi chú thuyết trình và trình chiếu toàn màn hình kèm bút laser.
+• Kèm sẵn 8 mẫu văn bản, bảng tính ngân sách, hóa đơn và bài thuyết trình ngoại tuyến.
+• Xem, chỉnh sửa và lưu tài liệu luôn miễn phí — không khóa tính năng hay gián đoạn khi nhấn Lưu.
+
+BỘ CÔNG CỤ PDF CHUYÊN SÂU
+• Ghi chú PDF: tô sáng, gạch chân, gạch ngang, vẽ tay, ghi chú dán và chèn chữ ký viết tay lưu sẵn.
+• Gộp PDF, Tách PDF theo trang, Nén giảm dung lượng PDF, Đóng dấu chìm (Watermark), Đặt/Gỡ mật khẩu AES-128/256 và In qua hệ thống Android.
+• Chuyển đổi Ảnh sang PDF, Văn bản sang PDF, Office/HWP sang PDF, PDF sang ảnh PNG và chuyển PDF sang DOCX ngay trên thiết bị.
+• Kiểm tra và ký chứng thư số PKCS#7 (.p12/.pfx).
+
+HỖ TRỢ HWP/HWPX, EPUB & GIẢI NÉN ZIP/7Z
+• Đọc tệp Hangul (.hwp, .hwpx), EPUB, TXT, CSV, Markdown hoàn toàn ngoại tuyến.
+• Duyệt và giải nén tệp .zip, .7z kể cả có mật khẩu (không hỗ trợ định dạng .rar).
+
+QUÉT TÀI LIỆU, GHÉP CCCD 2 MẶT, OCR & QR
+• Quét tài liệu nhiều trang, tự cắt mép, xoay và bộ lọc màu.
+• Chế độ Thẻ ID / CCCD 2 mặt tự động ghép mặt trước và mặt sau lên 1 trang A4 sẵn sàng in.
+• OCR ngoại tuyến nhận diện chữ từ ảnh/PDF (Latin, Trung, Nhật, Hàn, Devanagari) xuất ra TXT hoặc DOCX.
+• Quét mã QR & mã vạch (URL, Wi-Fi, danh bạ).
+
+CHUYỂN FILE WI-FI & ĐÁM MÂY
+• Chia sẻ tệp với máy tính qua trình duyệt Web kéo-thả hoặc FTP nội bộ có khóa PIN và chế độ chỉ đọc.
+• Tùy chọn kết nối Google Drive và Microsoft OneDrive để tải xuống hoặc tải lên tệp của bạn.
+
+MINH BẠCH MIỄN PHÍ & KHÔNG QUẢNG CÁO
+Evora Office hiện không chứa quảng cáo. Toàn bộ tính năng đọc, sửa/lưu tài liệu, Gộp/Tách/Nén PDF, Watermark, Đặt/Gỡ mật khẩu AES, Ký số PKCS#7, PDF sang DOCX, Quét tài liệu, Ghép CCCD 2 mặt, OCR, QR, In và Wi-Fi đều hoạt động cục bộ trên thiết bị. Tùy chọn Evora Pro qua Google Play Billing giúp ủng hộ phát triển lâu dài.
+
+QUYỀN TRUY CẬP TỆP & QUYỀN RIÊNG TƯ
+Evora Office yêu cầu quyền Truy cập tất cả tệp (MANAGE_EXTERNAL_STORAGE) chỉ để lập chỉ mục, đọc, sửa và quản lý tài liệu trên bộ nhớ máy hoàn toàn ngoại tuyến; bạn luôn có thể dùng Trình chọn thư mục (SAF) thay thế.
