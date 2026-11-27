@@ -91,8 +91,17 @@ public final class LibreOfficeKit {
         String apkFile = appContext.getPackageResourcePath();
 
         try {
-            redirectStdio(false);
+            boolean isDebuggable = (info.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+            redirectStdio(isDebuggable);
             putenv("SAL_LOK_OPTIONS=compact_fonts");
+            String userRoot = "file://" + dataDir + "/user";
+            putenv("BUNDLED_EXTENSIONS=file:///assets/share/extensions");
+            putenv("BUNDLED_EXTENSIONS_USER=" + userRoot + "/extensions/bundled");
+            putenv("SHARED_EXTENSIONS_USER=" + userRoot + "/extensions/shared");
+            putenv("UNO_SHARED_PACKAGES_CACHE=" + userRoot + "/uno_packages/cache");
+            putenv("UNO_USER_PACKAGES_CACHE=" + userRoot + "/uno_packages/cache");
+            putenv("TMP_EXTENSIONS=" + userRoot + "/extensions/tmp");
+            putenv("BAK_EXTENSIONS=" + userRoot + "/extensions/bak");
             if (!initializeNative(dataDir, cacheDir, apkFile, mgr)) {
                 Log.e(LOGTAG, "LibreOfficeKit.initializeNative returned false");
                 return false;

@@ -58,9 +58,22 @@ class MediaStoreDocumentScanner @Inject constructor(
             }
         }.toTypedArray()
 
-        // Filter out images/videos/audio at the SQLite layer to stay well under the <800ms / 1,000 docs target
-        val selection = "${MediaStore.Files.FileColumns.MEDIA_TYPE} = ? AND ${MediaStore.Files.FileColumns.SIZE} > 0"
-        val selectionArgs = arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_NONE.toString())
+        // Filter out images/videos/audio at the SQLite layer to stay well under the <800ms / 1,000 docs target.
+        // Android 11+ (API 30+) classifies PDF, Office, ODF, EPUB, and TXT files under MEDIA_TYPE_DOCUMENT (6),
+        // whereas HWP/HWPX and archive formats remain MEDIA_TYPE_NONE (0).
+        val selection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            "(${MediaStore.Files.FileColumns.MEDIA_TYPE} = ? OR ${MediaStore.Files.FileColumns.MEDIA_TYPE} = ?) AND ${MediaStore.Files.FileColumns.SIZE} > 0"
+        } else {
+            "${MediaStore.Files.FileColumns.MEDIA_TYPE} = ? AND ${MediaStore.Files.FileColumns.SIZE} > 0"
+        }
+        val selectionArgs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            arrayOf(
+                MediaStore.Files.FileColumns.MEDIA_TYPE_NONE.toString(),
+                MediaStore.Files.FileColumns.MEDIA_TYPE_DOCUMENT.toString(),
+            )
+        } else {
+            arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_NONE.toString())
+        }
         val sortOrder = "${MediaStore.Files.FileColumns.DATE_MODIFIED} DESC"
 
         runCatching {

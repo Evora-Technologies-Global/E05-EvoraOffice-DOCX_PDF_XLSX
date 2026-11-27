@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.libreoffice.kit.DirectBufferAllocator
@@ -21,10 +22,13 @@ class LibreOfficeBridgeTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val adapter = LibreOfficeEngineAdapter(context)
 
-        // On Robolectric JVM (host arch), ARM64 .so libs cannot load; bridge must return false cleanly.
+        // On Robolectric JVM (host arch), ARM64 .so libs cannot load; bridge must return false cleanly
+        // regardless of whether runtime assets were staged from CI.
         assertFalse(LibreOfficeNativeBridge.ensureLoaded())
         assertFalse(adapter.isNativeEngineAvailable())
-        assertFalse(LibreOfficeAssetHelper.hasBundledRuntimeAssets(context))
+        if (LibreOfficeAssetHelper.hasBundledRuntimeAssets(context)) {
+            assertTrue(LibreOfficeAssetHelper.prepareRuntime(context))
+        }
         assertFalse(LibreOfficeNativeBridge.ensureInitialized(context))
         assertFalse(adapter.convertToPdfIfAvailable("file:///nonexistent.doc", File(context.cacheDir, "out.pdf").absolutePath))
     }

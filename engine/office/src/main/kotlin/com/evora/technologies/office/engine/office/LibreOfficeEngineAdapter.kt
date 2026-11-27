@@ -6,6 +6,7 @@ import android.util.Xml
 import com.evora.technologies.office.core.domain.port.OfficeEnginePort
 import com.evora.technologies.office.core.domain.port.ParsedTextDocument
 import com.evora.technologies.office.core.domain.port.TextChapter
+import com.evora.technologies.office.core.domain.util.BoundedZipReader
 import com.evora.technologies.office.core.model.DocFormat
 import dagger.Binds
 import dagger.Module
@@ -14,11 +15,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
-import java.util.zip.ZipInputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,6 +41,28 @@ class LibreOfficeEngineAdapter @Inject constructor(
         val uri = Uri.parse(uriString)
         val title = uri.lastPathSegment?.substringAfterLast('/') ?: "Office Document"
 
+        val isZip = isZipContainer(uri, uriString)
+        if (isZip) {
+            val xmlAttempt = runCatching {
+                openStream(uri, uriString)?.use { input ->
+                    extractZipXmlText(input, format)
+                }
+            }
+            val fastText = xmlAttempt.getOrNull().orEmpty()
+            if (fastText.isNotBlank()) {
+                return@withContext ParsedTextDocument(
+                    title = title,
+                    chapters = listOf(TextChapter(title = title, body = fastText)),
+                    fullPlainText = fastText,
+                )
+            }
+            if (xmlAttempt.isFailure) {
+                // Malformed OOXML/ODF XML or oversize archive: avoid feeding broken XML into headless LOK.
+                val msg = "Unable to extract text from document."
+                return@withContext ParsedTextDocument(title, listOf(TextChapter(title = title, body = msg)), msg)
+            }
+        }
+
         val lokText = extractViaLokIfActive(uriString, format)
         if (!lokText.isNullOrBlank()) {
             return@withContext ParsedTextDocument(
@@ -53,7 +76,7 @@ class LibreOfficeEngineAdapter @Inject constructor(
             ?: return@withContext ParsedTextDocument(title, listOf(TextChapter("Preview", "Unable to open file.")), "")
 
         stream.use { input ->
-            val extracted = runCatching { extractZipXmlText(input, format) }.getOrNull().orEmpty()
+            val extracted = if (isZip) runCatching { extractZipXmlText(input, format) }.getOrNull().orEmpty() else ""
             val body = extracted.ifBlank {
                 when {
                     !isNativeEngineAvailable() ->
@@ -82,12 +105,14 @@ class LibreOfficeEngineAdapter @Inject constructor(
         val tmpSrc = LibreOfficeAssetHelper.copyUriToTempFile(context, sourceUriString, "docx")
             ?: return@withContext false
         try {
-            LibreOfficeNativeBridge.convertDocument(
-                context = context,
-                sourcePath = tmpSrc.absolutePath,
-                targetPath = outPdfPath,
-                targetFormat = "pdf",
-            )
+            withTimeoutOrNull(LOK_OPERATION_TIMEOUT_MS) {
+                LibreOfficeNativeBridge.convertDocument(
+                    context = context,
+                    sourcePath = tmpSrc.absolutePath,
+                    targetPath = outPdfPath,
+                    targetFormat = "pdf",
+                )
+            } ?: false
         } finally {
             tmpSrc.delete()
         }
@@ -104,32 +129,39 @@ class LibreOfficeEngineAdapter @Inject constructor(
         }
         val tmpSrc = LibreOfficeAssetHelper.copyUriToTempFile(context, uriString, fallbackExt) ?: return null
         return try {
-            LibreOfficeNativeBridge.extractPlainText(context, tmpSrc.absolutePath)
+            withTimeoutOrNull(LOK_OPERATION_TIMEOUT_MS) {
+                LibreOfficeNativeBridge.extractPlainText(context, tmpSrc.absolutePath)
+            }
         } finally {
             tmpSrc.delete()
         }
     }
 
+    private fun isZipContainer(uri: Uri, raw: String): Boolean = runCatching {
+        openStream(uri, raw)?.use { stream ->
+            val magic = ByteArray(2)
+            stream.read(magic) == 2 && magic[0] == 0x50.toByte() && magic[1] == 0x4B.toByte()
+        } ?: false
+    }.getOrDefault(false)
+
+    private companion object {
+        const val LOK_OPERATION_TIMEOUT_MS = 12_000L
+    }
+
     private fun extractZipXmlText(input: InputStream, format: DocFormat): String {
-        val sections = mutableListOf<String>()
-        val zis = ZipInputStream(input)
-        var entry = zis.nextEntry
-        while (entry != null) {
-            val name = entry.name
-            val matches = when (format) {
+        val entries = BoundedZipReader.readEntries(input) { name ->
+            when (format) {
                 DocFormat.WORD -> name == "word/document.xml"
                 DocFormat.EXCEL -> name.startsWith("xl/sharedStrings") || name.startsWith("xl/worksheets/sheet")
                 DocFormat.PPT -> name.startsWith("ppt/slides/slide") && name.endsWith(".xml")
                 DocFormat.ODF -> name == "content.xml"
                 else -> false
             }
-            if (matches) {
-                val text = extractTextFromXmlBytes(zis.readBytes())
-                if (text.isNotBlank()) sections += text
-            }
-            entry = zis.nextEntry
         }
-        return sections.joinToString("\n\n")
+        return entries.values
+            .map { extractTextFromXmlBytes(it) }
+            .filter { it.isNotBlank() }
+            .joinToString("\n\n")
     }
 
     private fun extractTextFromXmlBytes(bytes: ByteArray): String {
@@ -147,8 +179,8 @@ class LibreOfficeEngineAdapter @Inject constructor(
                     }
                 }
                 XmlPullParser.END_TAG -> {
-                    val tag = parser.name
-                    if (tag == "p" || tag == "row" || tag == "tr") {
+                    val tag = parser.name.substringAfter(':')
+                    if (tag == "p" || tag == "row" || tag == "tr" || tag == "table-row") {
                         if (sb.isNotEmpty() && sb.last() != '\n') sb.append('\n')
                     }
                 }
