@@ -58,7 +58,7 @@
     <string name="evora_settings_restore_purchases">Käufe wiederherstellen</string>
     <string name="evora_settings_connected_clouds">Verbundene Clouds</string>
     <string name="evora_settings_privacy_legal">Datenschutz &amp; Rechtliches</string>
-    <string name="evora_settings_ump_privacy">Datenschutz-Einstellungen</string>
+    <string name="evora_settings_privacy_notice">Datenschutz &amp; Lokale Verarbeitung</string>
     <string name="evora_settings_oss_licenses">Open-Source-Lizenzen</string>
 
     <string name="evora_widget_quick_name">Evora Schnellleiste</string>

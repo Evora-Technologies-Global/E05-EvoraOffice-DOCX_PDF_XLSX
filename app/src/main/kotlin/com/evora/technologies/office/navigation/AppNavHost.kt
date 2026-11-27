@@ -132,7 +132,6 @@ fun AppNavHost(
     incomingAction: IncomingLaunchAction?,
     onIncomingActionConsumed: () -> Unit,
     modifier: Modifier = Modifier,
-    onRouteChanged: (route: String?, isProtectedSurface: Boolean) -> Unit = { _, _ -> },
 ) {
     val navController = rememberNavController()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -141,19 +140,6 @@ fun AppNavHost(
     var pendingSignaturePath by rememberSaveable { mutableStateOf<String?>(null) }
     var openTemplatesTrigger by rememberSaveable { mutableIntStateOf(0) }
     var deferredDeepLink by remember { mutableStateOf<IncomingLaunchAction?>(null) }
-
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = backStackEntry?.destination?.route
-    LaunchedEffect(currentRoute) {
-        val protected = currentRoute in setOf(
-            AppRoutes.OFFICE_EDITOR,
-            AppRoutes.PDF_EDITOR,
-            AppRoutes.SIGNATURE_PAD,
-            AppRoutes.SLIDE_SHOW,
-            AppRoutes.SCANNER,
-        )
-        onRouteChanged(currentRoute, protected)
-    }
 
     val showMessage: (String) -> Unit = remember(snackbarHostState) {
         { msg ->
@@ -454,7 +440,6 @@ fun AppNavHost(
                     toolKind = kind,
                     preselectedUri = preUri,
                     onBack = { navController.popBackStack() },
-                    onOpenPaywall = { navController.navigate(AppRoutes.paywall(fromOnboarding = false)) },
                     onOpenOutput = { outUri, outName, fmt ->
                         if (fmt in setOf(DocFormat.WORD, DocFormat.EXCEL, DocFormat.PPT)) {
                             openEditorForDoc(outUri, outName, fmt)
@@ -475,7 +460,6 @@ fun AppNavHost(
                 ScannerFlowRoute(
                     initialMode = mode,
                     onBack = { navController.popBackStack() },
-                    onOpenPaywall = { navController.navigate(AppRoutes.paywall(fromOnboarding = false)) },
                     onOpenDocument = { outUri, outName, fmt ->
                         if (fmt == DocFormat.WORD) {
                             openEditorForDoc(outUri, outName, fmt)
@@ -510,7 +494,6 @@ fun AppNavHost(
                         pendingSignaturePath = null
                     },
                     onOpenSignaturePad = { navController.navigate(AppRoutes.SIGNATURE_PAD) },
-                    onOpenPaywall = { navController.navigate(AppRoutes.paywall(fromOnboarding = false)) },
                     onBack = { navController.popBackStack() },
                     onShowMessage = showMessage,
                 )

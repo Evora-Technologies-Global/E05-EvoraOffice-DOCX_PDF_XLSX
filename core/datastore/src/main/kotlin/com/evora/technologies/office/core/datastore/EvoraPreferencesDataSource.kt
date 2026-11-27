@@ -9,7 +9,6 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
@@ -35,12 +34,10 @@ class EvoraPreferencesDataSource @Inject constructor(
         val themeMode = stringPreferencesKey("theme_mode")
         val defaultSortOrder = stringPreferencesKey("default_sort_order")
         val autosaveIntervalSec = intPreferencesKey("autosave_interval_sec")
-        val rewardPassExpiresAtMs = longPreferencesKey("reward_pass_expires_at_ms")
         val qaProOverride = booleanPreferencesKey("qa_pro_override")
         val entitlementHmacPayload = stringPreferencesKey("entitlement_hmac_payload")
         val defaultAppPromptDismissed = booleanPreferencesKey("default_prompt_dismissed")
         val externalOpenCount = intPreferencesKey("external_open_count")
-        val pdfToDocxFreeUsedDay = longPreferencesKey("pdf_to_docx_free_used_day")
         val safTreeUris = stringSetPreferencesKey("saf_tree_uris")
     }
 
@@ -65,9 +62,6 @@ class EvoraPreferencesDataSource @Inject constructor(
     val autosaveIntervalSec: Flow<Int> =
         dataStore.data.map { it[Keys.autosaveIntervalSec] ?: 15 }
 
-    val rewardPassExpiresAtEpochMs: Flow<Long> =
-        dataStore.data.map { it[Keys.rewardPassExpiresAtMs] ?: 0L }
-
     val qaProOverride: Flow<Boolean> =
         dataStore.data.map { it[Keys.qaProOverride] ?: false }
 
@@ -79,9 +73,6 @@ class EvoraPreferencesDataSource @Inject constructor(
 
     val externalOpenCount: Flow<Int> =
         dataStore.data.map { it[Keys.externalOpenCount] ?: 0 }
-
-    val pdfToDocxFreeUsedEpochDay: Flow<Long> =
-        dataStore.data.map { it[Keys.pdfToDocxFreeUsedDay] ?: -1L }
 
     val safTreeUris: Flow<Set<String>> =
         dataStore.data.map { it[Keys.safTreeUris] ?: emptySet() }
@@ -104,10 +95,6 @@ class EvoraPreferencesDataSource @Inject constructor(
 
     suspend fun setAutosaveIntervalSec(seconds: Int) {
         dataStore.edit { it[Keys.autosaveIntervalSec] = seconds.coerceIn(5, 300) }
-    }
-
-    suspend fun setRewardPassExpiresAt(epochMs: Long) {
-        dataStore.edit { it[Keys.rewardPassExpiresAtMs] = epochMs }
     }
 
     suspend fun setQaProOverride(enabled: Boolean) {
@@ -133,10 +120,6 @@ class EvoraPreferencesDataSource @Inject constructor(
             val current = prefs[Keys.externalOpenCount] ?: 0
             prefs[Keys.externalOpenCount] = current + 1
         }
-    }
-
-    suspend fun setPdfToDocxFreeUsedEpochDay(epochDay: Long) {
-        dataStore.edit { it[Keys.pdfToDocxFreeUsedDay] = epochDay }
     }
 
     suspend fun addSafTreeUri(treeUri: String) {

@@ -22,10 +22,6 @@ dependencyResolutionManagement {
             url = uri("https://pkgs.dev.azure.com/MicrosoftDeviceSDK/DuoSDK-Public/_packaging/Duo-SDK-Feed/maven/v1")
             name = "Duo-SDK-Feed"
         }
-        maven {
-            url = uri("https://dl-maven-android.mintegral.com/repository/mbridge_android_sdk_oversea")
-            name = "Mintegral-Maven"
-        }
     }
 }
 

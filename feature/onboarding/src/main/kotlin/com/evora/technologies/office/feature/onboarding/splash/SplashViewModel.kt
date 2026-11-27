@@ -1,8 +1,6 @@
 package com.evora.technologies.office.feature.onboarding.splash
 
-import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.AnalyticsPort
-import com.evora.technologies.office.core.domain.port.ConsentPort
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
 import com.evora.technologies.office.core.domain.port.RemoteConfigPort
@@ -16,8 +14,6 @@ class SplashViewModel @Inject constructor(
     private val preferencesRepository: PreferencesRepository,
     private val documentRepository: DocumentRepository,
     private val remoteConfigPort: RemoteConfigPort,
-    private val consentPort: ConsentPort,
-    private val adPlacementHook: AdPlacementHook,
     private val analyticsPort: AnalyticsPort,
 ) : MviViewModel<SplashState, SplashIntent, SplashEffect>(SplashState()) {
 
@@ -41,8 +37,7 @@ class SplashViewModel @Inject constructor(
             },
         ) {
             if (!intent.externalUri.isNullOrBlank()) {
-                // US-004: External ACTION_VIEW bypasses startup UMP/ads and opens reader immediately
-                adPlacementHook.markExternalIntentLaunch(true)
+                // US-004: External ACTION_VIEW opens reader immediately
                 val imported = documentRepository.importExternalUri(
                     uriString = intent.externalUri,
                     displayNameHint = intent.displayNameHint,
@@ -62,7 +57,6 @@ class SplashViewModel @Inject constructor(
                 return@launchSafely
             }
 
-            adPlacementHook.markExternalIntentLaunch(false)
             // Check persisted onboarding state immediately so returning users launch straight to Home (< 1.2s)
             val onboardingDone = preferencesRepository.onboardingCompleted.first()
             if (onboardingDone) {
@@ -72,7 +66,7 @@ class SplashViewModel @Inject constructor(
                 return@launchSafely
             }
 
-            // First launch: bounded fast Remote Config read; UMP consent runs concurrently via MainActivity
+            // First launch: bounded fast Remote Config read
             val remote = remoteConfigPort.fetchAndActivate(timeoutMs = 350L)
             analyticsPort.logOnboardingStep("splash", "complete")
             setState { copy(isRouting = false) }

@@ -1,7 +1,6 @@
 package com.evora.technologies.office.feature.monetization.paywall
 
 import app.cash.turbine.test
-import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.AnalyticsPort
 import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.domain.port.RemoteConfigPort
@@ -10,7 +9,6 @@ import com.evora.technologies.office.core.model.ProFeature
 import com.evora.technologies.office.core.model.ProStatus
 import com.evora.technologies.office.core.model.PurchaseResult
 import com.evora.technologies.office.core.model.RemoteConfigSnapshot
-import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.model.SubscriptionPlan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,10 +39,6 @@ private class FakePaywallEntitlementPort : ProEntitlementPort {
     var refreshCalled = false
 
     override suspend fun hasAccess(feature: ProFeature): Boolean = _status.value.isUnlocked
-
-    override suspend fun grantRewardedPass(hours: Int) {
-        _status.value = _status.value.copy(hasRewardedPass = true, rewardPassExpiresAtEpochMs = 9999999999999L)
-    }
 
     override suspend fun restorePurchases(): Boolean {
         restoreError?.let { throw it }
@@ -79,26 +73,9 @@ private class FakePaywallRemoteConfig(
     override suspend fun fetchAndActivate(timeoutMs: Long): RemoteConfigSnapshot = config.value
 }
 
-private class FakePaywallAdHook : AdPlacementHook {
-    var nextRewardedOutcome: RewardedAdOutcome = RewardedAdOutcome.Earned(24)
-
-    override fun onMilestoneCompleted(screenId: String) = Unit
-    override fun onHomeHubEntered() = Unit
-    override suspend fun showRewardedPassAd(): RewardedAdOutcome = nextRewardedOutcome
-}
-
 private class FakePaywallAnalytics : AnalyticsPort {
     val paywallImpressions = mutableListOf<String>()
     val purchaseSuccesses = mutableListOf<String>()
-
-    override fun logAdImpression(
-        adPlatform: String,
-        adFormat: String,
-        adUnitName: String,
-        currency: String,
-        value: Double,
-        valueMicros: Long,
-    ) = Unit
 
     override fun logOnboardingStep(stepName: String, action: String) = Unit
     override fun logStoragePermissionResult(grantType: String) = Unit
@@ -132,12 +109,10 @@ class PaywallViewModelTest {
     private fun createViewModel(
         port: FakePaywallEntitlementPort = FakePaywallEntitlementPort(),
         remoteConfig: FakePaywallRemoteConfig = FakePaywallRemoteConfig(),
-        adHook: FakePaywallAdHook = FakePaywallAdHook(),
         analytics: FakePaywallAnalytics = FakePaywallAnalytics(),
     ): PaywallViewModel = PaywallViewModel(
         proEntitlementPort = port,
         remoteConfigPort = remoteConfig,
-        adPlacementHook = adHook,
         analyticsPort = analytics,
     )
 
@@ -178,7 +153,6 @@ class PaywallViewModelTest {
             assertEquals(listOf("paywall"), analytics.paywallImpressions)
             assertEquals(listOf(SubscriptionPlan.LIFETIME.skuId), analytics.purchaseSuccesses)
             assertTrue(vm.state.value.proStatus.isPro)
-            assertTrue(vm.state.value.proStatus.shouldHideAds)
             assertFalse(vm.state.value.isProcessing)
             assertTrue(awaitItem() is PaywallEffect.ShowMessage)
             assertEquals(PaywallEffect.ClosePaywall, awaitItem())
@@ -219,36 +193,6 @@ class PaywallViewModelTest {
             advanceUntilIdle()
             assertTrue(vm.state.value.proStatus.isPro)
             assertFalse(vm.state.value.isProcessing)
-            assertTrue(awaitItem() is PaywallEffect.ShowMessage)
-            assertEquals(PaywallEffect.ClosePaywall, awaitItem())
-        }
-    }
-
-    @Test
-    fun `reward pass grants 24h access when ad earned and stays locked when dismissed`() = runTest {
-        val port = FakePaywallEntitlementPort()
-        val adHook = FakePaywallAdHook().apply {
-            nextRewardedOutcome = RewardedAdOutcome.Dismissed
-        }
-        val vm = createViewModel(port = port, adHook = adHook)
-
-        vm.effects.test {
-            vm.onIntent(PaywallIntent.GrantRewardPassClicked)
-            advanceUntilIdle()
-            assertFalse(vm.state.value.proStatus.hasRewardedPass)
-            assertFalse(vm.state.value.isProcessing)
-            assertEquals(
-                PaywallEffect.ShowMessage("Complete the rewarded video to unlock a 24h Pro pass"),
-                awaitItem(),
-            )
-            expectNoEvents()
-        }
-
-        adHook.nextRewardedOutcome = RewardedAdOutcome.Earned(24)
-        vm.effects.test {
-            vm.onIntent(PaywallIntent.GrantRewardPassClicked)
-            advanceUntilIdle()
-            assertTrue(vm.state.value.proStatus.hasRewardedPass)
             assertTrue(awaitItem() is PaywallEffect.ShowMessage)
             assertEquals(PaywallEffect.ClosePaywall, awaitItem())
         }

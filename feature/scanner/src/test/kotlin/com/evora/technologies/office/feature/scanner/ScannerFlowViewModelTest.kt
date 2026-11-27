@@ -1,19 +1,14 @@
 package com.evora.technologies.office.feature.scanner
 
 import app.cash.turbine.test
-import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.AnalyticsPort
 import com.evora.technologies.office.core.domain.port.OcrExtractionResult
-import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.domain.port.ScannerPort
 import com.evora.technologies.office.core.domain.util.QrPayloadParser
 import com.evora.technologies.office.core.model.OcrScript
 import com.evora.technologies.office.core.model.PdfToolKind
 import com.evora.technologies.office.core.model.PdfToolResult
-import com.evora.technologies.office.core.model.ProFeature
-import com.evora.technologies.office.core.model.ProStatus
 import com.evora.technologies.office.core.model.QrDecodedAction
-import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.model.ScanFilter
 import com.evora.technologies.office.core.model.ScanMode
 import com.evora.technologies.office.feature.scanner.camera.ScannerFlowEffect
@@ -21,7 +16,6 @@ import com.evora.technologies.office.feature.scanner.camera.ScannerFlowIntent
 import com.evora.technologies.office.feature.scanner.camera.ScannerFlowViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -29,8 +23,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -54,27 +46,7 @@ private class FakeScannerPort : ScannerPort {
         Result.success(PdfToolResult(PdfToolKind.PDF_TO_DOCX, "file:///ocr.docx", "ocr.docx", 50, 120, "OCR saved"))
 }
 
-private class FakeScannerProPort : ProEntitlementPort {
-    override val proStatus = MutableStateFlow(ProStatus())
-    override suspend fun hasAccess(feature: ProFeature) = proStatus.value.isUnlocked
-    override suspend fun grantRewardedPass(hours: Int) {
-        proStatus.value = proStatus.value.copy(hasRewardedPass = true, rewardPassExpiresAtEpochMs = 9999999L)
-    }
-    override suspend fun restorePurchases() = false
-}
-
-private class FakeScannerAdHook : AdPlacementHook {
-    var outcome: RewardedAdOutcome = RewardedAdOutcome.Earned(24)
-    val milestones = mutableListOf<String>()
-    override fun onMilestoneCompleted(screenId: String) {
-        milestones += screenId
-    }
-    override fun onHomeHubEntered() = Unit
-    override suspend fun showRewardedPassAd(): RewardedAdOutcome = outcome
-}
-
 private class FakeScannerAnalytics : AnalyticsPort {
-    override fun logAdImpression(adPlatform: String, adFormat: String, adUnitName: String, currency: String, value: Double, valueMicros: Long) = Unit
     override fun logOnboardingStep(stepName: String, action: String) = Unit
     override fun logStoragePermissionResult(grantType: String) = Unit
     override fun logDocumentOpen(format: String, source: String) = Unit
@@ -100,10 +72,9 @@ class ScannerFlowViewModelTest {
     }
 
     @Test
-    fun `dual id card advances step 1 to 2 to A4 composition with upfront reward gate`() = runTest {
+    fun `dual id card advances step 1 to 2 to A4 composition cleanly without ad gate`() = runTest {
         val scannerPort = FakeScannerPort()
-        val adHook = FakeScannerAdHook()
-        val vm = ScannerFlowViewModel(scannerPort, FakeScannerProPort(), adHook, FakeScannerAnalytics())
+        val vm = ScannerFlowViewModel(scannerPort, FakeScannerAnalytics())
         vm.onIntent(ScannerFlowIntent.SelectMode(ScanMode.ID_CARD))
         assertEquals(1, vm.state.value.idCardStep)
 
@@ -115,20 +86,13 @@ class ScannerFlowViewModelTest {
 
         vm.onIntent(ScannerFlowIntent.ExportDualIdCard(asPdf = true))
         advanceUntilIdle()
-        assertNotNull(vm.state.value.showRewardGateTitle)
-        assertTrue(!scannerPort.idCardComposed)
-
-        vm.onIntent(ScannerFlowIntent.GrantRewardedPassClicked)
-        advanceUntilIdle()
-        assertNull(vm.state.value.showRewardGateTitle)
         assertTrue(scannerPort.idCardComposed)
         assertEquals("id.pdf", vm.state.value.exportResult?.outputDisplayName)
-        assertTrue("scanner_id_card_export" in adHook.milestones)
     }
 
     @Test
     fun `ocr 5-script selection extracts text and exports docx`() = runTest {
-        val vm = ScannerFlowViewModel(FakeScannerPort(), FakeScannerProPort(), FakeScannerAdHook(), FakeScannerAnalytics())
+        val vm = ScannerFlowViewModel(FakeScannerPort(), FakeScannerAnalytics())
         vm.onIntent(ScannerFlowIntent.SelectMode(ScanMode.OCR))
         vm.onIntent(ScannerFlowIntent.SelectOcrScript(OcrScript.KOREAN))
         vm.onIntent(ScannerFlowIntent.ImageCaptured("/tmp/hangul.jpg"))

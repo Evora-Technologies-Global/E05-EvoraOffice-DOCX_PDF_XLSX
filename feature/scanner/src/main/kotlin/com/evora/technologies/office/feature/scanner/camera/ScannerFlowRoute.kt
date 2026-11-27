@@ -92,7 +92,6 @@ import com.evora.technologies.office.core.designsystem.component.ErrorStateCard
 import com.evora.technologies.office.core.designsystem.component.EvoraIconButton
 import com.evora.technologies.office.core.designsystem.component.EvoraOutlinedButton
 import com.evora.technologies.office.core.designsystem.component.EvoraPrimaryButton
-import com.evora.technologies.office.core.designsystem.component.EvoraRewardGateSheet
 import com.evora.technologies.office.core.designsystem.theme.EvoraRadii
 import com.evora.technologies.office.core.designsystem.theme.EvoraSpacing
 import com.evora.technologies.office.core.designsystem.theme.EvoraTheme
@@ -116,7 +115,6 @@ import java.util.concurrent.Executors
 fun ScannerFlowRoute(
     initialMode: ScanMode = ScanMode.DOCUMENT,
     onBack: () -> Unit,
-    onOpenPaywall: () -> Unit,
     onOpenDocument: (uriString: String, displayName: String, format: DocFormat) -> Unit,
     onShowMessage: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -166,7 +164,6 @@ fun ScannerFlowRoute(
     CollectEffects(viewModel.effects) { effect ->
         when (effect) {
             ScannerFlowEffect.NavigateBack -> onBack()
-            ScannerFlowEffect.NavigateToPaywall -> onOpenPaywall()
             is ScannerFlowEffect.OpenDocument -> {
                 val ext = effect.displayName.substringAfterLast('.', "pdf").lowercase()
                 onOpenDocument(effect.uriString, effect.displayName, DocFormat.fromExtension(ext) ?: DocFormat.PDF)
@@ -293,15 +290,10 @@ internal fun ScannerFlowScreen(
                         horizontalArrangement = Arrangement.spacedBy(EvoraSpacing.sm),
                     ) {
                         itemsIndexed(ScanMode.entries, key = { _, m -> m.name }) { _, mode ->
-                            val label = if (mode == ScanMode.ID_CARD && !state.proStatus.isUnlocked) {
-                                "${mode.label} · PRO"
-                            } else {
-                                mode.label
-                            }
                             FilterChip(
                                 selected = state.mode == mode,
                                 onClick = { onIntent(ScannerFlowIntent.SelectMode(mode)) },
-                                label = { Text(label) },
+                                label = { Text(mode.label) },
                             )
                         }
                     }
@@ -681,15 +673,6 @@ internal fun ScannerFlowScreen(
             dismissButton = {
                 TextButton(onClick = { onIntent(ScannerFlowIntent.DismissExportResult) }) { Text("Close") }
             },
-        )
-    }
-
-    state.showRewardGateTitle?.let { gateTitle ->
-        EvoraRewardGateSheet(
-            featureTitle = gateTitle,
-            onWatchRewardedPass = { onIntent(ScannerFlowIntent.GrantRewardedPassClicked) },
-            onUpgradePro = { onIntent(ScannerFlowIntent.UpgradeProClicked) },
-            onDismiss = { onIntent(ScannerFlowIntent.DismissRewardGate) },
         )
     }
 }

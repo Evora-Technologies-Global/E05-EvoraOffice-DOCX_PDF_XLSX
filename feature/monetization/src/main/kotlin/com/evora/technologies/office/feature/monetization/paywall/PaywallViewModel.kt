@@ -1,12 +1,10 @@
 package com.evora.technologies.office.feature.monetization.paywall
 
 import androidx.lifecycle.viewModelScope
-import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.AnalyticsPort
 import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.domain.port.RemoteConfigPort
 import com.evora.technologies.office.core.model.PurchaseResult
-import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.model.SubscriptionPlan
 import com.evora.technologies.office.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +17,6 @@ import javax.inject.Inject
 class PaywallViewModel @Inject constructor(
     private val proEntitlementPort: ProEntitlementPort,
     private val remoteConfigPort: RemoteConfigPort,
-    private val adPlacementHook: AdPlacementHook,
     private val analyticsPort: AnalyticsPort,
 ) : MviViewModel<PaywallState, PaywallIntent, PaywallEffect>(
     PaywallState(
@@ -51,7 +48,6 @@ class PaywallViewModel @Inject constructor(
             is PaywallIntent.SelectPlan -> setState { copy(selectedPlan = intent.plan, statusMessage = null) }
             PaywallIntent.StartTrialClicked -> startPlayBillingPurchase()
             PaywallIntent.RestorePurchasesClicked -> restorePurchases()
-            PaywallIntent.GrantRewardPassClicked -> grantRewardPass()
             PaywallIntent.SkipClicked -> sendEffect(PaywallEffect.ClosePaywall)
         }
     }
@@ -127,34 +123,6 @@ class PaywallViewModel @Inject constructor(
             sendEffect(PaywallEffect.ShowMessage(msg))
             if (restored) {
                 sendEffect(PaywallEffect.ClosePaywall)
-            }
-        }
-    }
-
-    private fun grantRewardPass() {
-        if (currentState.isProcessing) return
-        launchSafely(
-            onError = { err ->
-                setState { copy(isProcessing = false, statusMessage = err.message) }
-            },
-        ) {
-            setState { copy(isProcessing = true, statusMessage = null) }
-            when (val outcome = adPlacementHook.showRewardedPassAd()) {
-                is RewardedAdOutcome.Earned -> {
-                    proEntitlementPort.grantRewardedPass(hours = outcome.hours)
-                    setState { copy(isProcessing = false) }
-                    sendEffect(PaywallEffect.ShowMessage("${outcome.hours}-hour Pro tool pass activated"))
-                    sendEffect(PaywallEffect.ClosePaywall)
-                }
-                RewardedAdOutcome.Dismissed -> {
-                    val msg = "Complete the rewarded video to unlock a 24h Pro pass"
-                    setState { copy(isProcessing = false, statusMessage = msg) }
-                    sendEffect(PaywallEffect.ShowMessage(msg))
-                }
-                is RewardedAdOutcome.Unavailable -> {
-                    setState { copy(isProcessing = false, statusMessage = outcome.reason) }
-                    sendEffect(PaywallEffect.ShowMessage(outcome.reason))
-                }
             }
         }
     }

@@ -58,7 +58,7 @@
     <string name="evora_settings_restore_purchases">Restaurar Compras</string>
     <string name="evora_settings_connected_clouds">Nuvens Conectadas</string>
     <string name="evora_settings_privacy_legal">Privacidade e Legal</string>
-    <string name="evora_settings_ump_privacy">Opções de Privacidade</string>
+    <string name="evora_settings_privacy_notice">Privacidade e Processamento Local</string>
     <string name="evora_settings_oss_licenses">Licenças Open-Source</string>
 
     <string name="evora_widget_quick_name">Barra Rápida Evora</string>

@@ -2,7 +2,6 @@ package com.evora.technologies.office.feature.settings
 
 import app.cash.turbine.test
 import com.evora.technologies.office.core.domain.port.CloudDrivePort
-import com.evora.technologies.office.core.domain.port.ConsentPort
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
 import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.model.AppLanguage
@@ -12,7 +11,6 @@ import com.evora.technologies.office.core.model.CloudBrowsePage
 import com.evora.technologies.office.core.model.CloudItem
 import com.evora.technologies.office.core.model.CloudProvider
 import com.evora.technologies.office.core.model.CloudTransferProgress
-import com.evora.technologies.office.core.model.ConsentState
 import com.evora.technologies.office.core.model.DocumentItem
 import com.evora.technologies.office.core.model.ProFeature
 import com.evora.technologies.office.core.model.ProStatus
@@ -60,7 +58,6 @@ private class FakeSettingsPro : ProEntitlementPort {
     var restoreResult: Boolean = false
     var restoreException: Throwable? = null
     override suspend fun hasAccess(feature: ProFeature) = proStatus.value.isUnlocked
-    override suspend fun grantRewardedPass(hours: Int) = Unit
     override suspend fun restorePurchases(): Boolean {
         restoreException?.let { throw it }
         if (restoreResult) {
@@ -83,18 +80,6 @@ private class FakeSettingsCloud : CloudDrivePort {
     override suspend fun uploadLocalFile(account: CloudAccount, localUriString: String, targetFolderId: String) = Result.failure<CloudItem>(UnsupportedOperationException())
 }
 
-private class FakeSettingsConsent(privacyRequired: Boolean = false) : ConsentPort {
-    var privacyFormShown = false
-    override val consentState = MutableStateFlow(
-        ConsentState(canRequestAds = true, privacyOptionsRequired = privacyRequired, isInitialized = true),
-    )
-    override suspend fun gatherConsentIfNeeded() = consentState.value
-    override suspend fun showPrivacyOptionsForm(): Result<ConsentState> {
-        privacyFormShown = true
-        return Result.success(consentState.value)
-    }
-}
-
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
     private val dispatcher = StandardTestDispatcher()
@@ -112,7 +97,7 @@ class SettingsViewModelTest {
     @Test
     fun `theme, language, autosave, and navigation intents emit expected state and effects`() = runTest {
         val prefs = FakeSettingsPrefs()
-        val vm = SettingsViewModel(prefs, FakeSettingsPro(), FakeSettingsCloud(), FakeSettingsConsent())
+        val vm = SettingsViewModel(prefs, FakeSettingsPro(), FakeSettingsCloud())
         advanceUntilIdle()
         assertEquals(1, vm.state.value.connectedCloudCount)
 
@@ -144,14 +129,12 @@ class SettingsViewModelTest {
     @Test
     fun `restore purchases updates pro status or resets busy flag on failure`() = runTest {
         val pro = FakeSettingsPro().apply { restoreResult = true }
-        val consent = FakeSettingsConsent(privacyRequired = true)
-        val vm = SettingsViewModel(FakeSettingsPrefs(), pro, FakeSettingsCloud(), consent)
+        val vm = SettingsViewModel(FakeSettingsPrefs(), pro, FakeSettingsCloud())
         advanceUntilIdle()
-        assertTrue(vm.state.value.umpPrivacyOptionsRequired)
 
-        vm.onIntent(SettingsIntent.OpenUmpPrivacy)
+        vm.onIntent(SettingsIntent.OpenPrivacyNotice)
         advanceUntilIdle()
-        assertTrue(consent.privacyFormShown)
+        assertTrue(vm.state.value.showPrivacyDialog)
 
         vm.effects.test {
             vm.onIntent(SettingsIntent.RestorePurchasesClicked)

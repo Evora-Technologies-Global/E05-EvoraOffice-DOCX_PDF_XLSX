@@ -1,15 +1,12 @@
 package com.evora.technologies.office.feature.onboarding
 
 import app.cash.turbine.test
-import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.AnalyticsPort
-import com.evora.technologies.office.core.domain.port.ConsentPort
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
 import com.evora.technologies.office.core.domain.port.RemoteConfigPort
 import com.evora.technologies.office.core.model.AppLanguage
 import com.evora.technologies.office.core.model.AppThemeMode
-import com.evora.technologies.office.core.model.ConsentState
 import com.evora.technologies.office.core.model.DocFormat
 import com.evora.technologies.office.core.model.DocumentItem
 import com.evora.technologies.office.core.model.ExternalIntentPayload
@@ -133,27 +130,7 @@ private class FakeOnboardingRemoteConfig(
     override suspend fun fetchAndActivate(timeoutMs: Long): RemoteConfigSnapshot = config.value
 }
 
-private class FakeOnboardingConsent : ConsentPort {
-    var gathered = false
-    override val consentState = MutableStateFlow(ConsentState(canRequestAds = true, isInitialized = true))
-    override suspend fun gatherConsentIfNeeded(): ConsentState {
-        gathered = true
-        return consentState.value
-    }
-    override suspend fun showPrivacyOptionsForm(): Result<ConsentState> = Result.success(consentState.value)
-}
-
-private class FakeOnboardingAdHook : AdPlacementHook {
-    var externalMarked = false
-    override fun onMilestoneCompleted(screenId: String) = Unit
-    override fun onHomeHubEntered() = Unit
-    override fun markExternalIntentLaunch(external: Boolean) {
-        externalMarked = external
-    }
-}
-
 private class FakeOnboardingAnalytics : AnalyticsPort {
-    override fun logAdImpression(adPlatform: String, adFormat: String, adUnitName: String, currency: String, value: Double, valueMicros: Long) = Unit
     override fun logOnboardingStep(stepName: String, action: String) = Unit
     override fun logStoragePermissionResult(grantType: String) = Unit
     override fun logDocumentOpen(format: String, source: String) = Unit
@@ -179,15 +156,11 @@ class OnboardingViewModelsTest {
     }
 
     @Test
-    fun `splash routes external ACTION_VIEW directly to reader skipping onboarding and UMP`() = runTest {
-        val consent = FakeOnboardingConsent()
-        val adHook = FakeOnboardingAdHook()
+    fun `splash routes external ACTION_VIEW directly to reader skipping onboarding`() = runTest {
         val vm = SplashViewModel(
             FakePrefsRepo(initialOnboarding = false),
             FakeOnboardingDocRepo(),
             FakeOnboardingRemoteConfig(),
-            consent,
-            adHook,
             FakeOnboardingAnalytics(),
         )
         vm.effects.test {
@@ -198,8 +171,6 @@ class OnboardingViewModelsTest {
                 ),
             )
             advanceUntilIdle()
-            assertTrue(adHook.externalMarked)
-            assertTrue(!consent.gathered)
             val effect = awaitItem()
             assertTrue(effect is SplashEffect.NavigateToExternalDocument)
             assertEquals(DocFormat.WORD, (effect as SplashEffect.NavigateToExternalDocument).payload.format)
@@ -243,20 +214,16 @@ class OnboardingViewModelsTest {
 
     @Test
     fun `splash routes returning user directly to Home without waiting on onboarding`() = runTest {
-        val consent = FakeOnboardingConsent()
         val vm = SplashViewModel(
             FakePrefsRepo(initialOnboarding = true),
             FakeOnboardingDocRepo(),
             FakeOnboardingRemoteConfig(),
-            consent,
-            FakeOnboardingAdHook(),
             FakeOnboardingAnalytics(),
         )
         vm.effects.test {
             vm.onIntent(SplashIntent.StartRouting())
             advanceUntilIdle()
             assertEquals(SplashEffect.NavigateToHome, awaitItem())
-            assertTrue(!consent.gathered)
         }
     }
 
@@ -266,8 +233,6 @@ class OnboardingViewModelsTest {
             FakePrefsRepo(initialOnboarding = false),
             FakeOnboardingDocRepo(),
             FakeOnboardingRemoteConfig(RemoteConfigSnapshot(onboardingShowLanguage = true)),
-            FakeOnboardingConsent(),
-            FakeOnboardingAdHook(),
             FakeOnboardingAnalytics(),
         )
         vm.effects.test {

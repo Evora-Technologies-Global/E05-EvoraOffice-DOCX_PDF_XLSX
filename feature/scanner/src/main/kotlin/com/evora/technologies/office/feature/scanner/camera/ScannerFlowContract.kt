@@ -2,7 +2,6 @@ package com.evora.technologies.office.feature.scanner.camera
 
 import com.evora.technologies.office.core.model.OcrScript
 import com.evora.technologies.office.core.model.PdfToolResult
-import com.evora.technologies.office.core.model.ProStatus
 import com.evora.technologies.office.core.model.QrDecodedAction
 import com.evora.technologies.office.core.model.ScanFilter
 import com.evora.technologies.office.core.model.ScanMode
@@ -20,7 +19,6 @@ data class ScannedPageItem(
 
 data class ScannerFlowState(
     val mode: ScanMode = ScanMode.DOCUMENT,
-    val proStatus: ProStatus = ProStatus(),
     val flashEnabled: Boolean = false,
     val showGrid: Boolean = true,
     val cameraPermissionGranted: Boolean = false,
@@ -37,7 +35,6 @@ data class ScannerFlowState(
     val decodedQrs: List<QrDecodedAction> = emptyList(),
     val pendingOpenUrlConfirm: String? = null,
     // Shared status
-    val showRewardGateTitle: String? = null,
     val isBusy: Boolean = false,
     val exportResult: PdfToolResult? = null,
     val errorMessage: String? = null,
@@ -78,10 +75,7 @@ sealed interface ScannerFlowIntent : UiIntent {
     data class RequestOpenUrl(val url: String) : ScannerFlowIntent
     data object ConfirmOpenUrl : ScannerFlowIntent
     data object DismissOpenUrl : ScannerFlowIntent
-    // Pro gate & output
-    data object DismissRewardGate : ScannerFlowIntent
-    data object GrantRewardedPassClicked : ScannerFlowIntent
-    data object UpgradeProClicked : ScannerFlowIntent
+    // Output
     data object OpenExportedResult : ScannerFlowIntent
     data object DismissExportResult : ScannerFlowIntent
     data object DismissError : ScannerFlowIntent
@@ -90,7 +84,6 @@ sealed interface ScannerFlowIntent : UiIntent {
 
 sealed interface ScannerFlowEffect : UiEffect {
     data object NavigateBack : ScannerFlowEffect
-    data object NavigateToPaywall : ScannerFlowEffect
     data class OpenDocument(val uriString: String, val displayName: String) : ScannerFlowEffect
     data class CopyToClipboard(val text: String) : ScannerFlowEffect
     data class LaunchBrowserUrl(val url: String) : ScannerFlowEffect

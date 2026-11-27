@@ -1,13 +1,10 @@
 package com.evora.technologies.office.feature.tools.hub
 
 import androidx.lifecycle.viewModelScope
-import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.DocumentRepository
-import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.domain.port.TemplateRepository
 import com.evora.technologies.office.core.model.DocTemplatePreset
 import com.evora.technologies.office.core.model.PdfToolKind
-import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
@@ -16,22 +13,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ToolsHubViewModel @Inject constructor(
-    private val proEntitlementPort: ProEntitlementPort,
     private val templateRepository: TemplateRepository,
-    private val documentRepository: DocumentRepository,
-    private val adPlacementHook: AdPlacementHook,
+    documentRepository: DocumentRepository,
 ) : MviViewModel<ToolsHubState, ToolsHubIntent, ToolsHubEffect>(
     ToolsHubState(templates = templateRepository.getAvailableTemplates()),
 ) {
 
     init {
-        proEntitlementPort.proStatus
-            .onEach { status ->
-                val freeDocx = proEntitlementPort.hasFreeDailyPdfToDocxAvailable()
-                setState { copy(proStatus = status, freeDailyPdfToDocxAvailable = freeDocx) }
-            }
-            .launchIn(viewModelScope)
-
         documentRepository.observeLibraryDocuments()
             .onEach { docs ->
                 setState { copy(printableDocuments = docs.take(25)) }
@@ -41,13 +29,7 @@ class ToolsHubViewModel @Inject constructor(
 
     override fun onIntent(intent: ToolsHubIntent) {
         when (intent) {
-            is ToolsHubIntent.ToolClicked -> handleToolClick(intent.toolId)
-            ToolsHubIntent.DismissRewardGate -> setState { copy(pendingGateToolId = null, pendingGateTitle = "") }
-            ToolsHubIntent.GrantRewardedPassClicked -> grantRewardedPassAndProceed()
-            ToolsHubIntent.UpgradeProClicked -> {
-                setState { copy(pendingGateToolId = null, pendingGateTitle = "") }
-                sendEffect(ToolsHubEffect.NavigateToPaywall)
-            }
+            is ToolsHubIntent.ToolClicked -> dispatchTool(intent.toolId)
             is ToolsHubIntent.FilterTemplates -> setState { copy(selectedTemplateFilter = intent.kind) }
             is ToolsHubIntent.CreateFromTemplate -> createTemplate(intent.preset)
             ToolsHubIntent.DismissTemplatesSheet -> setState { copy(showTemplatesSheet = false) }
@@ -58,59 +40,6 @@ class ToolsHubViewModel @Inject constructor(
             ToolsHubIntent.DismissPrintPicker -> setState { copy(showPrintPickerSheet = false) }
             ToolsHubIntent.SettingsClicked -> sendEffect(ToolsHubEffect.NavigateToSettings)
             ToolsHubIntent.PaywallClicked -> sendEffect(ToolsHubEffect.NavigateToPaywall)
-        }
-    }
-
-    private fun handleToolClick(toolId: UtilityToolId) {
-        launchSafely(
-            onError = { setState { copy(pendingGateToolId = null) } },
-        ) {
-            val isUnlocked = proEntitlementPort.proStatus.value.isUnlocked
-            when (toolId) {
-                UtilityToolId.WATERMARK_PDF -> if (!isUnlocked) {
-                    setState { copy(pendingGateToolId = toolId, pendingGateTitle = "Watermark PDF") }
-                    return@launchSafely
-                }
-                UtilityToolId.SIGN_PDF -> if (!isUnlocked) {
-                    setState { copy(pendingGateToolId = toolId, pendingGateTitle = "PKCS#7 Digital Signature") }
-                    return@launchSafely
-                }
-                UtilityToolId.PDF_TO_DOCX -> {
-                    val hasDailyFree = proEntitlementPort.hasFreeDailyPdfToDocxAvailable()
-                    if (!isUnlocked && !hasDailyFree) {
-                        setState { copy(pendingGateToolId = toolId, pendingGateTitle = "Offline PDF to DOCX") }
-                        return@launchSafely
-                    }
-                }
-                else -> Unit
-            }
-            dispatchTool(toolId)
-        }
-    }
-
-    private fun grantRewardedPassAndProceed() {
-        val pending = currentState.pendingGateToolId ?: return
-        launchSafely(
-            onError = { err ->
-                setState { copy(pendingGateToolId = null) }
-                sendEffect(ToolsHubEffect.ShowMessage(err.message ?: "Unable to unlock pass"))
-            },
-        ) {
-            when (val outcome = adPlacementHook.showRewardedPassAd()) {
-                is RewardedAdOutcome.Earned -> {
-                    proEntitlementPort.grantRewardedPass(hours = outcome.hours)
-                    setState { copy(pendingGateToolId = null, pendingGateTitle = "") }
-                    dispatchTool(pending)
-                }
-                RewardedAdOutcome.Dismissed -> {
-                    setState { copy(pendingGateToolId = null, pendingGateTitle = "") }
-                    sendEffect(ToolsHubEffect.ShowMessage("Watch the full rewarded video to unlock a 24h pass."))
-                }
-                is RewardedAdOutcome.Unavailable -> {
-                    setState { copy(pendingGateToolId = null, pendingGateTitle = "") }
-                    sendEffect(ToolsHubEffect.ShowMessage(outcome.reason))
-                }
-            }
         }
     }
 

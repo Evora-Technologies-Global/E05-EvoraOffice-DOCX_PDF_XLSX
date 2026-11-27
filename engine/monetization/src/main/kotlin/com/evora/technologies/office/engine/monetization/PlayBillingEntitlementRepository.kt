@@ -50,17 +50,13 @@ class PlayBillingEntitlementRepository @Inject constructor(
 
     override val proStatus: StateFlow<ProStatus> = combine(
         preferences.entitlementHmacPayload,
-        preferences.rewardPassExpiresAtEpochMs,
         preferences.qaProOverride,
-    ) { signedPayload, rewardExpiresAt, qaOverride ->
+    ) { signedPayload, qaOverride ->
         val now = System.currentTimeMillis()
         val verifiedCached = signedCache.verify(signedPayload, now)
         val debugOverride = isDebugBuild && qaOverride
-        val activeReward = rewardExpiresAt > now
         ProStatus(
             isPro = verifiedCached != null || debugOverride,
-            hasRewardedPass = activeReward,
-            rewardPassExpiresAtEpochMs = rewardExpiresAt,
             activeSku = verifiedCached?.skuId ?: if (debugOverride) "qa_debug_pro" else null,
         )
     }.stateIn(
@@ -87,11 +83,6 @@ class PlayBillingEntitlementRepository @Inject constructor(
     }
 
     override suspend fun hasAccess(feature: ProFeature): Boolean = proStatus.value.isUnlocked
-
-    override suspend fun grantRewardedPass(hours: Int) {
-        val expiresAt = System.currentTimeMillis() + hours * 3_600_000L
-        preferences.setRewardPassExpiresAt(expiresAt)
-    }
 
     override fun observeBillingOffers(): Flow<List<BillingOffer>> = _billingOffers.asStateFlow()
 
@@ -133,17 +124,6 @@ class PlayBillingEntitlementRepository @Inject constructor(
         if (isDebugBuild) {
             preferences.setQaProOverride(enabled)
         }
-    }
-
-    override suspend fun hasFreeDailyPdfToDocxAvailable(): Boolean {
-        if (proStatus.value.isUnlocked) return true
-        val today = System.currentTimeMillis() / 86_400_000L
-        return preferences.pdfToDocxFreeUsedEpochDay.first() < today
-    }
-
-    override suspend fun consumeFreeDailyPdfToDocx() {
-        val today = System.currentTimeMillis() / 86_400_000L
-        preferences.setPdfToDocxFreeUsedEpochDay(today)
     }
 
     private suspend fun syncPurchasesQuietly() {

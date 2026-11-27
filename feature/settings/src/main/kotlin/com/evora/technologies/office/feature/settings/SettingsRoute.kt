@@ -218,10 +218,10 @@ internal fun SettingsScreen(
                         SettingsRow(
                             icon = Icons.Outlined.WorkspacePremium,
                             title = stringResource(R.string.evora_settings_manage_pro),
-                            subtitle = when {
-                                state.proStatus.isPro -> "Pro Active (${state.proStatus.activeSku ?: "Active"}) · Ad-Free"
-                                state.proStatus.hasRewardedPass -> "24h Pro Pass Active"
-                                else -> "Free Plan"
+                            subtitle = if (state.proStatus.isPro) {
+                                "Pro Active (${state.proStatus.activeSku ?: "Active"})"
+                            } else {
+                                "Free Plan"
                             },
                             onClick = { onIntent(SettingsIntent.ManageProClicked) },
                         )
@@ -250,13 +250,9 @@ internal fun SettingsScreen(
                     SettingsSectionCard(title = stringResource(R.string.evora_settings_privacy_legal)) {
                         SettingsRow(
                             icon = Icons.Outlined.PrivacyTip,
-                            title = stringResource(R.string.evora_settings_ump_privacy),
-                            subtitle = if (state.umpPrivacyOptionsRequired) {
-                                "EEA/UK/CH Consent Management (Tap to review or revoke)"
-                            } else {
-                                "100% offline processing · Consent & GDPR/EEA controls"
-                            },
-                            onClick = { onIntent(SettingsIntent.OpenUmpPrivacy) },
+                            title = stringResource(R.string.evora_settings_privacy_notice),
+                            subtitle = "100% offline processing · Zero document uploads",
+                            onClick = { onIntent(SettingsIntent.OpenPrivacyNotice) },
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         SettingsRow(
@@ -409,13 +405,13 @@ internal fun SettingsScreen(
         )
     }
 
-    if (state.showUmpPrivacyDialog) {
+    if (state.showPrivacyDialog) {
         AlertDialog(
             onDismissRequest = { onIntent(SettingsIntent.DismissDialogs) },
-            title = { Text(stringResource(R.string.evora_settings_ump_privacy)) },
+            title = { Text(stringResource(R.string.evora_settings_privacy_notice)) },
             text = {
                 Text(
-                    "Evora Office processes all documents, OCR, PDF tools, and Wi-Fi transfers 100% locally on your device. No document contents are uploaded. EEA/UK/CH privacy consent controls apply when billing and ad-consent services are enabled.",
+                    "Evora Office processes all documents, OCR, PDF tools, and Wi-Fi transfers 100% locally on your device. No document contents are uploaded.",
                 )
             },
             confirmButton = {

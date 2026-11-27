@@ -1,19 +1,15 @@
 package com.evora.technologies.office.feature.tools.pdf
 
 import androidx.lifecycle.viewModelScope
-import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.AnalyticsPort
 import com.evora.technologies.office.core.domain.port.DocumentInvalidPasswordException
 import com.evora.technologies.office.core.domain.port.DocumentPasswordRequiredException
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.PdfEnginePort
 import com.evora.technologies.office.core.domain.port.PdfPowerPort
-import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.model.CompressQuality
-import com.evora.technologies.office.core.model.DocFormat
 import com.evora.technologies.office.core.model.DocumentItem
 import com.evora.technologies.office.core.model.PdfToolKind
-import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.model.SplitMode
 import com.evora.technologies.office.core.model.WatermarkConfig
 import com.evora.technologies.office.core.mvi.MviViewModel
@@ -28,8 +24,6 @@ class PdfToolConfigViewModel @Inject constructor(
     private val pdfPowerPort: PdfPowerPort,
     private val pdfEnginePort: PdfEnginePort,
     private val documentRepository: DocumentRepository,
-    private val proEntitlementPort: ProEntitlementPort,
-    private val adPlacementHook: AdPlacementHook,
     private val analyticsPort: AnalyticsPort,
 ) : MviViewModel<PdfToolConfigState, PdfToolConfigIntent, PdfToolConfigEffect>(
     PdfToolConfigState(),
@@ -38,13 +32,6 @@ class PdfToolConfigViewModel @Inject constructor(
     private var initializedKey: String? = null
 
     init {
-        proEntitlementPort.proStatus
-            .onEach { status ->
-                val freeDocx = proEntitlementPort.hasFreeDailyPdfToDocxAvailable()
-                setState { copy(proStatus = status, freeDailyPdfToDocxAvailable = freeDocx) }
-            }
-            .launchIn(viewModelScope)
-
         documentRepository.observeLibraryDocuments()
             .onEach { docs -> setState { copy(availableLibraryDocs = docs) } }
             .launchIn(viewModelScope)
@@ -87,7 +74,9 @@ class PdfToolConfigViewModel @Inject constructor(
             is PdfToolConfigIntent.ToggleLandscape -> setState { copy(landscape = intent.landscape) }
             is PdfToolConfigIntent.UpdatePlainTextInput -> setState { copy(plainTextInput = intent.text) }
             is PdfToolConfigIntent.ToggleStitchedLongImage -> setState { copy(stitchedLongImage = intent.stitched) }
-            PdfToolConfigIntent.ExecuteClicked -> checkProGateAndExecute()
+            PdfToolConfigIntent.ExecuteClicked -> executeTool(
+                passwordOverride = currentState.currentPdfPassword.ifBlank { null },
+            )
             PdfToolConfigIntent.CancelExecution -> {
                 runJob?.cancel()
                 setState { copy(isProcessing = false, progress = 0f) }
@@ -97,12 +86,6 @@ class PdfToolConfigViewModel @Inject constructor(
                 executeTool(passwordOverride = intent.password)
             }
             PdfToolConfigIntent.DismissUnlockDialog -> setState { copy(passwordPromptRequired = false, passwordPromptError = null) }
-            PdfToolConfigIntent.DismissRewardGate -> setState { copy(showRewardGateTitle = null) }
-            PdfToolConfigIntent.GrantRewardedPassAndRun -> grantRewardPassAndRun()
-            PdfToolConfigIntent.UpgradeProClicked -> {
-                setState { copy(showRewardGateTitle = null) }
-                sendEffect(PdfToolConfigEffect.NavigateToPaywall)
-            }
             PdfToolConfigIntent.OpenResultClicked -> {
                 currentState.result?.let { res ->
                     sendEffect(PdfToolConfigEffect.OpenOutputFile(res.outputUriString, res.outputDisplayName))
@@ -134,8 +117,6 @@ class PdfToolConfigViewModel @Inject constructor(
         setState {
             PdfToolConfigState(
                 toolKind = kind,
-                proStatus = proStatus,
-                freeDailyPdfToDocxAvailable = freeDailyPdfToDocxAvailable,
                 availableLibraryDocs = availableLibraryDocs,
                 outputBaseName = defaultOut,
             )
@@ -222,54 +203,6 @@ class PdfToolConfigViewModel @Inject constructor(
         val next = currentState.splitSelectedPages.toMutableSet()
         if (!next.add(pageZeroBased)) next.remove(pageZeroBased)
         setState { copy(splitSelectedPages = next) }
-    }
-
-    private fun checkProGateAndExecute() {
-        launchSafely(
-            onError = { setState { copy(errorMessage = it.message) } },
-        ) {
-            val unlocked = proEntitlementPort.proStatus.value.isUnlocked
-            if (!unlocked) {
-                val gateReason: String? = when (currentState.toolKind) {
-                    PdfToolKind.MERGE if currentState.selectedInputs.size > 3 ->
-                        "Merge > 3 PDF Files"
-                    PdfToolKind.COMPRESS if currentState.compressQuality == CompressQuality.HIGH ->
-                        "High Compression Mode"
-                    PdfToolKind.WATERMARK -> "Watermark PDF"
-                    PdfToolKind.PKCS7_SIGN -> "PKCS#7 Digital Signature"
-                    PdfToolKind.PDF_TO_DOCX if !proEntitlementPort.hasFreeDailyPdfToDocxAvailable() ->
-                        "Offline PDF to DOCX"
-                    else -> null
-                }
-                if (gateReason != null) {
-                    setState { copy(showRewardGateTitle = gateReason) }
-                    return@launchSafely
-                }
-            }
-            executeTool(passwordOverride = currentState.currentPdfPassword.ifBlank { null })
-        }
-    }
-
-    private fun grantRewardPassAndRun() {
-        launchSafely(
-            onError = { setState { copy(showRewardGateTitle = null, errorMessage = it.message) } },
-        ) {
-            when (val outcome = adPlacementHook.showRewardedPassAd()) {
-                is RewardedAdOutcome.Earned -> {
-                    proEntitlementPort.grantRewardedPass(hours = outcome.hours)
-                    setState { copy(showRewardGateTitle = null) }
-                    executeTool(passwordOverride = currentState.currentPdfPassword.ifBlank { null })
-                }
-                RewardedAdOutcome.Dismissed -> {
-                    setState { copy(showRewardGateTitle = null) }
-                    sendEffect(PdfToolConfigEffect.ShowMessage("Complete the rewarded video to unlock a 24h pass."))
-                }
-                is RewardedAdOutcome.Unavailable -> {
-                    setState { copy(showRewardGateTitle = null) }
-                    sendEffect(PdfToolConfigEffect.ShowMessage(outcome.reason))
-                }
-            }
-        }
     }
 
     private fun executeTool(passwordOverride: String?) {
@@ -395,22 +328,17 @@ class PdfToolConfigViewModel @Inject constructor(
                 }
                 PdfToolKind.PDF_TO_DOCX -> {
                     val uri = primaryUri ?: error("Select a PDF file first")
-                    val out = pdfPowerPort.pdfToDocxOffline(
+                    pdfPowerPort.pdfToDocxOffline(
                         sourceUriString = uri,
                         password = passwordOverride,
                         onProgress = { p -> setState { copy(progress = p) } },
                     )
-                    if (out.isSuccess && !proEntitlementPort.proStatus.value.isUnlocked) {
-                        proEntitlementPort.consumeFreeDailyPdfToDocx()
-                    }
-                    out
                 }
             }.getOrThrow()
 
             val elapsedMs = (System.currentTimeMillis() - startedMs).coerceAtLeast(0L)
             analyticsPort.logPdfToolComplete(stateSnap.toolKind.name.lowercase(), elapsedMs, success = true)
             setState { copy(isProcessing = false, progress = 1f, result = res) }
-            adPlacementHook.onMilestoneCompleted("pdf_tool_${stateSnap.toolKind.name}")
         }
     }
 

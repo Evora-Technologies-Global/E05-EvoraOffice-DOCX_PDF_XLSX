@@ -57,7 +57,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.evora.technologies.office.core.designsystem.component.EvoraIconButton
-import com.evora.technologies.office.core.designsystem.component.EvoraRewardGateSheet
 import com.evora.technologies.office.core.designsystem.component.EvoraTemplatesSheet
 import com.evora.technologies.office.core.designsystem.component.FormatBadge
 import com.evora.technologies.office.core.designsystem.component.launchSystemPdfPrint
@@ -132,7 +131,6 @@ internal fun ToolsHubScreen(
 ) {
     val extra = EvoraThemeTokens.colors
     val formats = EvoraThemeTokens.formats
-    val isPro = state.proStatus.isUnlocked
 
     val convertTiles = listOf(
         ToolTileSpec(UtilityToolId.IMAGE_TO_PDF, "Image to PDF", Icons.Outlined.Image, formats.pdf.tintBg, formats.pdf.inkText),
@@ -144,11 +142,6 @@ internal fun ToolsHubScreen(
             Icons.Outlined.Description,
             formats.word.tintBg,
             formats.word.inkText,
-            badgeText = when {
-                isPro -> null
-                state.freeDailyPdfToDocxAvailable -> "1 FREE"
-                else -> "PRO"
-            },
         ),
         ToolTileSpec(UtilityToolId.PDF_TO_IMAGE, "PDF to Image", Icons.Outlined.Image, formats.epub.tintBg, formats.epub.inkText),
     )
@@ -163,7 +156,6 @@ internal fun ToolsHubScreen(
             Icons.Outlined.AutoFixHigh,
             formats.hwp.tintBg,
             formats.hwp.inkText,
-            badgeText = if (isPro) null else "PRO",
         ),
         ToolTileSpec(UtilityToolId.SET_PASSWORD, "Lock PDF", Icons.Outlined.Lock, formats.odf.tintBg, formats.odf.inkText),
         ToolTileSpec(UtilityToolId.REMOVE_PASSWORD, "Unlock PDF", Icons.Outlined.LockOpen, formats.textArchive.tintBg, formats.textArchive.inkText),
@@ -173,7 +165,6 @@ internal fun ToolsHubScreen(
             Icons.Outlined.Draw,
             formats.word.tintBg,
             formats.word.inkText,
-            badgeText = if (isPro) null else "PRO",
         ),
         ToolTileSpec(UtilityToolId.PRINT_DOCUMENT, "Print PDF", Icons.Outlined.Print, formats.excel.tintBg, formats.excel.inkText),
     )
@@ -246,15 +237,6 @@ internal fun ToolsHubScreen(
                 )
             }
         }
-    }
-
-    if (state.pendingGateToolId != null) {
-        EvoraRewardGateSheet(
-            featureTitle = state.pendingGateTitle,
-            onWatchRewardedPass = { onIntent(ToolsHubIntent.GrantRewardedPassClicked) },
-            onUpgradePro = { onIntent(ToolsHubIntent.UpgradeProClicked) },
-            onDismiss = { onIntent(ToolsHubIntent.DismissRewardGate) },
-        )
     }
 
     if (state.showTemplatesSheet) {

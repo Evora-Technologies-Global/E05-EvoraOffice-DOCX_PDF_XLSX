@@ -58,7 +58,7 @@
     <string name="evora_settings_restore_purchases">購入を復元</string>
     <string name="evora_settings_connected_clouds">接続済みクラウド</string>
     <string name="evora_settings_privacy_legal">プライバシーと法的情報</string>
-    <string name="evora_settings_ump_privacy">プライバシー同意設定</string>
+    <string name="evora_settings_privacy_notice">プライバシーとローカル処理</string>
     <string name="evora_settings_oss_licenses">オープンソースライセンス</string>
 
     <string name="evora_widget_quick_name">Evora クイックバー</string>

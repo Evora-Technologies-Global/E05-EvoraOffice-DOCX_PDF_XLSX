@@ -58,7 +58,7 @@
     <string name="evora_settings_restore_purchases">Khôi phục giao dịch</string>
     <string name="evora_settings_connected_clouds">Tài khoản đám mây đã nối</string>
     <string name="evora_settings_privacy_legal">Quyền riêng tư &amp; Pháp lý</string>
-    <string name="evora_settings_ump_privacy">Tùy chọn đồng ý &amp; riêng tư</string>
+    <string name="evora_settings_privacy_notice">Quyền riêng tư &amp; Xử lý cục bộ</string>
     <string name="evora_settings_oss_licenses">Giấy phép mã nguồn mở</string>
 
     <string name="evora_widget_quick_name">Thanh nhanh Evora</string>

@@ -180,14 +180,9 @@ enum class StorageAccessMode {
 
 data class ProStatus(
     val isPro: Boolean = false,
-    val hasRewardedPass: Boolean = false,
-    val rewardPassExpiresAtEpochMs: Long = 0L,
     val activeSku: String? = null,
 ) {
-    val isUnlocked: Boolean get() = isPro || hasRewardedPass
-
-    /** True only when paid Pro subscription/lifetime is active, hiding all ad slots globally. */
-    val shouldHideAds: Boolean get() = isPro
+    val isUnlocked: Boolean get() = isPro
 }
 
 enum class ProFeature {
@@ -209,7 +204,7 @@ enum class SubscriptionPlan(
 ) {
     WEEKLY("e05_weekly_trial", "Weekly Pro", "$4.99 / week", "Includes 3-day free trial", null),
     YEARLY("e05_yearly_pro_3999", "Annual Pro", "$39.99 / year", "7-day free trial · $3.33/mo", "BEST VALUE"),
-    LIFETIME("e05_lifetime_pro", "Lifetime Pro", "$59.99 once", "One-time unlock · Forever ad-free", null),
+    LIFETIME("e05_lifetime_pro", "Lifetime Pro", "$59.99 once", "One-time unlock · Lifetime Pro access", null),
 }
 
 data class BillingOffer(

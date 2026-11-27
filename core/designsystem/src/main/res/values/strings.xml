@@ -58,7 +58,7 @@
     <string name="evora_settings_restore_purchases">Restore Purchases</string>
     <string name="evora_settings_connected_clouds">Connected Cloud Drives</string>
     <string name="evora_settings_privacy_legal">Privacy &amp; Legal</string>
-    <string name="evora_settings_ump_privacy">Privacy &amp; Consent Choices</string>
+    <string name="evora_settings_privacy_notice">Privacy &amp; Local Processing</string>
     <string name="evora_settings_oss_licenses">Open-Source Licenses</string>
 
     <string name="evora_widget_quick_name">Evora Quick Bar</string>

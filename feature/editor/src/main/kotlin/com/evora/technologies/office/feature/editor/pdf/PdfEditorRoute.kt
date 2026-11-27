@@ -96,7 +96,6 @@ import com.evora.technologies.office.core.designsystem.component.ErrorStateCard
 import com.evora.technologies.office.core.designsystem.component.EvoraIconButton
 import com.evora.technologies.office.core.designsystem.component.EvoraOutlinedButton
 import com.evora.technologies.office.core.designsystem.component.EvoraPrimaryButton
-import com.evora.technologies.office.core.designsystem.component.EvoraRewardGateSheet
 import com.evora.technologies.office.core.designsystem.component.PasswordUnlockDialog
 import com.evora.technologies.office.core.designsystem.component.launchSystemPdfPrint
 import com.evora.technologies.office.core.designsystem.theme.EvoraRadii
@@ -124,7 +123,6 @@ fun PdfEditorRoute(
     newlyCreatedSignature: SignatureItem? = null,
     onNewlyCreatedSignatureConsumed: () -> Unit = {},
     onOpenSignaturePad: () -> Unit,
-    onOpenPaywall: () -> Unit,
     onBack: () -> Unit,
     onShowMessage: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -148,7 +146,6 @@ fun PdfEditorRoute(
         when (effect) {
             PdfEditorEffect.NavigateBack -> onBack()
             PdfEditorEffect.NavigateToSignaturePad -> onOpenSignaturePad()
-            PdfEditorEffect.NavigateToPaywall -> onOpenPaywall()
             is PdfEditorEffect.LaunchPrint -> launchSystemPdfPrint(context, effect.uriString, effect.displayName, onShowMessage)
             is PdfEditorEffect.ShowMessage -> onShowMessage(effect.message)
         }
@@ -721,15 +718,6 @@ internal fun PdfEditorScreen(
             errorMessage = state.passwordError,
             onUnlock = { onIntent(PdfEditorIntent.SubmitOpenPassword(it)) },
             onDismiss = { onIntent(PdfEditorIntent.DismissOpenPassword) },
-        )
-    }
-
-    state.showRewardGateTitle?.let { title ->
-        EvoraRewardGateSheet(
-            featureTitle = title,
-            onWatchRewardedPass = { onIntent(PdfEditorIntent.GrantRewardPassAndProceed) },
-            onUpgradePro = { onIntent(PdfEditorIntent.UpgradeProClicked) },
-            onDismiss = { onIntent(PdfEditorIntent.DismissRewardGate) },
         )
     }
 }

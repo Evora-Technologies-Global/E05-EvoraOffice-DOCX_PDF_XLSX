@@ -14,13 +14,11 @@ data class SettingsState(
     val proStatus: ProStatus = ProStatus(),
     val connectedCloudCount: Int = 0,
     val isRestoringPurchases: Boolean = false,
-    val umpPrivacyOptionsRequired: Boolean = false,
-    val umpConsentGranted: Boolean = false,
     val showThemeDialog: Boolean = false,
     val showLanguageDialog: Boolean = false,
     val showAutosaveDialog: Boolean = false,
     val showDefaultHandlerDialog: Boolean = false,
-    val showUmpPrivacyDialog: Boolean = false,
+    val showPrivacyDialog: Boolean = false,
     val showLicensesSheet: Boolean = false,
 ) : UiState
 
@@ -36,7 +34,7 @@ sealed interface SettingsIntent : UiIntent {
     data object ManageProClicked : SettingsIntent
     data object RestorePurchasesClicked : SettingsIntent
     data object ConnectedCloudsClicked : SettingsIntent
-    data object OpenUmpPrivacy : SettingsIntent
+    data object OpenPrivacyNotice : SettingsIntent
     data object OpenLicenses : SettingsIntent
     data object DismissDialogs : SettingsIntent
     data object BackClicked : SettingsIntent

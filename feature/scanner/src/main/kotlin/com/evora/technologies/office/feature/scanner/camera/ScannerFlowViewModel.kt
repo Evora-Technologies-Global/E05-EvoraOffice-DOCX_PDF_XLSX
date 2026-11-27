@@ -1,39 +1,24 @@
 package com.evora.technologies.office.feature.scanner.camera
 
-import androidx.lifecycle.viewModelScope
-import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.AnalyticsPort
-import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.domain.port.ScannerPort
 import com.evora.technologies.office.core.model.OcrScript
-import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.model.ScanFilter
 import com.evora.technologies.office.core.model.ScanMode
 import com.evora.technologies.office.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class ScannerFlowViewModel @Inject constructor(
     private val scannerPort: ScannerPort,
-    private val proEntitlementPort: ProEntitlementPort,
-    private val adPlacementHook: AdPlacementHook,
     private val analyticsPort: AnalyticsPort,
 ) : MviViewModel<ScannerFlowState, ScannerFlowIntent, ScannerFlowEffect>(
     ScannerFlowState(),
 ) {
     private var workJob: Job? = null
-    private var pendingGateKind: String? = null
-
-    init {
-        proEntitlementPort.proStatus
-            .onEach { status -> setState { copy(proStatus = status) } }
-            .launchIn(viewModelScope)
-    }
 
     override fun onIntent(intent: ScannerFlowIntent) {
         when (intent) {
@@ -75,16 +60,6 @@ class ScannerFlowViewModel @Inject constructor(
                 if (url != null) sendEffect(ScannerFlowEffect.LaunchBrowserUrl(url))
             }
             ScannerFlowIntent.DismissOpenUrl -> setState { copy(pendingOpenUrlConfirm = null) }
-            ScannerFlowIntent.DismissRewardGate -> {
-                pendingGateKind = null
-                setState { copy(showRewardGateTitle = null) }
-            }
-            ScannerFlowIntent.GrantRewardedPassClicked -> grantPassAndResume()
-            ScannerFlowIntent.UpgradeProClicked -> {
-                pendingGateKind = null
-                setState { copy(showRewardGateTitle = null) }
-                sendEffect(ScannerFlowEffect.NavigateToPaywall)
-            }
             ScannerFlowIntent.OpenExportedResult -> {
                 val res = currentState.exportResult ?: return
                 setState { copy(exportResult = null) }
@@ -172,18 +147,12 @@ class ScannerFlowViewModel @Inject constructor(
             ).getOrThrow()
             analyticsPort.logScanOcrComplete("doc", currentState.pages.size, "none")
             setState { copy(isBusy = false, exportResult = res) }
-            adPlacementHook.onMilestoneCompleted("scanner_doc_export")
         }
     }
 
     private fun exportIdCard(asPdf: Boolean) {
         val front = currentState.idFrontPath ?: return
         val back = currentState.idBackPath ?: return
-        if (!currentState.proStatus.isUnlocked) {
-            pendingGateKind = if (asPdf) "ID_PDF" else "ID_PNG"
-            setState { copy(showRewardGateTitle = "Dual-Side ID Card A4 Layout") }
-            return
-        }
         runIdCardExport(front, back, asPdf)
     }
 
@@ -201,7 +170,6 @@ class ScannerFlowViewModel @Inject constructor(
             ).getOrThrow()
             analyticsPort.logScanOcrComplete("id_card", 2, "none")
             setState { copy(isBusy = false, exportResult = res) }
-            adPlacementHook.onMilestoneCompleted("scanner_id_card_export")
         }
     }
 
@@ -261,36 +229,6 @@ class ScannerFlowViewModel @Inject constructor(
             val action = scannerPort.decodeBarcodeFromRaw(rawValue)
             if (currentState.decodedQrs.none { it.rawValue == action.rawValue }) {
                 setState { copy(decodedQrs = listOf(action) + decodedQrs.take(4)) }
-            }
-        }
-    }
-
-    private fun grantPassAndResume() {
-        val gate = pendingGateKind
-        launchSafely(
-            onError = { setState { copy(showRewardGateTitle = null, errorMessage = it.message) } },
-        ) {
-            when (val outcome = adPlacementHook.showRewardedPassAd()) {
-                is RewardedAdOutcome.Earned -> {
-                    proEntitlementPort.grantRewardedPass(hours = outcome.hours)
-                    pendingGateKind = null
-                    setState { copy(showRewardGateTitle = null) }
-                    val front = currentState.idFrontPath
-                    val back = currentState.idBackPath
-                    if (front != null && back != null && (gate == "ID_PDF" || gate == "ID_PNG")) {
-                        runIdCardExport(front, back, asPdf = gate == "ID_PDF")
-                    }
-                }
-                RewardedAdOutcome.Dismissed -> {
-                    pendingGateKind = null
-                    setState { copy(showRewardGateTitle = null) }
-                    sendEffect(ScannerFlowEffect.ShowMessage("Complete the rewarded video to unlock Dual ID Card export."))
-                }
-                is RewardedAdOutcome.Unavailable -> {
-                    pendingGateKind = null
-                    setState { copy(showRewardGateTitle = null) }
-                    sendEffect(ScannerFlowEffect.ShowMessage(outcome.reason))
-                }
             }
         }
     }

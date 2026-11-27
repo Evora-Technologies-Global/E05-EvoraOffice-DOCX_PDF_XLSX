@@ -10,18 +10,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.evora.technologies.office.core.designsystem.component.InlineNativeAdSlotRenderer
-import com.evora.technologies.office.core.designsystem.component.LocalInlineNativeAdRenderer
 import com.evora.technologies.office.core.designsystem.component.ProvideReducedMotion
 import com.evora.technologies.office.core.designsystem.theme.EvoraTheme
-import com.evora.technologies.office.core.domain.port.AdPlacementHook
-import com.evora.technologies.office.core.domain.port.ConsentPort
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
 import com.evora.technologies.office.core.domain.port.RemoteConfigPort
 import com.evora.technologies.office.core.model.AppThemeMode
@@ -38,19 +33,10 @@ class MainActivity : AppCompatActivity() {
     lateinit var preferencesRepository: PreferencesRepository
 
     @Inject
-    lateinit var adPlacementHook: AdPlacementHook
-
-    @Inject
-    lateinit var inlineNativeAdRenderer: InlineNativeAdSlotRenderer
-
-    @Inject
     lateinit var remoteConfigPort: RemoteConfigPort
 
-    @Inject
-    lateinit var consentPort: ConsentPort
-
     private var incomingActionState by mutableStateOf<IncomingLaunchAction?>(null)
-    private var startupConsentTriggered = false
+    private var startupConfigFetched = false
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,17 +44,12 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         if (savedInstanceState == null) {
             incomingActionState = extractIncomingAction(intent)
-            if (incomingActionState is IncomingLaunchAction.ViewDocument) {
-                adPlacementHook.markExternalIntentLaunch(true)
-            }
         }
-        if (incomingActionState !is IncomingLaunchAction.ViewDocument && !startupConsentTriggered) {
-            startupConsentTriggered = true
-            // Run Remote Config + UMP consent asynchronously so cold start stays < 1.2s (T-025)
-            // while still gating MobileAds initialization strictly behind ConsentPort.consentState (US-002).
+        if (incomingActionState !is IncomingLaunchAction.ViewDocument && !startupConfigFetched) {
+            startupConfigFetched = true
+            // Run Remote Config asynchronously so cold start stays < 1.2s (T-025)
             lifecycleScope.launch {
                 remoteConfigPort.fetchAndActivate(timeoutMs = 1_500L)
-                consentPort.gatherConsentIfNeeded()
             }
         }
 
@@ -83,22 +64,12 @@ class MainActivity : AppCompatActivity() {
             val windowSizeClass = calculateWindowSizeClass(this)
 
             EvoraTheme(darkTheme = isDark) {
-                CompositionLocalProvider(
-                    LocalInlineNativeAdRenderer provides inlineNativeAdRenderer,
-                ) {
-                    ProvideReducedMotion {
-                        AppNavHost(
-                            windowWidthSizeClass = windowSizeClass.widthSizeClass,
-                            incomingAction = incomingActionState,
-                            onIncomingActionConsumed = { incomingActionState = null },
-                            onRouteChanged = { route, isProtected ->
-                                adPlacementHook.setProtectedSurfaceActive(isProtected)
-                                if (route == "main") {
-                                    adPlacementHook.onHomeHubEntered()
-                                }
-                            },
-                        )
-                    }
+                ProvideReducedMotion {
+                    AppNavHost(
+                        windowWidthSizeClass = windowSizeClass.widthSizeClass,
+                        incomingAction = incomingActionState,
+                        onIncomingActionConsumed = { incomingActionState = null },
+                    )
                 }
             }
         }
@@ -108,9 +79,6 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         extractIncomingAction(intent)?.let {
-            if (it is IncomingLaunchAction.ViewDocument) {
-                adPlacementHook.markExternalIntentLaunch(true)
-            }
             incomingActionState = it
         }
     }

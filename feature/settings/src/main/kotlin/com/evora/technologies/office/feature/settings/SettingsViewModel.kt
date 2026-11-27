@@ -2,7 +2,6 @@ package com.evora.technologies.office.feature.settings
 
 import androidx.lifecycle.viewModelScope
 import com.evora.technologies.office.core.domain.port.CloudDrivePort
-import com.evora.technologies.office.core.domain.port.ConsentPort
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
 import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.model.AppLanguage
@@ -18,7 +17,6 @@ class SettingsViewModel @Inject constructor(
     private val preferencesRepository: PreferencesRepository,
     private val proEntitlementPort: ProEntitlementPort,
     private val cloudDrivePort: CloudDrivePort,
-    private val consentPort: ConsentPort,
 ) : MviViewModel<SettingsState, SettingsIntent, SettingsEffect>(SettingsState()) {
 
     init {
@@ -45,17 +43,6 @@ class SettingsViewModel @Inject constructor(
         cloudDrivePort.observeConnectedAccounts()
             .onEach { accounts -> setState { copy(connectedCloudCount = accounts.size) } }
             .launchIn(viewModelScope)
-
-        consentPort.consentState
-            .onEach { consent ->
-                setState {
-                    copy(
-                        umpPrivacyOptionsRequired = consent.privacyOptionsRequired,
-                        umpConsentGranted = consent.canRequestAds,
-                    )
-                }
-            }
-            .launchIn(viewModelScope)
     }
 
     override fun onIntent(intent: SettingsIntent) {
@@ -74,7 +61,7 @@ class SettingsViewModel @Inject constructor(
             SettingsIntent.ManageProClicked -> sendEffect(SettingsEffect.NavigateToPaywall)
             SettingsIntent.RestorePurchasesClicked -> restorePurchases()
             SettingsIntent.ConnectedCloudsClicked -> sendEffect(SettingsEffect.NavigateToCloudDrives)
-            SettingsIntent.OpenUmpPrivacy -> openUmpPrivacyControls()
+            SettingsIntent.OpenPrivacyNotice -> setState { copy(showPrivacyDialog = true) }
             SettingsIntent.OpenLicenses -> setState { copy(showLicensesSheet = true) }
             SettingsIntent.DismissDialogs -> setState {
                 copy(
@@ -82,7 +69,7 @@ class SettingsViewModel @Inject constructor(
                     showLanguageDialog = false,
                     showAutosaveDialog = false,
                     showDefaultHandlerDialog = false,
-                    showUmpPrivacyDialog = false,
+                    showPrivacyDialog = false,
                     showLicensesSheet = false,
                 )
             }
@@ -110,19 +97,6 @@ class SettingsViewModel @Inject constructor(
         launchSafely {
             preferencesRepository.setAutosaveIntervalSec(seconds)
             sendEffect(SettingsEffect.ShowMessage("Auto-save interval set to ${seconds}s"))
-        }
-    }
-
-    private fun openUmpPrivacyControls() {
-        if (!currentState.umpPrivacyOptionsRequired) {
-            setState { copy(showUmpPrivacyDialog = true) }
-            return
-        }
-        launchSafely(
-            onError = { setState { copy(showUmpPrivacyDialog = true) } },
-        ) {
-            consentPort.showPrivacyOptionsForm()
-                .onFailure { setState { copy(showUmpPrivacyDialog = true) } }
         }
     }
 

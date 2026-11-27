@@ -6,7 +6,6 @@ import com.evora.technologies.office.core.model.PageSizePreset
 import com.evora.technologies.office.core.model.PdfToolKind
 import com.evora.technologies.office.core.model.PdfToolResult
 import com.evora.technologies.office.core.model.Pkcs7CertificateInfo
-import com.evora.technologies.office.core.model.ProStatus
 import com.evora.technologies.office.core.model.SplitMode
 import com.evora.technologies.office.core.mvi.UiEffect
 import com.evora.technologies.office.core.mvi.UiIntent
@@ -19,8 +18,6 @@ data class ToolInputFile(
 
 data class PdfToolConfigState(
     val toolKind: PdfToolKind = PdfToolKind.MERGE,
-    val proStatus: ProStatus = ProStatus(),
-    val freeDailyPdfToDocxAvailable: Boolean = true,
     val availableLibraryDocs: List<DocumentItem> = emptyList(),
     val selectedInputs: List<ToolInputFile> = emptyList(),
     val outputBaseName: String = "Evora_Output",
@@ -59,7 +56,6 @@ data class PdfToolConfigState(
     val stitchedLongImage: Boolean = false,
     // Execution
     val showLibraryPicker: Boolean = false,
-    val showRewardGateTitle: String? = null,
     val passwordPromptRequired: Boolean = false,
     val passwordPromptError: String? = null,
     val isProcessing: Boolean = false,
@@ -113,9 +109,6 @@ sealed interface PdfToolConfigIntent : UiIntent {
     data object CancelExecution : PdfToolConfigIntent
     data class SubmitUnlockPassword(val password: String) : PdfToolConfigIntent
     data object DismissUnlockDialog : PdfToolConfigIntent
-    data object DismissRewardGate : PdfToolConfigIntent
-    data object GrantRewardedPassAndRun : PdfToolConfigIntent
-    data object UpgradeProClicked : PdfToolConfigIntent
     data object OpenResultClicked : PdfToolConfigIntent
     data object ShareResultClicked : PdfToolConfigIntent
     data object ResetForAnotherRun : PdfToolConfigIntent
@@ -124,7 +117,6 @@ sealed interface PdfToolConfigIntent : UiIntent {
 
 sealed interface PdfToolConfigEffect : UiEffect {
     data object NavigateBack : PdfToolConfigEffect
-    data object NavigateToPaywall : PdfToolConfigEffect
     data class OpenOutputFile(val uriString: String, val displayName: String) : PdfToolConfigEffect
     data class ShareOutputFile(val uriString: String, val displayName: String) : PdfToolConfigEffect
     data class ShowMessage(val message: String) : PdfToolConfigEffect

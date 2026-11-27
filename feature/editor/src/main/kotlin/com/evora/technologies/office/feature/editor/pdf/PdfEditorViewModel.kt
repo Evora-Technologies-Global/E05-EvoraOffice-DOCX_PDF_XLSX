@@ -1,18 +1,15 @@
 package com.evora.technologies.office.feature.editor.pdf
 
 import androidx.lifecycle.viewModelScope
-import com.evora.technologies.office.core.domain.port.AdPlacementHook
 import com.evora.technologies.office.core.domain.port.DocumentInvalidPasswordException
 import com.evora.technologies.office.core.domain.port.DocumentPasswordRequiredException
 import com.evora.technologies.office.core.domain.port.PdfEnginePort
 import com.evora.technologies.office.core.domain.port.PdfPowerPort
-import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.domain.port.SignatureRepository
 import com.evora.technologies.office.core.model.NormalizedPoint
 import com.evora.technologies.office.core.model.PdfAnnotationDraft
 import com.evora.technologies.office.core.model.PdfAnnotationType
 import com.evora.technologies.office.core.model.PdfSignaturePlacement
-import com.evora.technologies.office.core.model.RewardedAdOutcome
 import com.evora.technologies.office.core.model.SignatureItem
 import com.evora.technologies.office.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,8 +24,6 @@ class PdfEditorViewModel @Inject constructor(
     private val pdfEngine: PdfEnginePort,
     private val pdfPowerPort: PdfPowerPort,
     private val signatureRepository: SignatureRepository,
-    private val proEntitlementPort: ProEntitlementPort,
-    private val adPlacementHook: AdPlacementHook,
 ) : MviViewModel<PdfEditorState, PdfEditorIntent, PdfEditorEffect>(
     PdfEditorState(),
 ) {
@@ -37,15 +32,10 @@ class PdfEditorViewModel @Inject constructor(
     private var renderJob: Job? = null
     private var activePassword: String? = null
     private var lastRenderWidthPx: Int = 1080
-    private var pendingPkcs7Gate = false
 
     init {
         signatureRepository.observeSignatures()
             .onEach { list -> setState { copy(savedSignatures = list) } }
-            .launchIn(viewModelScope)
-
-        proEntitlementPort.proStatus
-            .onEach { status -> setState { copy(proStatus = status) } }
             .launchIn(viewModelScope)
     }
 
@@ -107,16 +97,6 @@ class PdfEditorViewModel @Inject constructor(
                 }
             }
             PdfEditorIntent.OpenSignaturePadClicked -> sendEffect(PdfEditorEffect.NavigateToSignaturePad)
-            PdfEditorIntent.DismissRewardGate -> {
-                pendingPkcs7Gate = false
-                setState { copy(showRewardGateTitle = null) }
-            }
-            PdfEditorIntent.GrantRewardPassAndProceed -> grantRewardPassAndOpenCerts()
-            PdfEditorIntent.UpgradeProClicked -> {
-                pendingPkcs7Gate = false
-                setState { copy(showRewardGateTitle = null) }
-                sendEffect(PdfEditorEffect.NavigateToPaywall)
-            }
             PdfEditorIntent.BackClicked -> sendEffect(PdfEditorEffect.NavigateBack)
         }
     }
@@ -322,11 +302,6 @@ class PdfEditorViewModel @Inject constructor(
     }
 
     private fun inspectPkcs7() {
-        if (!currentState.proStatus.isUnlocked) {
-            pendingPkcs7Gate = true
-            setState { copy(showRewardGateTitle = "PKCS#7 Digital Certificate Signer") }
-            return
-        }
         launchSafely(
             onError = { sendEffect(PdfEditorEffect.ShowMessage(it.message ?: "Unable to inspect certificates")) },
         ) {
@@ -398,33 +373,6 @@ class PdfEditorViewModel @Inject constructor(
             activePassword = null
             setState { copy(isSaving = false, uriString = res.outputUriString, displayName = res.outputDisplayName) }
             sendEffect(PdfEditorEffect.ShowMessage(res.summaryMessage))
-        }
-    }
-
-    private fun grantRewardPassAndOpenCerts() {
-        launchSafely(
-            onError = { setState { copy(showRewardGateTitle = null) }; sendEffect(PdfEditorEffect.ShowMessage(it.message ?: "Unable to unlock pass")) },
-        ) {
-            when (val outcome = adPlacementHook.showRewardedPassAd()) {
-                is RewardedAdOutcome.Earned -> {
-                    proEntitlementPort.grantRewardedPass(hours = outcome.hours)
-                    setState { copy(showRewardGateTitle = null) }
-                    if (pendingPkcs7Gate) {
-                        pendingPkcs7Gate = false
-                        inspectPkcs7()
-                    }
-                }
-                RewardedAdOutcome.Dismissed -> {
-                    pendingPkcs7Gate = false
-                    setState { copy(showRewardGateTitle = null) }
-                    sendEffect(PdfEditorEffect.ShowMessage("Complete the rewarded video to unlock PKCS#7 inspection."))
-                }
-                is RewardedAdOutcome.Unavailable -> {
-                    pendingPkcs7Gate = false
-                    setState { copy(showRewardGateTitle = null) }
-                    sendEffect(PdfEditorEffect.ShowMessage(outcome.reason))
-                }
-            }
         }
     }
 }

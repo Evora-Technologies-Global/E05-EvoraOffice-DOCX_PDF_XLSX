@@ -123,7 +123,7 @@ class MonetizationEngineTest {
     }
 
     @Test
-    fun `PlayBillingEntitlementRepository acknowledges purchases, hides ads, and persists offline across restarts`() = runTest(testDispatcher) {
+    fun `PlayBillingEntitlementRepository acknowledges purchases and persists offline across restarts`() = runTest(testDispatcher) {
         val prefs = createPrefs(backgroundScope)
         val signer = TestHmacSigner()
         val cache = SignedEntitlementCache(prefs, signer)
@@ -152,7 +152,6 @@ class MonetizationEngineTest {
         advanceUntilIdle()
 
         assertTrue(repo.proStatus.value.isPro)
-        assertTrue(repo.proStatus.value.shouldHideAds)
         assertEquals(SubscriptionPlan.YEARLY.skuId, repo.proStatus.value.activeSku)
         assertEquals(listOf("tok_yearly_unack"), gateway.acknowledgedTokens)
 
@@ -174,7 +173,6 @@ class MonetizationEngineTest {
         )
         advanceUntilIdle()
         assertTrue(restartedRepo.proStatus.value.isPro)
-        assertTrue(restartedRepo.proStatus.value.shouldHideAds)
     }
 
     @Test
@@ -212,7 +210,6 @@ class MonetizationEngineTest {
         advanceUntilIdle()
         assertFalse(restored)
         assertFalse(repo.proStatus.value.isPro)
-        assertFalse(repo.proStatus.value.shouldHideAds)
     }
 
     @Test
@@ -245,25 +242,14 @@ class MonetizationEngineTest {
     }
 
     @Test
-    fun `firebaseAndAdjustTelemetry dispatches ad_impression AdjustAdRevenue and PRD section 10 events`() {
+    fun `firebaseTelemetry dispatches PRD section 10 product and billing events without ad telemetry`() {
         val sink = FakeTelemetrySink()
-        val telemetry = FirebaseAndAdjustTelemetry(sink)
-        assertEquals(1, sink.adjustInitCount)
-
-        telemetry.logAdImpression(
-            adPlatform = "AppLovin",
-            adFormat = "interstitial",
-            adUnitName = "ca-app-pub-test/interstitial",
-            currency = "USD",
-            value = 0.015,
-            valueMicros = 15_000L,
-        )
-        assertEquals(1, sink.adjustRevenues.size)
-        assertEquals("AppLovin", sink.adjustRevenues.single().adPlatform)
-        assertEquals(15_000L, sink.adjustRevenues.single().valueMicros)
+        val telemetry = FirebaseTelemetry(sink)
 
         telemetry.logOnboardingStep("welcome", "continue")
+        telemetry.logStoragePermissionResult("all_files")
         telemetry.logDocumentOpen("pdf", "home_list")
+        telemetry.logEditorSessionEnd("docx", 18L, "saved")
         telemetry.logPdfToolComplete("merge", 420L, success = true)
         telemetry.logScanOcrComplete("ocr", 2, "latin")
         telemetry.logPaywallImpression("settings")
@@ -272,9 +258,10 @@ class MonetizationEngineTest {
         val names = sink.firebaseEvents.map { it.first }
         assertEquals(
             listOf(
-                "ad_impression",
                 "onboarding_step",
+                "storage_permission_result",
                 "document_open",
+                "editor_session_end",
                 "pdf_tool_complete",
                 "scan_ocr_complete",
                 "paywall_impression",
@@ -282,8 +269,6 @@ class MonetizationEngineTest {
             ),
             names,
         )
-        assertEquals("AppLovin", sink.firebaseEvents.first().second["ad_platform"])
-        assertEquals("interstitial", sink.firebaseEvents.first().second["ad_format"])
     }
 
     @Test
@@ -291,42 +276,16 @@ class MonetizationEngineTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val manager = FirebaseRemoteConfigManager(
             context = context,
-            runtimeConfig = MonetizationRuntimeConfig(
-                isDebugBuild = true,
-                admobAppId = "ca-app-pub-3940256099942544~3347511713",
-                interstitialUnitId = "ca-app-pub-3940256099942544/1033173712",
-                appOpenUnitId = "ca-app-pub-3940256099942544/9257395921",
-                rewardedUnitId = "ca-app-pub-3940256099942544/5224354917",
-                nativeUnitId = "ca-app-pub-3940256099942544/2247696110",
-                adjustAppToken = "",
-            ),
+            isDebugBuild = true,
             ioDispatcher = testDispatcher,
         )
 
         val snapshot = manager.fetchAndActivate()
         assertEquals(RemoteConfigSnapshot(), snapshot)
-        assertEquals(60L, snapshot.adsInterstitialCooldownSec)
-        assertEquals(90L, snapshot.adsAppOpenCooldownSec)
-        assertEquals(6, snapshot.adsNativeListInterval)
-        assertTrue(snapshot.adsDisableEditorResume)
+        assertTrue(snapshot.onboardingShowLanguage)
+        assertTrue(snapshot.onboardingShowPaywall)
         assertEquals(SubscriptionPlan.YEARLY.skuId, snapshot.paywallDefaultSku)
-        assertEquals(24, snapshot.toolRewardUnlockHours)
         assertEquals(15, snapshot.lokAutosaveIntervalSec)
-    }
-
-    @Test
-    fun `umpConsentManager completes safely with initialized ConsentState without an active activity`() = runTest(testDispatcher) {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val consentManager = UmpConsentManager(
-            context = context,
-            activityTracker = ActiveActivityTracker(),
-            mainDispatcher = testDispatcher,
-        )
-
-        val state = consentManager.gatherConsentIfNeeded()
-        assertTrue(state.isInitialized)
-        assertFalse(state.canRequestAds)
-        assertFalse(state.privacyOptionsRequired)
     }
 
     @Test
@@ -355,19 +314,9 @@ class MonetizationEngineTest {
 }
 
 private class FakeTelemetrySink : TelemetrySink {
-    var adjustInitCount = 0
     val firebaseEvents = mutableListOf<Pair<String, Map<String, Any>>>()
-    val adjustRevenues = mutableListOf<AdImpressionRecord>()
-
-    override fun initAdjustIfConfigured() {
-        adjustInitCount += 1
-    }
 
     override fun dispatchFirebaseEvent(eventName: String, params: Map<String, Any>) {
         firebaseEvents += eventName to params
-    }
-
-    override fun dispatchAdjustAdRevenue(record: AdImpressionRecord) {
-        adjustRevenues += record
     }
 }

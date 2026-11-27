@@ -8,7 +8,6 @@ import com.evora.technologies.office.core.domain.port.PdfEnginePort
 import com.evora.technologies.office.core.domain.port.PdfPageRaster
 import com.evora.technologies.office.core.domain.port.PdfPowerPort
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
-import com.evora.technologies.office.core.domain.port.ProEntitlementPort
 import com.evora.technologies.office.core.domain.port.SignatureRepository
 import com.evora.technologies.office.core.model.AppThemeMode
 import com.evora.technologies.office.core.model.CompressQuality
@@ -23,8 +22,6 @@ import com.evora.technologies.office.core.model.PdfSignaturePlacement
 import com.evora.technologies.office.core.model.PdfToolKind
 import com.evora.technologies.office.core.model.PdfToolResult
 import com.evora.technologies.office.core.model.Pkcs7CertificateInfo
-import com.evora.technologies.office.core.model.ProFeature
-import com.evora.technologies.office.core.model.ProStatus
 import com.evora.technologies.office.core.model.SignatureItem
 import com.evora.technologies.office.core.model.SlideDeckSnapshot
 import com.evora.technologies.office.core.model.SlideElement
@@ -235,17 +232,7 @@ class EditorViewModelsTest {
             override suspend fun extractPageText(uriString: String, pageIndex: Int, password: String?) = ""
             override suspend fun searchText(uriString: String, query: String, password: String?) = emptyList<PdfSearchMatch>()
         }
-        val proPort = object : ProEntitlementPort {
-            override val proStatus = MutableStateFlow(ProStatus())
-            override suspend fun hasAccess(feature: ProFeature) = false
-            override suspend fun grantRewardedPass(hours: Int) = Unit
-            override suspend fun restorePurchases() = false
-        }
-        val adHook = object : com.evora.technologies.office.core.domain.port.AdPlacementHook {
-            override fun onMilestoneCompleted(screenId: String) = Unit
-            override fun onHomeHubEntered() = Unit
-        }
-        val vm = PdfEditorViewModel(pdfEngine, power, sigRepo, proPort, adHook)
+        val vm = PdfEditorViewModel(pdfEngine, power, sigRepo)
         vm.onIntent(PdfEditorIntent.OpenPdf("file:///doc.pdf", "doc.pdf"))
         advanceUntilIdle()
 

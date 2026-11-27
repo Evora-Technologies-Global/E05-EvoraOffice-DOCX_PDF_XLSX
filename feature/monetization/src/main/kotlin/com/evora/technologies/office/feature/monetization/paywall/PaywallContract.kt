@@ -20,7 +20,6 @@ sealed interface PaywallIntent : UiIntent {
     data class SelectPlan(val plan: SubscriptionPlan) : PaywallIntent
     data object StartTrialClicked : PaywallIntent
     data object RestorePurchasesClicked : PaywallIntent
-    data object GrantRewardPassClicked : PaywallIntent
     data object SkipClicked : PaywallIntent
 }
 

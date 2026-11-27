@@ -1,12 +1,3 @@
 # Consumer rules for :engine:monetization
 -keep class com.android.billingclient.api.** { *; }
 -keep class com.evora.technologies.office.engine.monetization.** { *; }
--keep class com.google.android.gms.ads.** { *; }
--keep class com.google.android.ump.** { *; }
--keep class com.google.ads.mediation.** { *; }
--keep class com.applovin.** { *; }
--keep class com.unity3d.ads.** { *; }
--keep class com.mbridge.** { *; }
--keep class com.adjust.sdk.** { *; }
--dontwarn com.bytedance.sdk.**
--dontwarn com.pangle.**

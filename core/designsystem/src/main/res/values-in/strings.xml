@@ -58,7 +58,7 @@
     <string name="evora_settings_restore_purchases">Pulihkan Pembelian</string>
     <string name="evora_settings_connected_clouds">Cloud Terhubung</string>
     <string name="evora_settings_privacy_legal">Privasi &amp; Hukum</string>
-    <string name="evora_settings_ump_privacy">Pilihan Privasi &amp; Izin</string>
+    <string name="evora_settings_privacy_notice">Privasi &amp; Proses Lokal</string>
     <string name="evora_settings_oss_licenses">Lisensi Sumber Terbuka</string>
 
     <string name="evora_widget_quick_name">Bilah Cepat Evora</string>

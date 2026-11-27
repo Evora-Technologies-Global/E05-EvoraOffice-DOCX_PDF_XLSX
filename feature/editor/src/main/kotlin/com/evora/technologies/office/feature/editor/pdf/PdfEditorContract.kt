@@ -5,7 +5,6 @@ import com.evora.technologies.office.core.model.PdfAnnotationDraft
 import com.evora.technologies.office.core.model.PdfAnnotationType
 import com.evora.technologies.office.core.model.PdfSignaturePlacement
 import com.evora.technologies.office.core.model.Pkcs7CertificateInfo
-import com.evora.technologies.office.core.model.ProStatus
 import com.evora.technologies.office.core.model.SignatureItem
 import com.evora.technologies.office.core.mvi.UiEffect
 import com.evora.technologies.office.core.mvi.UiIntent
@@ -43,8 +42,6 @@ data class PdfEditorState(
     val showRemovePasswordDialog: Boolean = false,
     val passwordRequired: Boolean = false,
     val passwordError: String? = null,
-    val proStatus: ProStatus = ProStatus(),
-    val showRewardGateTitle: String? = null,
     val errorMessage: String? = null,
 ) : UiState
 
@@ -81,16 +78,12 @@ sealed interface PdfEditorIntent : UiIntent {
     data object DismissSecurityDialogs : PdfEditorIntent
     data object PrintClicked : PdfEditorIntent
     data object OpenSignaturePadClicked : PdfEditorIntent
-    data object DismissRewardGate : PdfEditorIntent
-    data object GrantRewardPassAndProceed : PdfEditorIntent
-    data object UpgradeProClicked : PdfEditorIntent
     data object BackClicked : PdfEditorIntent
 }
 
 sealed interface PdfEditorEffect : UiEffect {
     data object NavigateBack : PdfEditorEffect
     data object NavigateToSignaturePad : PdfEditorEffect
-    data object NavigateToPaywall : PdfEditorEffect
     data class LaunchPrint(val uriString: String, val displayName: String) : PdfEditorEffect
     data class ShowMessage(val message: String) : PdfEditorEffect
 }

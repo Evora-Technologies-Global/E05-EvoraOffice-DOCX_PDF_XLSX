@@ -68,7 +68,6 @@ import com.evora.technologies.office.core.designsystem.component.ErrorStateCard
 import com.evora.technologies.office.core.designsystem.component.EvoraIconButton
 import com.evora.technologies.office.core.designsystem.component.EvoraOutlinedButton
 import com.evora.technologies.office.core.designsystem.component.EvoraPrimaryButton
-import com.evora.technologies.office.core.designsystem.component.EvoraRewardGateSheet
 import com.evora.technologies.office.core.designsystem.component.FormatBadge
 import com.evora.technologies.office.core.designsystem.component.PasswordUnlockDialog
 import com.evora.technologies.office.core.designsystem.component.formatByteSize
@@ -90,7 +89,6 @@ fun PdfToolConfigRoute(
     toolKind: PdfToolKind,
     preselectedUri: String? = null,
     onBack: () -> Unit,
-    onOpenPaywall: () -> Unit,
     onOpenOutput: (uriString: String, displayName: String, format: DocFormat) -> Unit,
     onShowMessage: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -126,7 +124,6 @@ fun PdfToolConfigRoute(
     CollectEffects(viewModel.effects) { effect ->
         when (effect) {
             PdfToolConfigEffect.NavigateBack -> onBack()
-            PdfToolConfigEffect.NavigateToPaywall -> onOpenPaywall()
             is PdfToolConfigEffect.OpenOutputFile -> {
                 val ext = effect.displayName.substringAfterLast('.', "pdf").lowercase()
                 val fmt = DocFormat.fromExtension(ext) ?: DocFormat.PDF
@@ -370,13 +367,6 @@ internal fun PdfToolConfigScreen(
                                             }
                                         }
                                     }
-                                    if (state.toolKind == PdfToolKind.MERGE && state.selectedInputs.size > 3 && !state.proStatus.isUnlocked) {
-                                        Text(
-                                            text = "Free tier supports up to 3 PDFs. Merging ${state.selectedInputs.size} files offers a 24h Pass or Pro unlock upfront.",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = extra.onProGoldContainer,
-                                        )
-                                    }
                                 }
                             }
                         }
@@ -432,15 +422,6 @@ internal fun PdfToolConfigScreen(
             errorMessage = state.passwordPromptError,
             onUnlock = { onIntent(PdfToolConfigIntent.SubmitUnlockPassword(it)) },
             onDismiss = { onIntent(PdfToolConfigIntent.DismissUnlockDialog) },
-        )
-    }
-
-    state.showRewardGateTitle?.let { gateTitle ->
-        EvoraRewardGateSheet(
-            featureTitle = gateTitle,
-            onWatchRewardedPass = { onIntent(PdfToolConfigIntent.GrantRewardedPassAndRun) },
-            onUpgradePro = { onIntent(PdfToolConfigIntent.UpgradeProClicked) },
-            onDismiss = { onIntent(PdfToolConfigIntent.DismissRewardGate) },
         )
     }
 }
@@ -567,8 +548,7 @@ private fun ToolConfigSection(
                                 onClick = { onIntent(PdfToolConfigIntent.SelectCompressQuality(q)) },
                             )
                             Column {
-                                val badge = if (q == CompressQuality.HIGH && !state.proStatus.isUnlocked) " · PRO" else ""
-                                Text("${q.label}$badge", style = MaterialTheme.typography.titleSmall)
+                                Text(q.label, style = MaterialTheme.typography.titleSmall)
                                 Text(q.description, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
@@ -690,13 +670,7 @@ private fun ToolConfigSection(
 
                 PdfToolKind.PDF_TO_DOCX -> {
                     Text(
-                        text = if (state.proStatus.isUnlocked) {
-                            "Offline PDF -> DOCX ready (Pro Active)."
-                        } else if (state.freeDailyPdfToDocxAvailable) {
-                            "1 Free Offline PDF -> DOCX run available today (uses PDFBox + ML Kit OCR fallback)."
-                        } else {
-                            "Daily free PDF -> DOCX used. Rewarded 24h Pass or Pro unlock available before conversion."
-                        },
+                        text = "Offline PDF -> DOCX ready (uses PDFBox + ML Kit OCR fallback).",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

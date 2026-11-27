@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import com.evora.technologies.office.core.designsystem.component.EvoraBrandMark
 import com.evora.technologies.office.core.designsystem.component.EvoraIconButton
 import com.evora.technologies.office.core.designsystem.component.EvoraPrimaryButton
-import com.evora.technologies.office.core.designsystem.component.EvoraRewardGateSheet
 import com.evora.technologies.office.core.designsystem.theme.EvoraRadii
 import com.evora.technologies.office.core.designsystem.theme.EvoraSpacing
 import com.evora.technologies.office.core.designsystem.theme.EvoraTheme
@@ -51,10 +50,10 @@ internal fun PaywallScreen(
 ) {
     val extra = EvoraThemeTokens.colors
     val benefits = listOf(
-        "Remove all ad slots globally across every tab",
         "Batch Merge > 3 PDFs & High-DPI Compress",
         "Dual-Side ID Card Scan, Batch OCR & Watermark",
         "Unlimited Offline PDF -> DOCX & PKCS#7 Signing",
+        "Support 100% offline LibreOffice & PDF development",
     )
     val offerByPlan = state.offers.associateBy { it.plan }
     val selectedOffer = offerByPlan[state.selectedPlan] ?: BillingOffer(state.selectedPlan)
@@ -266,14 +265,8 @@ internal fun PaywallScreen(
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Center,
             ) {
-                TextButton(
-                    onClick = { onIntent(PaywallIntent.GrantRewardPassClicked) },
-                    enabled = !state.isProcessing,
-                ) {
-                    Text("24h Pro Pass")
-                }
                 TextButton(
                     onClick = { onIntent(PaywallIntent.SkipClicked) },
                     enabled = !state.isProcessing,
@@ -284,25 +277,6 @@ internal fun PaywallScreen(
             }
         }
     }
-}
-
-/**
- * Honest pre-action RewardGateSheet per CD-07 / US-110.
- * Shown upfront before a Pro power tool starts rather than locking Save.
- */
-@Composable
-fun RewardGateSheet(
-    featureTitle: String,
-    onWatchRewardedPass: () -> Unit,
-    onUpgradePro: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    EvoraRewardGateSheet(
-        featureTitle = featureTitle,
-        onWatchRewardedPass = onWatchRewardedPass,
-        onUpgradePro = onUpgradePro,
-        onDismiss = onDismiss,
-    )
 }
 
 @Preview(showBackground = true)

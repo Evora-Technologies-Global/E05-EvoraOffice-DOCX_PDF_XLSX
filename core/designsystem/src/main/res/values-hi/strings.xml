@@ -58,7 +58,7 @@
     <string name="evora_settings_restore_purchases">खरीदारी पुनर्स्थापित करें</string>
     <string name="evora_settings_connected_clouds">कनेक्टेड क्लाउड</string>
     <string name="evora_settings_privacy_legal">गोपनीयता और कानूनी</string>
-    <string name="evora_settings_ump_privacy">गोपनीयता विकल्प</string>
+    <string name="evora_settings_privacy_notice">गोपनीयता और स्थानीय प्रोसेसिंग</string>
     <string name="evora_settings_oss_licenses">ओपन-सोर्स लाइसेंस</string>
 
     <string name="evora_widget_quick_name">Evora क्विक बार</string>

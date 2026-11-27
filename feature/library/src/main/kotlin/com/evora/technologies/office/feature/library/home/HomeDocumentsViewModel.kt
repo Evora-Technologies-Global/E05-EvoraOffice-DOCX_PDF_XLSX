@@ -1,12 +1,8 @@
 package com.evora.technologies.office.feature.library.home
 
 import androidx.lifecycle.viewModelScope
-import com.evora.technologies.office.core.domain.policy.AdCooldownPolicy
-import com.evora.technologies.office.core.domain.port.ConsentPort
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.PreferencesRepository
-import com.evora.technologies.office.core.domain.port.ProEntitlementPort
-import com.evora.technologies.office.core.domain.port.RemoteConfigPort
 import com.evora.technologies.office.core.domain.port.TemplateRepository
 import com.evora.technologies.office.core.model.DocFormat
 import com.evora.technologies.office.core.model.DocTemplatePreset
@@ -29,9 +25,6 @@ class HomeDocumentsViewModel @Inject constructor(
     private val documentRepository: DocumentRepository,
     private val preferencesRepository: PreferencesRepository,
     private val templateRepository: TemplateRepository,
-    private val proEntitlementPort: ProEntitlementPort,
-    private val consentPort: ConsentPort,
-    private val remoteConfigPort: RemoteConfigPort,
 ) : MviViewModel<HomeDocumentsState, HomeDocumentsIntent, HomeDocumentsEffect>(
     HomeDocumentsState(templates = templateRepository.getAvailableTemplates()),
 ) {
@@ -55,25 +48,6 @@ class HomeDocumentsViewModel @Inject constructor(
             .catch { err ->
                 setState { copy(isLoading = false, isRefreshing = false, errorMessage = err.message) }
             }
-            .launchIn(viewModelScope)
-
-        combine(
-            proEntitlementPort.proStatus,
-            consentPort.consentState,
-            remoteConfigPort.config,
-            state,
-        ) { pro, consent, remote, uiState ->
-            AdCooldownPolicy.inlineNativeInsertionIndex(
-                shouldHideAds = pro.shouldHideAds,
-                canRequestAds = consent.canRequestAds,
-                itemCount = uiState.documents.size,
-                config = remote,
-            )
-        }.onEach { adIdx ->
-            if (currentState.inlineNativeAdIndex != adIdx) {
-                setState { copy(inlineNativeAdIndex = adIdx) }
-            }
-        }.catch { /* keep native ad hidden */ }
             .launchIn(viewModelScope)
 
         combine(
