@@ -77,4 +77,4 @@ The CEO decided this on 27/11/2026, following E03. It overrides the rules and th
 
 - applicationId and namespace: `com.evora.technologies.office`. App name `Evora Office` (store title `Evora Office: DOCX, PDF, XLSX`).
 - `versionCode 100`, `versionName "1.0.0"`.
-- Build types: `debug` and `release`; release is minified and signed only when `storeFile`, `storePassword`, `keyAlias` and `keyPassword` come from `keystore.properties`, `local.properties` or the `EVORA_RELEASE_*` variables. Production credentials are still pending (`docs/10_RELEASE_CHECKLIST.md` §2.2).
+- Build types: `debug` and `release`; release is minified and signed only when `storeFile`, `storePassword`, `keyAlias` and `keyPassword` come from `keystore.properties`, `local.properties` or the `EVORA_RELEASE_*` variables. The real Play upload key is local at `app/src/key_store.jks` (gitignored, its properties in `local.properties`): never commit it or print its passwords. The other production credentials are still pending (`docs/10_RELEASE_CHECKLIST.md` §2.2).
