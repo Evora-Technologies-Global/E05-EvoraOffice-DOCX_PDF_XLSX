@@ -54,7 +54,18 @@ verify_checksums() {
   fi
 }
 
+LOCAL_ASSETS_CACHE="$ROOT_DIR/.local/lok_ci_artifacts/lok-android-runtime-assets"
+
+sync_local_runtime_assets() {
+  if [[ "$CI_MODE" == false && -d "$LOCAL_ASSETS_CACHE/program" && ! -f "$ASSETS_DIR/unpack/program/udkapi.rdb" ]]; then
+    mkdir -p "$ASSETS_DIR"
+    cp -R "$LOCAL_ASSETS_CACHE"/* "$ASSETS_DIR/"
+    echo "Copied LibreOfficeKit runtime assets from $LOCAL_ASSETS_CACHE"
+  fi
+}
+
 if verify_checksums; then
+  sync_local_runtime_assets
   echo "LibreOfficeKit prebuilt .so binaries already verified in $JNI_DIR"
   exit 0
 fi
@@ -64,6 +75,7 @@ if [[ "$CI_MODE" == false && -d "$LOCAL_CACHE" && -f "$LOCAL_CACHE/liblo-native-
   mkdir -p "$JNI_DIR"
   cp -f "$LOCAL_CACHE"/*.so "$JNI_DIR/"
   if verify_checksums; then
+    sync_local_runtime_assets
     echo "Copied and verified LibreOfficeKit .so binaries from $LOCAL_CACHE"
     exit 0
   fi

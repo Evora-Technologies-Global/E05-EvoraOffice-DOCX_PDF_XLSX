@@ -198,6 +198,13 @@ jobs:
           BRAND_SHARE_SUBDIR=share
           CONFIGURATION_LAYERS=xcsxcu:${BRAND_BASE_DIR}/share/registry res:${BRAND_BASE_DIR}/share/registry
           URE_BIN_DIR=file:///assets/ure/bin/dir/nothing-here/we-can/exec-anyway
+          BUNDLED_EXTENSIONS=${BRAND_BASE_DIR}/share/extensions
+          BUNDLED_EXTENSIONS_USER=file://$APP_DATA_DIR/user/extensions/bundled
+          SHARED_EXTENSIONS_USER=file://$APP_DATA_DIR/user/extensions/shared
+          UNO_SHARED_PACKAGES_CACHE=file://$APP_DATA_DIR/user/uno_packages/cache
+          UNO_USER_PACKAGES_CACHE=file://$APP_DATA_DIR/user/uno_packages/cache
+          TMP_EXTENSIONS=file://$APP_DATA_DIR/user/extensions/tmp
+          BAK_EXTENSIONS=file://$APP_DATA_DIR/user/extensions/bak
           EOF
           cat > out/assets/program/bootstraprc << 'EOF'
           [Bootstrap]
