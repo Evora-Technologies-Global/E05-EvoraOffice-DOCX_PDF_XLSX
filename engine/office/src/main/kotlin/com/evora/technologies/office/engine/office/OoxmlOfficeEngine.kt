@@ -7,6 +7,7 @@ import android.util.Xml
 import com.evora.technologies.office.core.data.di.IoDispatcher
 import com.evora.technologies.office.core.domain.port.DocumentRepository
 import com.evora.technologies.office.core.domain.port.OfficeEditorPort
+import com.evora.technologies.office.core.domain.util.BoundedZipReader
 import com.evora.technologies.office.core.domain.util.ExcelFormulaEvaluator
 import com.evora.technologies.office.core.domain.util.OoxmlDocxWriter
 import com.evora.technologies.office.core.model.CellHorizontalAlign
@@ -39,7 +40,6 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -957,19 +957,8 @@ class OoxmlOfficeEngine @Inject constructor(
         return input.use(::readZipStream)
     }
 
-    private fun readZipStream(stream: InputStream): Map<String, ByteArray> {
-        val map = LinkedHashMap<String, ByteArray>()
-        ZipInputStream(stream).use { zis ->
-            var entry = zis.nextEntry
-            while (entry != null) {
-                if (!entry.isDirectory) {
-                    map[entry.name] = zis.readBytes()
-                }
-                entry = zis.nextEntry
-            }
-        }
-        return map
-    }
+    private fun readZipStream(stream: InputStream): Map<String, ByteArray> =
+        BoundedZipReader.readEntries(stream)
 
     private fun writeZip(zos: ZipOutputStream, name: String, xml: String) {
         zos.putNextEntry(ZipEntry(name))

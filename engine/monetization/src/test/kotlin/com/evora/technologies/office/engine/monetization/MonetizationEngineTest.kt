@@ -328,6 +328,30 @@ class MonetizationEngineTest {
         assertFalse(state.canRequestAds)
         assertFalse(state.privacyOptionsRequired)
     }
+
+    @Test
+    fun `signedEntitlementCache rejects tampered payload and release builds block qaProOverride`() = runTest(testDispatcher) {
+        val prefs = createPrefs(backgroundScope)
+        val signer = TestHmacSigner()
+        val cache = SignedEntitlementCache(prefs, signer)
+
+        val now = 1_750_000_000_000L
+        cache.saveVerifiedEntitlement(SubscriptionPlan.YEARLY.skuId, "tok_sec", now)
+        val raw = prefs.entitlementHmacPayload.first()!!
+        val tampered = raw.dropLast(2) + if (raw.endsWith("AA")) "BB" else "AA"
+        assertNull(cache.verify(tampered, now + 1000L))
+
+        val releaseRepo = PlayBillingEntitlementRepository(
+            preferences = prefs,
+            signedCache = cache,
+            billingGateway = FakeBillingGateway(),
+            isDebugBuild = false,
+            ioDispatcher = testDispatcher,
+        )
+        releaseRepo.setQaProOverride(true)
+        advanceUntilIdle()
+        assertFalse(releaseRepo.proStatus.value.isPro)
+    }
 }
 
 private class FakeTelemetrySink : TelemetrySink {

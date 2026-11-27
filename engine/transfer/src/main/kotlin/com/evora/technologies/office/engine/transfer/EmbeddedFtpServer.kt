@@ -18,6 +18,7 @@ import java.io.OutputStreamWriter
 import java.net.Inet4Address
 import java.net.ServerSocket
 import java.net.Socket
+import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Collections
 import java.util.Date
@@ -114,7 +115,11 @@ class EmbeddedFtpServer(
                     }
                     "PASS" -> {
                         val expected = cfg.pinCode.trim()
-                        if (expected.isEmpty() || arg == expected) {
+                        val matches = expected.isEmpty() || MessageDigest.isEqual(
+                            arg.toByteArray(Charsets.UTF_8),
+                            expected.toByteArray(Charsets.UTF_8),
+                        )
+                        if (matches) {
                             authenticated = true
                             send("230 Login successful")
                         } else {

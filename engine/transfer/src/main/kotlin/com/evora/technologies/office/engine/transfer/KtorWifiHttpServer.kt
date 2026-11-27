@@ -22,6 +22,7 @@ import io.ktor.server.routing.routing
 import io.ktor.utils.io.readAvailable
 import java.io.File
 import java.io.FileOutputStream
+import java.security.MessageDigest
 
 /**
  * Embedded Ktor CIO LAN HTTP server (07_TECH_SPEC.md §7.4 / T-019).
@@ -201,9 +202,11 @@ class KtorWifiHttpServer(
     private fun isPinAuthorized(call: ApplicationCall, config: WifiTransferConfig): Boolean {
         val expected = config.pinCode.trim()
         if (expected.isEmpty()) return true
-        val headerPin = call.request.headers["X-Evora-Pin"]?.trim()
-        val queryPin = call.request.queryParameters["pin"]?.trim()
-        return headerPin == expected || queryPin == expected
+        val expectedBytes = expected.toByteArray(Charsets.UTF_8)
+        val headerPin = call.request.headers["X-Evora-Pin"]?.trim()?.toByteArray(Charsets.UTF_8)
+        val queryPin = call.request.queryParameters["pin"]?.trim()?.toByteArray(Charsets.UTF_8)
+        return (headerPin != null && MessageDigest.isEqual(headerPin, expectedBytes)) ||
+            (queryPin != null && MessageDigest.isEqual(queryPin, expectedBytes))
     }
 
     private fun buildFilesJson(

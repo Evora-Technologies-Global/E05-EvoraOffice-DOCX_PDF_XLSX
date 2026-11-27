@@ -7,6 +7,7 @@ import com.evora.technologies.office.core.data.di.IoDispatcher
 import com.evora.technologies.office.core.domain.port.ParsedTextDocument
 import com.evora.technologies.office.core.domain.port.TextChapter
 import com.evora.technologies.office.core.domain.port.TextEpubEnginePort
+import com.evora.technologies.office.core.domain.util.BoundedZipReader
 import com.evora.technologies.office.core.model.DocFormat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -15,7 +16,6 @@ import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
-import java.util.zip.ZipInputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -52,16 +52,7 @@ class TextEpubEngineImpl @Inject constructor(
     }
 
     private fun parseEpub(title: String, input: InputStream): ParsedTextDocument {
-        val entries = LinkedHashMap<String, ByteArray>()
-        ZipInputStream(input).use { zis ->
-            var entry = zis.nextEntry
-            while (entry != null) {
-                if (!entry.isDirectory) {
-                    entries[entry.name] = zis.readBytes()
-                }
-                entry = zis.nextEntry
-            }
-        }
+        val entries = BoundedZipReader.readEntries(input)
 
         val opfPath = entries["META-INF/container.xml"]?.let(::extractRootFilePath)
         val opfDir = opfPath?.substringBeforeLast('/', "")?.takeIf { it.isNotEmpty() }?.plus("/") ?: ""

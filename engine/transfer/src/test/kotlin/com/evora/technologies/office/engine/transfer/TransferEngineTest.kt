@@ -213,6 +213,47 @@ class TransferEngineTest {
         }
     }
 
+    @Test
+    fun `TransferPathSandbox blocks encoded-style traversal, NUL bytes, and wrong FTP PIN`() {
+        val root = tempFolder.newFolder("pin_shared")
+        val upload = tempFolder.newFolder("pin_upload")
+        assertThrows(PathTraversalException::class.java) {
+            TransferPathSandbox.resolveInsideRoot(root, "sub/\u0000evil")
+        }
+        assertThrows(PathTraversalException::class.java) {
+            TransferPathSandbox.sanitizeSingleUploadFilename("bad\u0000name.pdf")
+        }
+
+        val ftp = EmbeddedFtpServer(
+            sharedRootDir = root,
+            uploadRootDir = upload,
+            hostIpProvider = { "127.0.0.1" },
+            configProvider = { WifiTransferConfig(readOnly = true, pinCode = "4829") },
+            onActivity = { _, _, _, _ -> },
+            onFileUploaded = {},
+        )
+        val port = ftp.start(0)
+        try {
+            Socket("127.0.0.1", port).use { sock ->
+                val reader = BufferedReader(InputStreamReader(sock.getInputStream()))
+                val writer = BufferedWriter(OutputStreamWriter(sock.getOutputStream()))
+                fun cmd(c: String): String {
+                    writer.write("$c\r\n")
+                    writer.flush()
+                    return reader.readLine()
+                }
+                assertTrue(reader.readLine().startsWith("220"))
+                assertTrue(cmd("USER evora").startsWith("331"))
+                assertTrue(cmd("PASS 0000").startsWith("530"))
+                assertTrue(cmd("PWD").startsWith("530"))
+                assertTrue(cmd("PASS 4829").startsWith("230"))
+                assertTrue(cmd("PWD").startsWith("257"))
+            }
+        } finally {
+            ftp.stop()
+        }
+    }
+
     private fun parsePasvPort(pasvResponse: String): Int {
         val nums = pasvResponse.substringAfter('(').substringBefore(')').split(',')
         val p1 = nums[4].trim().toInt()

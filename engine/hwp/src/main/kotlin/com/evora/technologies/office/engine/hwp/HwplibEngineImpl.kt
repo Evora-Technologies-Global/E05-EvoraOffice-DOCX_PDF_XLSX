@@ -216,11 +216,12 @@ class HwplibEngineImpl @Inject constructor(
             val file = File(uri.path!!)
             return Triple(file, false, file.name)
         }
-        val name = uri.lastPathSegment?.substringAfterLast('/') ?: "document.hwp"
-        val temp = File(context.cacheDir, "hwp_tmp_${System.nanoTime()}_$name")
+        val rawName = uri.lastPathSegment?.substringAfterLast('/') ?: "document.hwp"
+        val safeName = rawName.replace(Regex("[/\\\\:*?\"<>|\\x00-\\x1F]"), "_").ifBlank { "document.hwp" }
+        val temp = File(context.cacheDir, "hwp_tmp_${System.nanoTime()}_$safeName")
         val input = context.contentResolver.openInputStream(uri) ?: FileInputStream(File(uriString))
         input.use { src -> FileOutputStream(temp).use { dst -> src.copyTo(dst) } }
-        return Triple(temp, true, name)
+        return Triple(temp, true, safeName)
     }
 
     companion object {
