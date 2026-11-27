@@ -109,7 +109,7 @@ Full scoring and policy details are documented in [Expanded 12-Category Android 
 
 | Date | Decision Item | Proposed Options / Constraints | CEO Decision | Notes |
 |---|---|---|---|---|
-| 2026-11-25 | Target Platform & Architecture | Native Android (Kotlin + Jetpack Compose, MVI + Clean Architecture) | **Confirmed** | Fixed in `GEMINI.md` / `LLM.md` §13 |
+| 2026-11-25 | Target Platform & Architecture | Native Android (Kotlin + Jetpack Compose, MVI + Clean Architecture) | **Confirmed** | Fixed in `CLAUDE.md` / `LLM.md` §13 |
 | 2026-11-25 | Market, Budget & Monetization Scope | Non-Game Dual-Market (Tier-1 + Tier-2/3), Flexible UA Budget Tiers, Hybrid Preferred ($0/low COGS) | **Confirmed** | Baseline scope |
 | 2026-11-25 | Explicit Category Exclusions | Exclude **Note-Taking**, **Receipt/Billing Scanning**, and **Launchers** (deferred due to QuickStep/Play/AdMob IVT risk) | **Confirmed** | Applied across 12-category matrix above |
 | 2026-11-25 | **Selected Target Benchmark App** | Focus E05 on **`com.officedocument.word.docx.document.viewer`** (*Word Document: DOCX, PDF, XLSX* / *Office App* by iKame Applications - Begamob Global) with full feature parity target | **Confirmed by CEO** | UA evaluation (`CONDITIONAL GO`) in `research/phase1/office_viewer_ua_business_evaluation.md`. REA decompilation **COMPLETE** in [`01_COMPETITOR_REVERSE_ENGINEERING.md`](01_COMPETITOR_REVERSE_ENGINEERING.md) (**Artifex SmartOffice + MuPDF AGPL/OEM finding + 100% clean-room parity paths ready for CEO Gate 1**) |

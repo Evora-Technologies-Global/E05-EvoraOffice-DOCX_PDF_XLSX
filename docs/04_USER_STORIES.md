@@ -5,7 +5,7 @@
 **Owner:** Business Analysis (`ba-writer`)  
 **Date:** 2026-11-25  
 **Status:** Complete (Phase 3 Baseline -> Maps 1:1 to `docs/03_PRD.md`)  
-**Format Standard:** Domain-grouped tables (`US-001`..`US-119`) with Role-Action-Benefit + **Gherkin (`Given / When / Then`)** Acceptance Criteria per [`.gemini/rules/product-lifecycle-workflow.md`](../.gemini/rules/product-lifecycle-workflow.md).
+**Format Standard:** Domain-grouped tables (`US-001`..`US-119`) with Role-Action-Benefit + **Gherkin (`Given / When / Then`)** Acceptance Criteria per [`.claude/rules/product-lifecycle-workflow.md`](../.claude/rules/product-lifecycle-workflow.md).
 
 ---
 

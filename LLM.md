@@ -3,7 +3,7 @@
 > **Read this file BEFORE writing any code. Update it AFTER any structural change.**
 > This is the map of the codebase: where things live, what each layer may depend on, and
 > where a new file belongs. For *how* to write an MVI screen, read
-> [`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md).
+> [`.claude/rules/android-native-standards.md`](.claude/rules/android-native-standards.md).
 
 **Status (27/11/2026): Sprints 1–4 & Phases 1–8 Complete (`F-01`–`F-09 = Done`; `T-001`–`T-027` done; `R-01` `14/14` `16 KB` ARM64 `.so` binaries from CI run `45768969780` + `org.libreoffice.kit` JNI bindings & asset unpacker integrated in `:engine:office`); Ad-Free Architecture Cleared (all AdMob, Mediation, UMP, Adjust, `AD_ID`, and Rewarded Ad gates removed per CEO directive while keeping Play Billing `8.0.0`, Firebase Analytics/Remote Config, and all Pro utilities unlocked freely for now), Baseline Profiles + R8 Hardening (`T-025`), Phase 7 QA (`T-026`, `08_QA_TEST_REPORT.md` Zero Blockers, CEO Gate 3 Approved `27/11/2026`), and Phase 8 Release Prep & ASO (`T-027`, `09_ASO_METADATA.md`, `10_RELEASE_CHECKLIST.md`, `fastlane/`, `scripts/package_mplv2_disclosure.sh`) Complete — Pending Production Store Credentials (`10_RELEASE_CHECKLIST.md` §2.2) for Play Console Upload.** Architecture and module boundaries are
 defined in [`docs/07_TECH_SPEC.md`](docs/07_TECH_SPEC.md). Modules marked `[Active]` are compiled and verified; modules marked `[Planned — Sprint N]` activate in their respective sprint.
@@ -15,7 +15,7 @@ Code snippets in §4–§6 are copied strictly from real E05 code as modules lan
 
 | When | Do |
 |---|---|
-| Before writing code | Read §2–§10 of this file, [`docs/07_TECH_SPEC.md`](docs/07_TECH_SPEC.md), and [`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md). |
+| Before writing code | Read §2–§10 of this file, [`docs/07_TECH_SPEC.md`](docs/07_TECH_SPEC.md), and [`.claude/rules/android-native-standards.md`](.claude/rules/android-native-standards.md). |
 | Before adding a file | Check §10 "Where does a new file go?". Do not invent an unlisted package or module. |
 | After adding, moving, renaming, or deleting a package, module, layer, or architectural rule | Update this file in the same commit. |
 | After fixing something in §11 | Move the row from "Open" to "Fixed" with the commit reference. |
@@ -83,7 +83,7 @@ Root namespace is locked at `com.evora.technologies.office` (`CD-05`, Launcher n
 ## 4. The MVI core
 
 Package `com.evora.technologies.office.core.mvi` inside `:core:mvi` implements
-[`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md) §1 & §4
+[`.claude/rules/android-native-standards.md`](.claude/rules/android-native-standards.md) §1 & §4
 (`core/mvi/src/main/kotlin/com/evora/technologies/office/core/mvi/MviViewModel.kt` and `CollectEffects.kt`):
 
 ```kotlin
@@ -232,10 +232,10 @@ Locked by CEO (`CD-11`, `2026-11-25`): **Hilt with KSP (`com.google.dagger:hilt-
 
 | Constraint | Value | Source |
 |---|---|---|
-| Target platform | Native Android (Kotlin + Jetpack Compose) | [`GEMINI.md`](GEMINI.md) (CEO, 25/11/2026) |
-| Architecture | MVI + Clean Architecture | [`GEMINI.md`](GEMINI.md); [`.gemini/rules/android-native-standards.md`](.gemini/rules/android-native-standards.md) |
-| Documentation & lifecycle | 8-phase Company Bot lifecycle (`docs/01_*.md` to `docs/10_*.md`) in English; CEO communication & `README.md` in Vietnamese | [`GEMINI.md`](GEMINI.md); [`.gemini/rules/product-lifecycle-workflow.md`](.gemini/rules/product-lifecycle-workflow.md) |
-| Untrusted / temp competitor data | `.local/` only, never committed; release builds must never ship competitor assets | [`GEMINI.md`](GEMINI.md) §6 |
+| Target platform | Native Android (Kotlin + Jetpack Compose) | [`CLAUDE.md`](CLAUDE.md) (CEO, 25/11/2026) |
+| Architecture | MVI + Clean Architecture | [`CLAUDE.md`](CLAUDE.md); [`.claude/rules/android-native-standards.md`](.claude/rules/android-native-standards.md) |
+| Documentation & lifecycle | 8-phase Company Bot lifecycle (`docs/01_*.md` to `docs/10_*.md`); CEO communication, new docs and rewritten sections in Vietnamese (technical terms in English); docs written before 27/11/2026 stay in English; code, commits, `CLAUDE.md` and `LLM.md` in English | [`CLAUDE.md`](CLAUDE.md) (CEO, 27/11/2026); [`.claude/rules/product-lifecycle-workflow.md`](.claude/rules/product-lifecycle-workflow.md) |
+| Untrusted / temp competitor data | `.local/` only, never committed; release builds must never ship competitor assets | [`CLAUDE.md`](CLAUDE.md) "Untrusted and local-only data" |
 | SDK levels, versioning & monetization | `minSdk 26`, `targetSdk 36` (Android 16), `16 KB` ELF alignment; `versionName "1.0.0"`, `versionCode 100`; Track A Open-Source (`$0` royalty, `100%` offline `$0` server); Play Billing `8.0.0` Pro paywall (all ad SDKs & Rewarded Ad gates cleared until ads are scheduled for rollout); Tier B UA (`$1k–$5k/mo`) | [`02_PROJECT_CHARTER.md`](docs/02_PROJECT_CHARTER.md) (`CD-01`–`CD-07`, 25/11/2026) |
 | Brand, package, style & account scope | App name `Evora Office` (`Evora Office: DOCX, PDF, XLSX`), `applicationId = com.evora.technologies.office`, **Style B (Familiar Vibrant Utility)**, App logo deferred (`CD-06`), Interactive HTML Gate 2 wireframes (`CD-08`), Personal Play account 14d/12-tester gate ignored (`CD-09`) | [`02_PROJECT_CHARTER.md`](docs/02_PROJECT_CHARTER.md) (`CD-05`–`CD-09`, 25/11/2026); [`05_DESIGN_SYSTEM.md`](docs/05_DESIGN_SYSTEM.md) (`CD-10`) |
 | DI Framework & GitHub CI (`CD-11`, `CD-12`) | **Hilt with KSP (`2.60.1` + `KSP 2.3.14`)**, zero `kapt`; use existing GitHub repo `Evora-Technologies-Global/E05-EvoraOffice-DOCX_PDF_XLSX` for Android CI and `R-01` Linux LOK `16 KB` builds | CEO Decision (`CD-11`, `CD-12`, 25/11/2026); [`07_TECH_SPEC.md`](docs/07_TECH_SPEC.md) |

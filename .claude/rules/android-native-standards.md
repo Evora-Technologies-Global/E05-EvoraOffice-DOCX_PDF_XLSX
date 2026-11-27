@@ -1,3 +1,9 @@
+---
+paths:
+  - "**/*.kt"
+  - "**/*.kts"
+---
+
 # Android Native Architecture & MVI Standards
 
 > **Standard Guide for Android Development with Jetpack Compose & MVI**

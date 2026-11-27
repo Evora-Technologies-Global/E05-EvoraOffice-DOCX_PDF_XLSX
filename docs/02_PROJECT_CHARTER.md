@@ -17,7 +17,7 @@
 
 | Date | Decision ID | Decision Item | Status / Owner | Locked CEO Decision & Rationale |
 |---|---|---|---|---|
-| 2026-11-25 | `PD-01` | Target Platform & Architecture | **Locked (CEO)** | Strictly Native Android (`Kotlin + Jetpack Compose`, `MVI + Clean Architecture`) per [`GEMINI.md`](../GEMINI.md) and [`LLM.md`](../LLM.md) §13. |
+| 2026-11-25 | `PD-01` | Target Platform & Architecture | **Locked (CEO)** | Strictly Native Android (`Kotlin + Jetpack Compose`, `MVI + Clean Architecture`) per [`CLAUDE.md`](../CLAUDE.md) and [`LLM.md`](../LLM.md) §13. |
 | 2026-11-25 | `PD-02` | Benchmark Selection & Full Parity Mandate | **Locked (CEO)** | Full (`100%`) clean-room functional parity with `com.officedocument.word.docx.document.viewer` across View, Edit, PDF Tools, Scan/OCR, Cloud, and Wi-Fi Transfer. |
 | 2026-11-25 | `CD-01` | Core Document Engine Track | **Locked (CEO)** | **Track A: Clean-Room Open-Source (`$0` Engine Royalties)** — `LibreOfficeKit / Collabora Android Core` (`MPLv2/LGPLv3`, Linux NDK r27+ 16 KB build) + `PdfiumAndroid` (`Apache 2.0`, 16 KB) + `TomRoush/PdfBox-Android` (`Apache 2.0`) + `ML Kit` + `Apache Commons Compress`. |
 | 2026-11-25 | `CD-02` | Delivery Phasing, Versioning & Schedule | **Locked (CEO)** | **Amended Option P2 (Single Full-Parity `v1.0.0` Launch):** `versionName = 1.0.0`, `versionCode = 100`. Target **`4-week` (1-month) `[Internal Target]`** AI-accelerated engineering execution covering full features, ASO metadata, and store screenshots. *(External Google Play review / 14-day closed-test policy gates tracked separately from build completion.)* |

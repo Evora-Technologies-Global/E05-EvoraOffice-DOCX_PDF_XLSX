@@ -17,7 +17,7 @@ engine/office/src/main/assets/program/
 engine/office/src/main/assets/share/
 engine/office/src/main/assets/unpack/
 
-# Local-only competitor data, temp assets, and throwaway spikes (see GEMINI.md)
+# Local-only competitor data, temp assets, and throwaway spikes (see CLAUDE.md)
 .local/
 scratch/
 notes/
@@ -51,13 +51,9 @@ captures/
 keystore.properties
 signing.properties
 
-# Antigravity / Gemini local settings, secrets, and ephemeral state
-.gemini/.env
-.gemini/skills/**/.env
-.gemini/settings.local.json
-.gemini/worktrees/
-.gemini/agent-memory/
-mcp_config.json
+# Claude Code local settings and lane worktrees (each worktree is a checkout of this repo)
+.claude/settings.local.json
+.claude/worktrees/
 .mcp.json
 
 # Logs & temp

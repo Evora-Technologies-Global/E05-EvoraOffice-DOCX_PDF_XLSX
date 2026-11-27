@@ -1,9 +1,3 @@
----
-trigger: model_decision
-glob: null
-description: 'Only when working as one of several parallel agents on a shared task: file ownership, git safety, messaging, task claiming, shutdown.'
----
-
 # Team Coordination Rules
 
 > These rules only apply when operating as a teammate within an Agent Team.
@@ -29,9 +23,9 @@ Rules for agents operating as teammates within an Agent Team.
 
 ## Communication Protocol
 
-- **Language Mandate**: All inter-agent messages (`send_message`), task descriptions, handoffs, and review reports MUST be in **English**. (Only direct messages presented to the human user are in Vietnamese).
-- Use `send_message(type: "message")` for peer DMs — always specify recipient by name
-- Use `send_message(type: "broadcast")` ONLY for critical blocking issues affecting entire team
+- **Language Mandate**: All inter-agent messages (`SendMessage`), task descriptions, handoffs, and review reports MUST be in **English**. (Only direct messages presented to the human user are in Vietnamese).
+- Use `SendMessage(type: "message")` for peer DMs — always specify recipient by name
+- Use `SendMessage(type: "broadcast")` ONLY for critical blocking issues affecting entire team
 - Mark tasks completed via `TaskUpdate` BEFORE sending completion message to lead
 - Include actionable findings in messages, not just "I'm done"
 - Never send structured JSON status messages — use plain text
@@ -92,6 +86,6 @@ When `plan_mode_required` is set:
 
 ## Discovery
 
-- Read team config at `~/.gemini/config/teams/{team-name}/config.json` to discover teammates
+- Read team config at `~/.claude/teams/{team-name}/config.json` to discover teammates
 - Always refer to teammates by NAME (not agent ID)
-- Names are used for: `recipient` in send_message, task `owner` in TaskUpdate
+- Names are used for: `recipient` in SendMessage, task `owner` in TaskUpdate

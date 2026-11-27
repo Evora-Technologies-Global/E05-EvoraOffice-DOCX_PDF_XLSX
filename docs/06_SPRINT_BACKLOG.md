@@ -12,7 +12,7 @@
 - [`03_PRD.md`](03_PRD.md) *(`F-01`–`F-10`, 5 Room entities, Firebase Remote Config, Ktor LAN API, 21 routes)*  
 - [`04_USER_STORIES.md`](04_USER_STORIES.md) *(`37` prioritized stories `US-001`–`US-112`)*  
 - [`05_DESIGN_SYSTEM.md`](05_DESIGN_SYSTEM.md) *(`Gate 2` Approved & Locked `CD-10`; `S-01`–`S-20` + `W-01`/`W-02`; WCAG AA `75/75`)*  
-- [`.gemini/rules/android-native-standards.md`](../.gemini/rules/android-native-standards.md) · [`LLM.md`](../LLM.md)
+- [`.claude/rules/android-native-standards.md`](../.claude/rules/android-native-standards.md) · [`LLM.md`](../LLM.md)
 
 ---
 
@@ -148,7 +148,7 @@
 
 A task in `Sprint 1`–`Sprint 4` moves to **`Done`** **ONLY** when **100% of applicable criteria below pass**:
 
-1. **MVI & Clean Architecture Compliance (`.gemini/rules/android-native-standards.md`):**
+1. **MVI & Clean Architecture Compliance (`.claude/rules/android-native-standards.md`):**
    - Every screen ViewModel extends `MviViewModel<S, I, E>` with `onIntent` as its **sole** public method.
    - `State`, `Intent`, and `Effect` live strictly in `XContract.kt`; navigation is emitted strictly as a `UiEffect` via `Channel(BUFFERED)` + `CollectEffects`.
    - Zero `androidx.compose.*`, `android.*`, or platform SDK imports inside ViewModels, Contracts, or `:domain` classes.

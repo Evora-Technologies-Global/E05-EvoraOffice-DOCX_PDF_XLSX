@@ -15,7 +15,7 @@
 - [`04_USER_STORIES.md`](04_USER_STORIES.md) (`US-001`–`US-112`)  
 - [`05_DESIGN_SYSTEM.md`](05_DESIGN_SYSTEM.md) (`CD-10` Gate 2, `S-01`–`S-20`, `W-01`–`W-02`)  
 - [`06_SPRINT_BACKLOG.md`](06_SPRINT_BACKLOG.md) (`T-001`–`T-027`)  
-- [`.gemini/rules/android-native-standards.md`](../.gemini/rules/android-native-standards.md) · [`LLM.md`](../LLM.md)
+- [`.claude/rules/android-native-standards.md`](../.claude/rules/android-native-standards.md) · [`LLM.md`](../LLM.md)
 
 ---
 
@@ -143,7 +143,7 @@ To enforce `CD-07` (*zero live AdMob calls until `F-01`–`F-09` reach `Done`*):
 
 ## 5. MVI Foundation & Concurrency Contract
 
-All UI and presentation layers follow [`.gemini/rules/android-native-standards.md`](../.gemini/rules/android-native-standards.md):
+All UI and presentation layers follow [`.claude/rules/android-native-standards.md`](../.claude/rules/android-native-standards.md):
 - `XContract.kt`: Holds immutable `data class XState : UiState`, `sealed interface XIntent : UiIntent`, and `sealed interface XEffect : UiEffect` exclusively.
 - `XViewModel.kt`: Extends `MviViewModel<XState, XIntent, XEffect>`, exposes **`onIntent(intent: XIntent)` as the sole public method**, runs every coroutine through `launchSafely(onError = { ... })` (rethrowing `CancellationException`, resetting busy flags in `onError`), and emits navigation/snackbars exclusively via `sendEffect(...)`.
 - `XRoute.kt` / `XScreen.kt`: `XRoute` injects `hiltViewModel()`, collects `state.collectAsStateWithLifecycle()`, registers `CollectEffects(viewModel.effects) { ... }` (`repeatOnLifecycle(STARTED)` + `effects.collect`), and passes `state` + `viewModel::onIntent` down to stateless `internal fun XScreen(...)`.

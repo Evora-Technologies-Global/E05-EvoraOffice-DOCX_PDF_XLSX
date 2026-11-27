@@ -1,9 +1,3 @@
----
-trigger: always_on
-glob: null
-description: 'Standard Corporate Product Lifecycle: End-to-end documentation flow from market research, CEO approval, BA specs, UI/UX design gate, PM sprint, engineering, QA, to store release.'
----
-
 # Standard Corporate Product Lifecycle (Quy Trình Phát Triển Sản Phẩm Chuẩn Doanh Nghiệp)
 
 This workflow defines the mandatory corporate software development lifecycle (SDLC) from CEO problem statement to App Store / Google Play release.
@@ -122,8 +116,8 @@ Whenever a project or feature is requested, agents **MUST NEVER jump directly in
 - **Output Files**:
   - `docs/07_TECH_SPEC.md` (Architecture, Database Schema, API Contracts, State Machine)
   - **Native Source Code**:
-    - **Android**: MUST follow `.gemini/rules/android-native-standards.md` (MVI, StateFlow, Channel effects, Route/Screen split).
-    - **iOS**: MUST follow `.gemini/rules/ios-native-standards.md` (Swift 6 Clean MVVM, Sendable, AppContainer).
+    - **Android**: MUST follow `.claude/rules/android-native-standards.md` (MVI, StateFlow, Channel effects, Route/Screen split).
+    - **iOS**: MUST follow `.claude/rules/ios-native-standards.md` (Swift 6 Clean MVVM, Sendable, AppContainer).
 - **Review Gate**: `code-reviewer` scans diffs and outputs review findings (Blocker 🔴, Suggestion 🟡, Nit 💭).
 
 ---

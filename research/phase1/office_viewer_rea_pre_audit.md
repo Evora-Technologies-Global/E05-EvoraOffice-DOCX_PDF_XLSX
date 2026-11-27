@@ -16,7 +16,7 @@
 
 ## 1. Honest Execution & Tooling Readiness Report
 
-Per CEO directive (*"report trung thực"* / *"đục code để xác nhận tính khả thi"*) and E05 anti-hallucination rules (`GEMINI.md` §6, `agency-app-reverse-engineer`, `reality-checker`), **no code decompilation has been performed yet** because no authentic APK/XAPK/AAB binary for `com.officedocument.word.docx.document.viewer` is present locally or on an attached device.
+Per CEO directive (*"report trung thực"* / *"đục code để xác nhận tính khả thi"*) and E05 anti-hallucination rules (`CLAUDE.md` "Untrusted and local-only data", `agency-app-reverse-engineer`, `reality-checker`), **no code decompilation has been performed yet** because no authentic APK/XAPK/AAB binary for `com.officedocument.word.docx.document.viewer` is present locally or on an attached device.
 
 ### 1.1 Blocker Verification Summary
 | Check | Observed State | Impact |

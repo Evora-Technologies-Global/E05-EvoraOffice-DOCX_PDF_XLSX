@@ -1,9 +1,3 @@
----
-trigger: always_on
-glob: null
-description: 'Main working loop: plan, implement, compile, test, review, integrate, debug.'
----
-
 # Primary Workflow
 
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
@@ -15,7 +9,7 @@ description: 'Main working loop: plan, implement, compile, test, review, integra
   - Communicate, ask clarifying questions, explain, and discuss with the user/CEO in **Vietnamese**.
   - Author all technical artifacts, PRDs, plans, documentation, code, and comments in **English** (except the root `README.md`).
   - Conduct all inter-agent messages, squad context exchanges, and subagent delegations in **English**.
-- **Product Lifecycle Execution**: When the CEO introduces a new product idea or major initiative, **STRICTLY FOLLOW** the 8-phase flow defined in `.gemini/rules/product-lifecycle-workflow.md`. **NEVER jump straight into code**. Generate each sequential deliverable under `docs/` (`01_MARKET_RESEARCH.md` & `01_COMPETITOR_REVERSE_ENGINEERING.md` ➔ `02_PROJECT_CHARTER.md` ➔ `03_PRD.md` / `04_USER_STORIES.md` ➔ `05_DESIGN_SYSTEM.md` & Wireframes ➔ `06_SPRINT_BACKLOG.md` ➔ `07_TECH_SPEC.md` ➔ Code ➔ `08_QA_TEST_REPORT.md` ➔ `09_ASO_METADATA.md` / `10_RELEASE_CHECKLIST.md`).
+- **Product Lifecycle Execution**: When the CEO introduces a new product idea or major initiative, **STRICTLY FOLLOW** the 8-phase flow defined in `.claude/rules/product-lifecycle-workflow.md`. **NEVER jump straight into code**. Generate each sequential deliverable under `docs/` (`01_MARKET_RESEARCH.md` & `01_COMPETITOR_REVERSE_ENGINEERING.md` ➔ `02_PROJECT_CHARTER.md` ➔ `03_PRD.md` / `04_USER_STORIES.md` ➔ `05_DESIGN_SYSTEM.md` & Wireframes ➔ `06_SPRINT_BACKLOG.md` ➔ `07_TECH_SPEC.md` ➔ Code ➔ `08_QA_TEST_REPORT.md` ➔ `09_ASO_METADATA.md` / `10_RELEASE_CHECKLIST.md`).
 - Only proceed with planning and implementation after unclear points are aligned with the user.
 
 #### 1. Code Implementation
@@ -53,7 +47,7 @@ description: 'Main working loop: plan, implement, compile, test, review, integra
 - Maintain backward compatibility
 - Document breaking changes
 - Delegate to `docs-manager` agent to update docs in `./docs` directory if any.
-- **Git Commit**: Always delegate or follow `.gemini/agents/git-manager.md` and conventional commits (`type(scope): description`). **STRICTLY ZERO AI REFERENCES** in commit messages (no mentions of AI, Gemini, Claude, Antigravity, LLM, or AI co-authorship).
+- **Git Commit**: Always delegate or follow `.claude/agents/git-manager.md` and conventional commits (`type(scope): description`). **STRICTLY ZERO AI REFERENCES** in commit messages (no mentions of AI, Gemini, Claude, Antigravity, LLM, or AI co-authorship).
 
 #### 5. Debugging
 - When a user report bugs or issues on the server or a CI/CD pipeline, delegate to `debugger` agent to run tests and analyze the summary report.
