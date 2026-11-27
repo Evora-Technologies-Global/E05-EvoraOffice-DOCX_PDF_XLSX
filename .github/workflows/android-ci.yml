@@ -29,6 +29,13 @@ jobs:
   verify-android:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      # Maven Central answers bursts from shared runner IPs with HTTP 429. Gradle 9.6.0 treats 408/429
+      # as transient but defaults to 3 attempts with a 1 s initial back-off, too short to wait the
+      # limiter out. These are Gradle-internal properties: re-check them when the wrapper is upgraded.
+      GRADLE_NETWORK_RETRY: >-
+        -Dorg.gradle.internal.network.retry.max.attempts=6
+        -Dorg.gradle.internal.network.retry.initial.backOff=5000
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -46,6 +53,11 @@ jobs:
 
       - name: Configure Gradle caching
         uses: gradle/actions/setup-gradle@v4
+        with:
+          # The default writes the cache only on the default branch, so every duylt_dev run restored
+          # a stale main entry and re-downloaded the difference from Maven Central. Let the two
+          # long-lived branches write their own entries; pull requests stay read-only.
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/duylt_dev' }}
 
       - name: Make gradlew and helper scripts executable
         run: chmod +x gradlew scripts/fetch_lok_prebuilt.sh
@@ -56,10 +68,10 @@ jobs:
         run: bash scripts/fetch_lok_prebuilt.sh --ci --allow-missing
 
       - name: Run unit tests and Android Lint
-        run: ./gradlew testDebugUnitTest lintDebug --no-daemon
+        run: ./gradlew testDebugUnitTest lintDebug --no-daemon $GRADLE_NETWORK_RETRY
 
       - name: Assemble Debug APK
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon $GRADLE_NETWORK_RETRY
 
       - name: Verify 16 KB ELF64 alignment on bundled .so libraries
         run: python3 -I scripts/verify_16kb_elf.py app/build/outputs/apk/debug/app-debug.apk
