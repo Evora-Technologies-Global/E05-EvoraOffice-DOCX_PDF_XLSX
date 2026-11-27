@@ -11,10 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.evora.technologies.office.core.designsystem.theme.PoppinsFontFamily
 
 /**
@@ -26,7 +26,10 @@ fun EvoraBrandMark(
     size: Dp = 32.dp,
 ) {
     val cornerRadius = if (size >= 56.dp) 20.dp else 10.dp
-    val fontSize = if (size >= 56.dp) 26.sp else 13.sp
+    // Monogram inside fixed icon box scales with Dp bounds rather than system fontScale.
+    val fontSizeSp = with(LocalDensity.current) {
+        (if (size >= 56.dp) 26.dp else 13.dp).toSp()
+    }
     Box(
         modifier = modifier
             .size(size)
@@ -42,7 +45,9 @@ fun EvoraBrandMark(
             text = "EO",
             fontFamily = PoppinsFontFamily,
             fontWeight = FontWeight.Bold,
-            fontSize = fontSize,
+            fontSize = fontSizeSp,
+            maxLines = 1,
+            softWrap = false,
             color = Color.White,
         )
     }

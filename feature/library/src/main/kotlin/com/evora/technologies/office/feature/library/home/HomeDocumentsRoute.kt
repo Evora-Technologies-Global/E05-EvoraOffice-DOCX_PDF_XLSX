@@ -67,6 +67,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -217,6 +218,7 @@ internal fun HomeDocumentsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Row(
+                        modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(EvoraSpacing.sm),
                     ) {
@@ -225,6 +227,8 @@ internal fun HomeDocumentsScreen(
                             text = "Evora Office",
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -322,22 +326,27 @@ internal fun HomeDocumentsScreen(
                                         color = MaterialTheme.colorScheme.primaryContainer,
                                         modifier = Modifier.fillMaxWidth(),
                                     ) {
-                                        Row(
+                                        Column(
                                             modifier = Modifier.padding(EvoraSpacing.md),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalArrangement = Arrangement.spacedBy(EvoraSpacing.xs),
                                         ) {
                                             Text(
                                                 text = "Set Evora Office as default PDF & DOCX viewer",
                                                 style = MaterialTheme.typography.labelLarge,
                                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                                modifier = Modifier.weight(1f),
+                                                modifier = Modifier.fillMaxWidth(),
                                             )
-                                            TextButton(onClick = { onIntent(HomeDocumentsIntent.OpenDefaultAppSettings) }) {
-                                                Text("Set Default")
-                                            }
-                                            TextButton(onClick = { onIntent(HomeDocumentsIntent.DismissDefaultAppBanner) }) {
-                                                Text("Hide")
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                            ) {
+                                                TextButton(onClick = { onIntent(HomeDocumentsIntent.DismissDefaultAppBanner) }) {
+                                                    Text("Hide")
+                                                }
+                                                TextButton(onClick = { onIntent(HomeDocumentsIntent.OpenDefaultAppSettings) }) {
+                                                    Text("Set Default")
+                                                }
                                             }
                                         }
                                     }

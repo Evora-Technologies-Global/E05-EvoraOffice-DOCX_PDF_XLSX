@@ -6,7 +6,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,7 +70,8 @@ fun PageIndicatorPill(
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .width(48.dp)
+            .widthIn(min = 48.dp)
+            .wrapContentWidth(Alignment.End)
             .onSizeChanged { trackHeightPx = it.height }
             .pointerInput(totalPages) {
                 detectVerticalDragGestures(
@@ -102,7 +104,7 @@ fun PageIndicatorPill(
                 .semantics { contentDescription = "Page $displayPage of $totalPages" },
         ) {
             Box(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -110,6 +112,7 @@ fun PageIndicatorPill(
                     style = EvoraTabularMonoStyle,
                     color = Color.White,
                     maxLines = 1,
+                    softWrap = false,
                 )
             }
         }

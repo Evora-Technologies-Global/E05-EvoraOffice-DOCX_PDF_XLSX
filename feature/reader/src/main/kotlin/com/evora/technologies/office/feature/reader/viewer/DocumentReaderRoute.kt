@@ -311,13 +311,6 @@ internal fun DocumentReaderScreen(
                                 tint = formatPalette.headerContent,
                             )
                         }
-                        EvoraIconButton(onClick = { onIntent(DocumentReaderIntent.PrintClicked) }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Print,
-                                contentDescription = "Print",
-                                tint = formatPalette.headerContent,
-                            )
-                        }
                         if (state.format in setOf(DocFormat.PDF, DocFormat.WORD, DocFormat.EXCEL, DocFormat.PPT, DocFormat.ODF)) {
                             EvoraIconButton(onClick = { onIntent(DocumentReaderIntent.EditClicked) }) {
                                 Icon(
@@ -326,13 +319,6 @@ internal fun DocumentReaderScreen(
                                     tint = formatPalette.headerContent,
                                 )
                             }
-                        }
-                        EvoraIconButton(onClick = { onIntent(DocumentReaderIntent.ToggleFullscreen) }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Fullscreen,
-                                contentDescription = "Fullscreen",
-                                tint = formatPalette.headerContent,
-                            )
                         }
                         EvoraIconButton(onClick = { onIntent(DocumentReaderIntent.OpenReadingSettings) }) {
                             Icon(
@@ -1010,6 +996,42 @@ private fun ReadingSettingsSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                Text("Fullscreen Reading", style = MaterialTheme.typography.titleSmall)
+                Switch(
+                    checked = state.isFullscreen,
+                    onCheckedChange = {
+                        onIntent(DocumentReaderIntent.DismissReadingSettings)
+                        onIntent(DocumentReaderIntent.ToggleFullscreen)
+                    },
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Print Document", style = MaterialTheme.typography.titleSmall)
+                TextButton(
+                    onClick = {
+                        onIntent(DocumentReaderIntent.DismissReadingSettings)
+                        onIntent(DocumentReaderIntent.PrintClicked)
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Print,
+                        contentDescription = null,
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Print")
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text("TTS Read-Aloud", style = MaterialTheme.typography.titleSmall)
                 TextButton(onClick = { onIntent(DocumentReaderIntent.ToggleTts) }) {
                     Icon(
@@ -1058,6 +1080,23 @@ private fun printHtmlOrText(
             settings.allowUniversalAccessFromFileURLs = false
             settings.blockNetworkLoads = true
             webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                ): Boolean = true
+
+                override fun shouldInterceptRequest(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                ): WebResourceResponse? {
+                    val scheme = request?.url?.scheme?.lowercase()
+                    return if (scheme == "about") {
+                        super.shouldInterceptRequest(view, request)
+                    } else {
+                        WebResourceResponse("text/plain", "utf-8", ByteArrayInputStream(ByteArray(0)))
+                    }
+                }
+
                 override fun onPageFinished(view: WebView?, url: String?) {
                     val adapter = createPrintDocumentAdapter(title)
                     printManager.print(title, adapter, PrintAttributes.Builder().build())
